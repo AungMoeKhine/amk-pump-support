@@ -4,19 +4,20 @@ import google.generativeai as genai
 # Page Config
 st.set_page_config(page_title="AMK Smart Pump AI Support", page_icon="💧")
 
-# Setup AI (The API Key will be handled safely in the next step)
+# Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Load the hardware code as the knowledge base
+# CHANGE: Use 1.5-pro (more stable) and add the models/ prefix
+model = genai.GenerativeModel('models/gemini-1.5-pro')
+
+# Load the hardware code
 with open("source_code.cpp", "r") as f:
     knowledge_base = f.read()
 
 st.title("💧 AMK Smart Pump Support AI")
 st.subheader("Automated Troubleshooting & Documentation")
 
-# Chat UI
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -30,8 +31,8 @@ if prompt := st.chat_input("Ask about errors, setup, or logic..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # The "Secret Sauce": The System Instruction
-        context = f"""
+        # The Instruction
+        system_instruction = f"""
         You are the technical expert for the AMK Smart Pump System. 
         Knowledge Source (Source Code):
         {knowledge_base}
@@ -43,6 +44,12 @@ if prompt := st.chat_input("Ask about errors, setup, or logic..."):
         4. If they ask about a 'Dry Run', explain the Wait Seconds and Auto-Retry logic from the code.
         """
         
-        response = model.generate_content([context, prompt])
-        st.markdown(response.text)
-        st.session_state.messages.append({"role": "assistant", "content": response.text})
+        # CHANGE: Send as a single string instead of a list for better reliability
+        full_query = system_instruction + "\n\nUser Question: " + prompt
+        
+        try:
+            response = model.generate_content(full_query)
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
+        except Exception as e:
+            st.error(f"AI Connection Error: {str(e)}")
