@@ -7,7 +7,7 @@ st.set_page_config(page_title="AMK Smart Pump AI Support", page_icon="💧")
 # Setup AI (The API Key will be handled safely in the next step)
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('models/gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # Load the hardware code as the knowledge base
 with open("source_code.cpp", "r") as f:
