@@ -9,30 +9,13 @@ api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 
 # ---------------------------------------------------------
-# SAFE MODEL SELECTION (Fixes 404 and 429 Quota)
+# STABLE MODEL SELECTION (1,500 requests per day)
 # ---------------------------------------------------------
-@st.cache_resource
-def get_working_model():
-    try:
-        # Get all models your API key is allowed to use
-        available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        # 1. Try to find the Stable 1.5 Flash (1,500 requests/day)
-        for target in ["models/gemini-1.5-flash", "models/gemini-1.5-flash-latest", "models/gemini-1.5-pro"]:
-            if target in available:
-                return target
-        
-        # 2. Fallback to whatever Google gives you (like 2.5 or 3.0)
-        return available[0]
-    except:
-        return "gemini-1.5-flash" # Last resort guess
-
-# We are forcing the 'latest' version string to try and bypass the 2.5 fallback
-model_id = "models/gemini-1.5-flash-latest" 
-model = genai.GenerativeModel(model_id)
+# We use the most basic name to avoid 404 errors
+model = genai.GenerativeModel('gemini-1.5-flash')
 # ---------------------------------------------------------
 
-# Custom Styling
+# Custom Centered Styling
 st.markdown(f"""
     <style>
         .block-container {{ padding-top: 1rem !important; padding-bottom: 0rem !important; }}
@@ -40,13 +23,10 @@ st.markdown(f"""
         .sub-caption {{ font-size: 0.72rem !important; color: #888; text-align: center; width: 100%; margin-bottom: 15px; }}
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Connected to: {model_id.replace('models/', '')}</div>
+    <div class="sub-caption">Stable Support Engine (High Quota)</div>
     """, unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# CHAT LOGIC
-# ---------------------------------------------------------
-
+# Load the hardware code
 with open("source_code.cpp", "r") as f:
     knowledge_base = f.read()
 
@@ -63,10 +43,10 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        context = f"Technical Expert for AMK Pump. Code: {knowledge_base}\nUser: {prompt}"
+        context = f"Technical Expert for AMK Pump. Source Code: {knowledge_base}\n\nUser Question: {prompt}"
         try:
             response = model.generate_content(context)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"System Error: {str(e)}")
+            st.error(f"Error: {str(e)}")
