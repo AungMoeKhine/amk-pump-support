@@ -2,62 +2,68 @@ import streamlit as st
 import google.generativeai as genai
 
 # 1. Page Config
-st.set_page_config(page_title="AMK AI Support", page_icon="💧")
+st.set_page_config(page_title="AMK Smart Pump AI Support", page_icon="💧")
 
 # 2. Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-3.5-flash')
 
-# 3. THE "COMPUTER-LIKE" MOBILE OVERRIDE
+# 3. Stable Model (1,500 requests/day)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+# 4. TOTAL DARK OVERRIDE (Forces Mobile to match Computer)
 st.markdown("""
     <style>
-        /* Force Black Background on everything (Mobile + Desktop) */
-        html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
+        /* Force total black background on everything */
+        html, body, .stApp, .main, [data-testid="stAppViewContainer"], [data-testid="stBottom"] {
             background-color: #000000 !important;
-        }
-
-        /* 1. REMOVE THE WHITE FOOTER (Built with Streamlit) */
-        footer { display: none !important; }
-        [data-testid="stFooter"] { display: none !important; }
-        [data-testid="stDecoration"] { display: none !important; }
-
-        /* 2. FIX THE WHITE BOX AROUND INPUT ON MOBILE */
-        [data-testid="stBottom"] > div {
-            background-color: #000000 !important;
-            padding-bottom: 20px !important;
-        }
-
-        /* 3. MAKE THE INPUT BOX LOOK LIKE COMPUTER (Grey) */
-        [data-testid="stChatInput"] {
-            background-color: #1E1E1E !important;
-            border: 1px solid #333 !important;
-            border-radius: 15px !important;
-        }
-        [data-testid="stChatInput"] textarea {
-            background-color: transparent !important;
             color: #FFFFFF !important;
         }
 
-        /* 4. FIX MESSAGE COLORS: White text on dark grey bubbles */
+        /* HIDE ALL WHITE ELEMENTS & FOOTER */
+        footer {display: none !important;}
+        [data-testid="stFooter"] {display: none !important;}
+        header {display: none !important;}
+        [data-testid="stHeader"] {display: none !important;}
+        [data-testid="stDecoration"] {display: none !important;}
+
+        /* FIX MESSAGE BOXES (White text on dark bubbles) */
         [data-testid="stChatMessage"] {
             background-color: #1A1A1A !important;
             border: 1px solid #333 !important;
-            border-radius: 15px !important;
         }
         [data-testid="stChatMessage"] h1, [data-testid="stChatMessage"] h2, 
         [data-testid="stChatMessage"] h3, [data-testid="stChatMessage"] p, 
-        [data-testid="stChatMessage"] li {
+        [data-testid="stChatMessage"] li, [data-testid="stChatMessage"] div {
             color: #FFFFFF !important;
         }
 
-        /* Adjust Title Spacing */
+        /* FIX THE CHAT INPUT (THE YELLOW BOX PROBLEM) */
+        /* This forces the container to be black and the box to be grey */
+        [data-testid="stBottom"] > div {
+            background-color: #000000 !important;
+            padding: 10px !important;
+        }
+        
+        [data-testid="stChatInput"] {
+            border: 1px solid #444 !important;
+            border-radius: 12px !important;
+            background-color: #262626 !important; /* Grey Box */
+        }
+        
+        [data-testid="stChatInput"] textarea {
+            background-color: #262626 !important; /* Grey Inner Box */
+            color: #FFFFFF !important;             /* White Typing Text */
+            caret-color: #FFFFFF !important;
+        }
+
+        /* Title Spacing and Centering */
         .block-container { 
-            padding-top: 3.5rem !important; 
-            padding-bottom: 8rem !important; 
+            padding-top: 2rem !important; 
+            padding-bottom: 6rem !important; 
         }
         .main-title {
-            font-size: 1.2rem !important; 
+            font-size: 1.3rem !important; 
             font-weight: 800;
             text-align: center;
             width: 100%;
@@ -65,7 +71,7 @@ st.markdown("""
             margin-bottom: 2px;
         }
         .sub-caption {
-            font-size: 0.7rem !important;
+            font-size: 0.72rem !important;
             color: #888888 !important;
             text-align: center;
             width: 100%;
@@ -73,11 +79,11 @@ st.markdown("""
         }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Connected via Gemini 3.5 Frontier (Preview Quota)</div>
+    <div class="sub-caption">Stable Support Engine (High Quota)</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. CHAT LOGIC
+# 5. CHAT LOGIC
 # ---------------------------------------------------------
 
 with open("source_code.cpp", "r") as f:
@@ -96,7 +102,7 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        context = f"Technical Expert for AMK Pump. Code: {knowledge_base}\nUser: {prompt}"
+        context = f"Technical Expert for AMK Pump. Source Code: {knowledge_base}\n\nUser Question: {prompt}"
         try:
             response = model.generate_content(context)
             st.markdown(response.text)
