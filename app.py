@@ -9,35 +9,59 @@ api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 
 # ---------------------------------------------------------
-# AUTO-DETECT CORRECT MODEL (Fixes the 404 Error)
+# AUTO-DETECT CORRECT MODEL
 # ---------------------------------------------------------
 @st.cache_resource
 def get_best_model():
     try:
-        # Ask Google which models this specific API key can use
         available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        # Priority list: we want Flash first, then Pro
         if "models/gemini-1.5-flash" in available_models:
             return "models/gemini-1.5-flash"
         elif "models/gemini-1.5-pro" in available_models:
             return "models/gemini-1.5-pro"
         else:
-            # If none of those, just use the first one Google offers
             return available_models[0]
     except Exception as e:
-        return "models/gemini-1.5-flash" # Default fallback
+        return "models/gemini-1.5-flash" 
 
 best_model_name = get_best_model()
 model = genai.GenerativeModel(best_model_name)
+
+# ---------------------------------------------------------
+# CUSTOM STYLING (To make text smaller and fit mobile)
+# ---------------------------------------------------------
+st.markdown("""
+    <style>
+        /* 1. Reduce top padding of the whole app */
+        .block-container { padding-top: 1rem !important; padding-bottom: 0rem !important; }
+        
+        /* 2. Style for the Title */
+        .main-title {
+            font-size: 1.4rem !important; /* Much smaller than standard title */
+            font-weight: 800;
+            margin-bottom: 2px;
+            letter-spacing: -0.5px;
+        }
+        
+        /* 3. Style for the Caption */
+        .sub-caption {
+            font-size: 0.75rem !important;
+            color: #888;
+            margin-bottom: 15px;
+        }
+    </style>
+    <div class="main-title">💧 AMK Smart Pump Support AI</div>
+    """, unsafe_allow_html=True)
+
+st.markdown(f'<div class="sub-caption">Connected via {best_model_name}</div>', unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# LOGIC & CHAT UI
 # ---------------------------------------------------------
 
 # Load the hardware code
 with open("source_code.cpp", "r") as f:
     knowledge_base = f.read()
-
-st.title("💧 AMK Smart Pump Support AI")
-st.caption(f"Connected via {best_model_name}")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -63,10 +87,8 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         """
         
         try:
-            # Combine context and prompt
             response = model.generate_content(context + "\n\nUser: " + prompt)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
             st.error(f"Error: {str(e)}")
-            st.info("Check your API key or model access in Google AI Studio.")
