@@ -16,45 +16,58 @@ model = genai.GenerativeModel('gemini-3.5-flash')
 # ---------------------------------------------------------
 
 # ---------------------------------------------------------
-# CUSTOM STYLING (Forced Dark Mode & Fixed Cut-off)
+# TOTAL DARK MODE STYLING (Fixes White Bottom & Input Bar)
 # ---------------------------------------------------------
 st.markdown(f"""
     <style>
-        /* Force the background to Black to match your Dashboard */
-        .stApp {{
+        /* 1. Force the entire app background to Black */
+        html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"] {{
+            background-color: #000000 !important;
+            color: #FFFFFF !important;
+        }}
+
+        /* 2. Fix the White Bottom Input area */
+        [data-testid="stBottom"] > div {{
             background-color: #000000 !important;
         }}
 
-        /* Adjust padding so title sits below the top bar */
+        /* 3. Style the Chat Input box itself */
+        [data-testid="stChatInput"] textarea {{
+            background-color: #1E1E1E !important;
+            color: #FFFFFF !important;
+            border: 1px solid #333333 !important;
+        }}
+
+        /* 4. Hide the "Built with Streamlit" footer for a cleaner look */
+        footer {{ visibility: hidden !important; }}
+        [data-testid="stHeader"] {{ background: rgba(0,0,0,0); }}
+
+        /* 5. Adjust padding so title sits correctly */
         .block-container {{ 
-            padding-top: 3.5rem !important; 
-            padding-bottom: 1rem !important; 
+            padding-top: 3rem !important; 
+            padding-bottom: 5rem !important; 
         }}
         
-        /* Title styling - Forced White */
+        /* 6. Title and Caption Centering */
         .main-title {{
             font-size: 1.2rem !important; 
             font-weight: 800;
-            margin-bottom: 2px;
-            letter-spacing: -0.5px;
             text-align: center;
             width: 100%;
             color: #FFFFFF !important;
+            margin-bottom: 2px;
         }}
-        
-        /* Caption styling - Forced Grey */
         .sub-caption {{
             font-size: 0.7rem !important;
             color: #AAAAAA !important;
-            margin-bottom: 15px;
             text-align: center;
             width: 100%;
+            margin-bottom: 15px;
         }}
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
     <div class="sub-caption">Connected via Gemini 3.5 Frontier (Preview Quota)</div>
     """, unsafe_allow_html=True)
-
 # ---------------------------------------------------------
 # LOGIC & CHAT UI
 # ---------------------------------------------------------
