@@ -9,58 +9,49 @@ api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.5-flash')
 
-# 3. ULTIMATE DARK THEME FIX (Targets Yellow Boxes specifically)
+# 3. THE "COMPUTER-LIKE" MOBILE OVERRIDE
 st.markdown("""
     <style>
-        /* Force total black background on everything */
-        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
+        /* Force Black Background on everything (Mobile + Desktop) */
+        html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #000000 !important;
         }
 
-        /* HIDE ALL STREAMLIT UI ELEMENTS (Footer, Header, Line) */
-        footer {display: none !important;}
-        [data-testid="stFooter"] {display: none !important;}
-        header {display: none !important;}
-        [data-testid="stHeader"] {display: none !important;}
-        [data-testid="stDecoration"] {display: none !important;}
+        /* 1. REMOVE THE WHITE FOOTER (Built with Streamlit) */
+        footer { display: none !important; }
+        [data-testid="stFooter"] { display: none !important; }
+        [data-testid="stDecoration"] { display: none !important; }
 
-        /* FIX MESSAGE DISPLAY (Yellow Box 1): Force White on ALL text levels */
+        /* 2. FIX THE WHITE BOX AROUND INPUT ON MOBILE */
+        [data-testid="stBottom"] > div {
+            background-color: #000000 !important;
+            padding-bottom: 20px !important;
+        }
+
+        /* 3. MAKE THE INPUT BOX LOOK LIKE COMPUTER (Grey) */
+        [data-testid="stChatInput"] {
+            background-color: #1E1E1E !important;
+            border: 1px solid #333 !important;
+            border-radius: 15px !important;
+        }
+        [data-testid="stChatInput"] textarea {
+            background-color: transparent !important;
+            color: #FFFFFF !important;
+        }
+
+        /* 4. FIX MESSAGE COLORS: White text on dark grey bubbles */
         [data-testid="stChatMessage"] {
             background-color: #1A1A1A !important;
             border: 1px solid #333 !important;
+            border-radius: 15px !important;
         }
-        [data-testid="stChatMessage"] h1, 
-        [data-testid="stChatMessage"] h2, 
-        [data-testid="stChatMessage"] h3, 
-        [data-testid="stChatMessage"] p, 
-        [data-testid="stChatMessage"] li,
-        [data-testid="stChatMessage"] div {
-            color: #FFFFFF !important; /* Fixes the hard-to-see grey text */
-        }
-
-        /* FIX INPUT AREA (Yellow Box 2): Nuke the White Container */
-        [data-testid="stBottom"] > div {
-            background-color: #000000 !important;
-            padding: 0px !important;
-        }
-        
-        /* STYLE THE INPUT BOX: Dark Grey with White Text */
-        [data-testid="stChatInput"] {
-            border: 1px solid #444 !important;
-            border-radius: 12px !important;
-            background-color: #262626 !important;
-        }
-        [data-testid="stChatInput"] textarea {
-            background-color: #262626 !important;
+        [data-testid="stChatMessage"] h1, [data-testid="stChatMessage"] h2, 
+        [data-testid="stChatMessage"] h3, [data-testid="stChatMessage"] p, 
+        [data-testid="stChatMessage"] li {
             color: #FFFFFF !important;
-            caret-color: #FFFFFF !important;
-        }
-        /* Fix placeholder text color */
-        [data-testid="stChatInput"] textarea::placeholder {
-            color: #888888 !important;
         }
 
-        /* Title and Padding */
+        /* Adjust Title Spacing */
         .block-container { 
             padding-top: 3.5rem !important; 
             padding-bottom: 8rem !important; 
