@@ -11,12 +11,12 @@ genai.configure(api_key=api_key)
 # 3. Model Selection: Using the model available in your list
 model = genai.GenerativeModel('gemini-3.5-flash')
 
-# 4. ULTIMATE DARK THEME FIX (Targets Yellow Boxes)
+# 4. ULTIMATE DARK THEME FIX (Matches cloud_control.html)
 st.markdown("""
     <style>
-        /* Force total black background on everything */
+        /* Force transparent background so the HTML app's background shows through */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
-            background-color: #000000 !important;
+            background-color: transparent !important;
         }
 
         /* HIDE ALL STREAMLIT UI ELEMENTS */
@@ -26,10 +26,15 @@ st.markdown("""
         [data-testid="stHeader"] {display: none !important;}
         [data-testid="stDecoration"] {display: none !important;}
 
-        /* FIX MESSAGE DISPLAY: Force White on ALL text levels */
+        /* FIX MESSAGE DISPLAY: Match HTML App .card style */
         [data-testid="stChatMessage"] {
-            background-color: #1A1A1A !important;
-            border: 1px solid #333 !important;
+            background-color: rgba(30, 30, 30, 0.7) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+            padding: 15px !important;
+            margin-bottom: 10px !important;
         }
         [data-testid="stChatMessage"] h1, 
         [data-testid="stChatMessage"] h2, 
@@ -38,30 +43,33 @@ st.markdown("""
         [data-testid="stChatMessage"] li,
         [data-testid="stChatMessage"] div {
             color: #FFFFFF !important;
+            font-family: sans-serif !important;
         }
 
-        /* FIX INPUT AREA: Nuke the White Container */
+        /* FIX INPUT AREA: Match HTML inputs */
         [data-testid="stBottom"] > div {
-            background-color: #000000 !important;
-            padding: 0px !important;
+            background-color: transparent !important;
+            padding-bottom: 20px !important;
         }
         
-        /* STYLE THE INPUT BOX: Dark Grey with White Text */
+        /* STYLE THE INPUT BOX */
         [data-testid="stChatInput"] {
-            border: 1px solid #444 !important;
-            border-radius: 12px !important;
-            background-color: #262626 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            background-color: rgba(42, 42, 42, 0.8) !important;
         }
         [data-testid="stChatInput"] textarea {
-            background-color: #262626 !important;
+            background-color: transparent !important;
             color: #FFFFFF !important;
             caret-color: #FFFFFF !important;
+            font-size: 1.1rem !important;
+            font-family: sans-serif !important;
         }
 
         /* Title and Padding */
         .block-container { 
-            padding-top: 3.5rem !important; 
-            padding-bottom: 8rem !important; 
+            padding-top: 1.5rem !important; 
+            padding-bottom: 6rem !important; 
         }
         .main-title {
             font-size: 1.2rem !important; 
@@ -69,13 +77,15 @@ st.markdown("""
             text-align: center;
             width: 100%;
             color: #FFFFFF !important;
+            font-family: sans-serif !important;
             margin-bottom: 2px;
         }
         .sub-caption {
-            font-size: 0.7rem !important;
+            font-size: 0.75rem !important;
             color: #888888 !important;
             text-align: center;
             width: 100%;
+            font-family: sans-serif !important;
             margin-bottom: 15px;
         }
     </style>
