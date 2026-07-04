@@ -28,32 +28,35 @@ best_model_name = get_best_model()
 model = genai.GenerativeModel(best_model_name)
 
 # ---------------------------------------------------------
-# CUSTOM STYLING (To make text smaller and fit mobile)
+# CUSTOM STYLING (Smaller, Centered, Fit for Mobile)
 # ---------------------------------------------------------
-st.markdown("""
+st.markdown(f"""
     <style>
-        /* 1. Reduce top padding of the whole app */
-        .block-container { padding-top: 1rem !important; padding-bottom: 0rem !important; }
+        /* 1. Reduce huge top space */
+        .block-container {{ padding-top: 1rem !important; padding-bottom: 0rem !important; }}
         
-        /* 2. Style for the Title */
-        .main-title {
-            font-size: 1.4rem !important; /* Much smaller than standard title */
+        /* 2. Center and resize the Title */
+        .main-title {{
+            font-size: 1.3rem !important; 
             font-weight: 800;
             margin-bottom: 2px;
             letter-spacing: -0.5px;
-        }
+            text-align: center;
+            width: 100%;
+        }}
         
-        /* 3. Style for the Caption */
-        .sub-caption {
-            font-size: 0.75rem !important;
+        /* 3. Center and resize the Caption */
+        .sub-caption {{
+            font-size: 0.72rem !important;
             color: #888;
             margin-bottom: 15px;
-        }
+            text-align: center;
+            width: 100%;
+        }}
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
+    <div class="sub-caption">Connected via {best_model_name}</div>
     """, unsafe_allow_html=True)
-
-st.markdown(f'<div class="sub-caption">Connected via {best_model_name}</div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # LOGIC & CHAT UI
