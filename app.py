@@ -2,118 +2,97 @@ import streamlit as st
 import google.generativeai as genai
 
 # Page Config
-st.set_page_config(page_title="AMK Smart Pump AI Support", page_icon="💧", layout="centered")
+st.set_page_config(page_title="AMK Smart Pump AI Support", page_icon="💧")
 
 # Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 
 # ---------------------------------------------------------
-# MODEL SELECTION (Updated to 1.5-flash for stability)
+# AUTO-DETECT CORRECT MODEL
 # ---------------------------------------------------------
-model = genai.GenerativeModel('gemini-1.5-flash') 
+@st.cache_resource
+def get_best_model():
+    try:
+        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        if "models/gemini-1.5-flash" in available_models:
+            return "models/gemini-1.5-flash"
+        elif "models/gemini-1.5-pro" in available_models:
+            return "models/gemini-1.5-pro"
+        else:
+            return available_models[0]
+    except Exception as e:
+        return "models/gemini-1.5-flash" 
+
+# Force use of 1.5-flash to get the 1,500 requests/day quota
+model_name = "models/gemini-1.5-flash"
+model = genai.GenerativeModel(model_name)
 
 # ---------------------------------------------------------
-# TRUE BLACK THEME (Mobile + Desktop Optimized)
+# CUSTOM STYLING (Smaller, Centered, Fit for Mobile)
 # ---------------------------------------------------------
-st.markdown("""
+st.markdown(f"""
     <style>
-        /* Force background to pure black */
-        .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main {
-            background-color: #000000 !important;
-            color: #FFFFFF !important;
-        }
-
-        /* Fix for Mobile Header/Top Bar */
-        [data-testid="stHeader"] {
-            background-color: rgba(0,0,0,0) !important;
-        }
-
-        /* Hide Streamlit elements */
-        footer {visibility: hidden;}
-        #MainMenu {visibility: hidden;}
-        [data-testid="stDecoration"] {display:none;}
-
-        /* Chat Input Container Styling */
-        [data-testid="stBottom"] {
-            background-color: #000000 !important;
-            border-top: 1px solid #222;
-        }
+        /* 1. Reduce huge top space */
+        .block-container {{ padding-top: 1rem !important; padding-bottom: 0rem !important; }}
         
-        /* Input Box Styling */
-        [data-testid="stChatInput"] {
-            background-color: #1a1a1a !important;
-            border-radius: 10px !important;
-            border: 1px solid #333 !important;
-        }
-
-        /* Message Bubbles */
-        [data-testid="stChatMessage"] {
-            background-color: #111111 !important;
-            border: 1px solid #222 !important;
-            margin-bottom: 10px !important;
-        }
-
-        /* Text colors */
-        p, li, h1, h2, h3, span {
-            color: #FFFFFF !important;
-        }
-
-        /* Title & Caption Styling */
-        .main-title {
-            font-size: 1.5rem;
-            font-weight: 700;
+        /* 2. Center and resize the Title */
+        .main-title {{
+            font-size: 1.3rem !important; 
+            font-weight: 800;
+            margin-bottom: 2px;
+            letter-spacing: -0.5px;
             text-align: center;
-            margin-top: -30px;
-            color: #FFFFFF;
-        }
-        .sub-caption {
-            font-size: 0.8rem;
+            width: 100%;
+        }}
+        
+        /* 3. Center and resize the Caption */
+        .sub-caption {{
+            font-size: 0.72rem !important;
             color: #888;
+            margin-bottom: 15px;
             text-align: center;
-            margin-bottom: 20px;
-        }
+            width: 100%;
+        }}
     </style>
-    
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • High Quota Mode</div>
+    <div class="sub-caption">Connected via Gemini 1.5 Flash (High Quota)</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# LOGIC & KNOWLEDGE BASE
+# LOGIC & CHAT UI
 # ---------------------------------------------------------
 
-# Try to load source code for context
-try:
-    with open("source_code.cpp", "r") as f:
-        knowledge_base = f.read()
-except FileNotFoundError:
-    knowledge_base = "No source code loaded."
+# Load the hardware code
+with open("source_code.cpp", "r") as f:
+    knowledge_base = f.read()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display Chat History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Chat Input
 if prompt := st.chat_input("Ask about errors or setup..."):
-    # Add User Message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Generate AI Response
     with st.chat_message("assistant"):
-        # We provide the knowledge base as context for every prompt
-        full_prompt = f"System Context: {knowledge_base}\n\nUser Question: {prompt}"
+        context = f"""
+        You are the technical expert for the AMK Smart Pump System. 
+        Knowledge Source: {knowledge_base}
+        
+        Instructions:
+        1. Answer based ONLY on the logic in the source code.
+        2. Answer in Myanmar language if asked in Myanmar.
+        3. Mention hardware pins when helpful.
+        """
         
         try:
-            response = model.generate_content(full_prompt)
-            ai_response = response.text
-            st.markdown(ai_response)
-            st.session_state.messages.append({"role": "assistant", "content": ai_response})
+            response = model.generate_content(context + "\n\nUser: " + prompt)
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
             st.error(f"Error: {str(e)}")
