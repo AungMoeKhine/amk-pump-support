@@ -87,6 +87,20 @@ st.markdown("""
             width: 100%;
             font-family: sans-serif !important;
             margin-bottom: 15px;
+
+            /* HIDE THE EMBEDDED STREAMLIT FOOTER & BORDER */
+        .stApp > header { display: none !important; }
+        .stAppViewContainer { background-color: transparent !important; }
+        
+        /* This targets the "Built with Streamlit" banner */
+        #root > div:last-child, 
+        .stApp ~ div, 
+        [data-testid="stStreamlitFooter"] {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0px !important;
+        }
+    </style>
         }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
