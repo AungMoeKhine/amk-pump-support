@@ -15,13 +15,17 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.5-flash')
 # ---------------------------------------------------------
 
-# Custom Centered Styling
+# ---------------------------------------------------------
+# CUSTOM STYLING (Fixed Cut-off Issue)
+# ---------------------------------------------------------
 st.markdown(f"""
     <style>
-        /* Reduce huge top space */
-        .block-container {{ padding-top: 1rem !important; padding-bottom: 0rem !important; }}
+        /* Increase padding so title doesn't hide behind the top bar */
+        .block-container {{ 
+            padding-top: 3.5rem !important; 
+            padding-bottom: 1rem !important; 
+        }}
         
-        /* Center and resize the Title */
         .main-title {{
             font-size: 1.3rem !important; 
             font-weight: 800;
@@ -29,12 +33,12 @@ st.markdown(f"""
             letter-spacing: -0.5px;
             text-align: center;
             width: 100%;
+            color: white !important;
         }}
         
-        /* Center and resize the Caption */
         .sub-caption {{
             font-size: 0.72rem !important;
-            color: #888;
+            color: #AAAAAA !important;
             margin-bottom: 15px;
             text-align: center;
             width: 100%;
