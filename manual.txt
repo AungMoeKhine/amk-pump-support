@@ -1,0 +1,23 @@
+AMK SMART PUMP CONTROL SYSTEM - HUMAN SUPPORT MANUAL
+Contact Support: +95-9-977880406 (Aung Moe Khine)
+
+1. SYSTEM SPECIFICATIONS
+- Hardware: ESP32-S3 Dual-Core
+- Voltage Protection: 170V - 250V (Adjustable)
+- Dry-Run Protection: Flow sensor monitored on Pin 18
+- Tank Sensor: Ultrasonic JSN-SR04T on Pins 5 & 6
+
+2. TROUBLESHOOTING (English)
+- SENSOR ERROR: If the screen shows "SNR ERR", check if the ultrasonic sensor is wet or if there are spider webs inside the tank. Ensure the sensor is at least 10cm away from the tank walls.
+- DRY RUN ALARM: If the buzzer sounds and says "DRY ALRM", the pump is on but no water is flowing. Check for suction pipe leaks, air locks, or if the sump tank is empty. 
+- VOLTAGE OVER/UNDER: If the system is in "DELAY" or "OVER/UNDER", the power is unsafe. The system will auto-resume once the voltage stays stable for the configured wait time.
+- RESETTING ALARM: Press the Manual Button (Pin 9) once to silence the buzzer and reset the system.
+
+3. ဖြစ်ရပ်များအား ဖြေရှင်းနည်း (Myanmar)
+- ဆင်ဆာချို့ယွင်းခြင်း (SNR ERR): ရေတိုင်ကီအတွင်းရှိ Ultrasonic sensor တွင် ပင့်ကူအိမ်များရှိနေခြင်း သို့မဟုတ် ဆင်ဆာမျက်နှာပြင် စိုစွတ်နေခြင်း ရှိမရှိ စစ်ဆေးပါ။ ဆင်ဆာကို တိုင်ကီနံရံနှင့် ၁၀ စင်တီမီတာခန့် ခွာတပ်ဆင်ပါ။
+- ရေမတက်ခြင်း (DRY ALRM): မော်တာလည်သော်လည်း ရေမတက်ပါက အချက်ပေးသံမြည်ပါမည်။ ပိုက်လိုင်း လေခိုနေခြင်း၊ ရေစုပ်ပိုက်ယိုစိမ့်နေခြင်း သို့မဟုတ် အောက်တိုင်ကီတွင် ရေကုန်နေခြင်း ရှိမရှိ စစ်ဆေးပါ။
+- ဗို့အားပြဿနာ (OVER/UNDER): လျှပ်စစ်မီး အတက်အကျများနေပါက စက်ကို ခဏပိတ်ထားပါမည်။ မီးပြန်မှန်ပြီး ခဏကြာမှ စက်အလိုအလျောက် ပြန်ပွင့်ပါမည်။
+- စက်ပြန်လည်စတင်ခြင်း: Alarm မြည်နေပါက Manual Button (Pin 9) ကို တစ်ချက်နှိပ်၍ အချက်ပေးသံကို ပိတ်နိုင်ပြီး စက်ကို ပုံမှန်အတိုင်း ပြန်လည်အသုံးပြုနိုင်ပါသည်။
+
+4. CONTACT FOR REPAIR
+For any hardware failures, wiring issues, or advanced configuration, please contact AMK Smart Automation at +95-9-977880406.
