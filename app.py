@@ -16,28 +16,35 @@ model = genai.GenerativeModel('gemini-3.5-flash')
 # ---------------------------------------------------------
 
 # ---------------------------------------------------------
-# CUSTOM STYLING (Fixed Cut-off Issue)
+# CUSTOM STYLING (Forced Dark Mode & Fixed Cut-off)
 # ---------------------------------------------------------
 st.markdown(f"""
     <style>
-        /* Increase padding so title doesn't hide behind the top bar */
+        /* Force the background to Black to match your Dashboard */
+        .stApp {{
+            background-color: #000000 !important;
+        }}
+
+        /* Adjust padding so title sits below the top bar */
         .block-container {{ 
             padding-top: 3.5rem !important; 
             padding-bottom: 1rem !important; 
         }}
         
+        /* Title styling - Forced White */
         .main-title {{
-            font-size: 1.3rem !important; 
+            font-size: 1.2rem !important; 
             font-weight: 800;
             margin-bottom: 2px;
             letter-spacing: -0.5px;
             text-align: center;
             width: 100%;
-            color: white !important;
+            color: #FFFFFF !important;
         }}
         
+        /* Caption styling - Forced Grey */
         .sub-caption {{
-            font-size: 0.72rem !important;
+            font-size: 0.7rem !important;
             color: #AAAAAA !important;
             margin-bottom: 15px;
             text-align: center;
