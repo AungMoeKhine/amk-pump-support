@@ -87,8 +87,9 @@ st.markdown("""
             width: 100%;
             font-family: sans-serif !important;
             margin-bottom: 15px;
+        }
 
-            /* HIDE THE EMBEDDED STREAMLIT FOOTER & BORDER */
+        /* HIDE THE EMBEDDED STREAMLIT FOOTER & BORDER */
         .stApp > header { display: none !important; }
         .stAppViewContainer { background-color: transparent !important; }
         
@@ -101,8 +102,7 @@ st.markdown("""
             height: 0px !important;
         }
     </style>
-        }
-    </style>
+    
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
     <div class="sub-caption">Connected via Gemini 3.5 Frontier (Preview)</div>
     """, unsafe_allow_html=True)
