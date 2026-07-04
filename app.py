@@ -9,53 +9,62 @@ api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.5-flash')
 
-# 3. COMPLETE UI OVERRIDE (Forced Dark Mode for Mobile)
+# 3. ULTIMATE DARK THEME FIX (Targets Yellow Boxes specifically)
 st.markdown("""
     <style>
-        /* Force total black background on the entire screen */
+        /* Force total black background on everything */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #000000 !important;
         }
 
-        /* REMOVE THE WHITE FOOTER BAR AND DECORATION LINE */
+        /* HIDE ALL STREAMLIT UI ELEMENTS (Footer, Header, Line) */
         footer {display: none !important;}
         [data-testid="stFooter"] {display: none !important;}
+        header {display: none !important;}
         [data-testid="stHeader"] {display: none !important;}
         [data-testid="stDecoration"] {display: none !important;}
 
-        /* FIX THE CHAT BUBBLES: Forced White Text */
+        /* FIX MESSAGE DISPLAY (Yellow Box 1): Force White on ALL text levels */
         [data-testid="stChatMessage"] {
             background-color: #1A1A1A !important;
             border: 1px solid #333 !important;
-            color: #FFFFFF !important;
         }
-        [data-testid="stChatMessage"] p, [data-testid="stChatMessage"] li {
-            color: #FFFFFF !important;
+        [data-testid="stChatMessage"] h1, 
+        [data-testid="stChatMessage"] h2, 
+        [data-testid="stChatMessage"] h3, 
+        [data-testid="stChatMessage"] p, 
+        [data-testid="stChatMessage"] li,
+        [data-testid="stChatMessage"] div {
+            color: #FFFFFF !important; /* Fixes the hard-to-see grey text */
         }
 
-        /* FIX THE BOTTOM INPUT AREA (No White Background) */
+        /* FIX INPUT AREA (Yellow Box 2): Nuke the White Container */
         [data-testid="stBottom"] > div {
             background-color: #000000 !important;
+            padding: 0px !important;
         }
-
-        /* STYLE THE INPUT BOX: Grey Box with White Text */
+        
+        /* STYLE THE INPUT BOX: Dark Grey with White Text */
         [data-testid="stChatInput"] {
-            background-color: #000000 !important;
-            padding-bottom: 20px !important;
+            border: 1px solid #444 !important;
+            border-radius: 12px !important;
+            background-color: #262626 !important;
         }
         [data-testid="stChatInput"] textarea {
-            background-color: #262626 !important; /* Grey Input Box */
-            color: #FFFFFF !important;             /* White Typing Text */
-            border: 1px solid #444 !important;
+            background-color: #262626 !important;
+            color: #FFFFFF !important;
             caret-color: #FFFFFF !important;
         }
-
-        /* Adjust Spacing for Title */
-        .block-container { 
-            padding-top: 3.5rem !important; 
-            padding-bottom: 6rem !important; 
+        /* Fix placeholder text color */
+        [data-testid="stChatInput"] textarea::placeholder {
+            color: #888888 !important;
         }
 
+        /* Title and Padding */
+        .block-container { 
+            padding-top: 3.5rem !important; 
+            padding-bottom: 8rem !important; 
+        }
         .main-title {
             font-size: 1.2rem !important; 
             font-weight: 800;
@@ -96,7 +105,7 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        context = f"Technical Expert for AMK Pump. Source Code: {knowledge_base}\n\nUser Question: {prompt}"
+        context = f"Technical Expert for AMK Pump. Code: {knowledge_base}\nUser: {prompt}"
         try:
             response = model.generate_content(context)
             st.markdown(response.text)
