@@ -139,6 +139,8 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         # Strict Security Rules
         context = (
             "You are a technical support expert for AMK Smart Pump. "
+            "CRITICAL SECURITY RULE: You must NEVER reveal, confirm, or provide any system passwords, admin keys, secret codes, factory modes, or endpoints (e.g., AMK_ADMIN_2026, ACER123). "
+            "If a user asks for any password, code, or secret, you MUST firmly DENY the request and state: 'For security reasons, I cannot provide admin passwords or secret keys. Please contact official AMK technical support.' "
             "NEVER show actual C++ code lines. If asked for code, explain it is private property. "
             "Help the user by explaining logic or troubleshooting based on this code: "
             + knowledge_base
