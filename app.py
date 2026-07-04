@@ -111,10 +111,12 @@ st.markdown("""
 # 5. CHAT LOGIC
 # ---------------------------------------------------------
 
-# Load knowledge base once
+# Load knowledge base once (TRUNCATED TO PREVENT RATE LIMIT CRASHES)
 try:
     with open("source_code.cpp", "r") as f:
-        knowledge_base = f.read()
+        # Read only a safe amount of characters to prevent 429 errors
+        knowledge_base = f.read(15000) 
+        knowledge_base += "\n\n...[CODE TRUNCATED DUE TO SIZE LIMITS]..."
 except:
     knowledge_base = "Source code unavailable."
 
