@@ -1,23 +1,48 @@
-AMK SMART PUMP CONTROL SYSTEM - HUMAN SUPPORT MANUAL
-Contact Support: +95-9-977880406 (Aung Moe Khine)
+AMK SMART PUMP SYSTEM V2.1 PREMIUM - TECHNICAL DATA SHEET
+Support: +95-9-977880406 (Aung Moe Khine)
 
-1. SYSTEM SPECIFICATIONS
-- Hardware: ESP32-S3 Dual-Core
-- Voltage Protection: 170V - 250V (Adjustable)
-- Dry-Run Protection: Flow sensor monitored on Pin 18
-- Tank Sensor: Ultrasonic JSN-SR04T on Pins 5 & 6
+1. HARDWARE ARCHITECTURE (ESP32-S3)
+- Motor Control: Pin 8 (Active HIGH)
+- Solenoid/Valve: Pin 10 (For Compressor Unloader)
+- Flow Sensor: Pin 18 (Input Pullup, Logic LOW = Flow detected)
+- Manual Button: Pin 9 (Single click: Toggle, Double: Info, Long 3s: AP Mode)
+- Buzzer: Pin 7 (Oscillating for Dry-Run, Pulsed for Sensor Error)
+- Ultrasonic: Trig Pin 5, Echo Pin 6 (Max distance 8ft, logic uses 7ft usable)
+- Voltage Sensor: Pin 4 (ZMPT101B)
+- Display: 20x4 I2C LCD (Address 0x27)
+- Status LED: Pin 48 (NeoPixel RGB)
 
-2. TROUBLESHOOTING (English)
-- SENSOR ERROR: If the screen shows "SNR ERR", check if the ultrasonic sensor is wet or if there are spider webs inside the tank. Ensure the sensor is at least 10cm away from the tank walls.
-- DRY RUN ALARM: If the buzzer sounds and says "DRY ALRM", the pump is on but no water is flowing. Check for suction pipe leaks, air locks, or if the sump tank is empty. 
-- VOLTAGE OVER/UNDER: If the system is in "DELAY" or "OVER/UNDER", the power is unsafe. The system will auto-resume once the voltage stays stable for the configured wait time.
-- RESETTING ALARM: Press the Manual Button (Pin 9) once to silence the buzzer and reset the system.
+2. VOLTAGE PROTECTION LOGIC
+- Safe Range: 170V (Low) to 250V (High).
+- Resume Gap: 5V (Voltage must recover by 5V before restarting).
+- Stabilization Delay: 15 seconds (System waits 15s after power is stable).
+- LCD Status: "OVER" (High), "UNDER" (Low), "DELAY" (Waiting).
 
-3. ဖြစ်ရပ်များအား ဖြေရှင်းနည်း (Myanmar)
-- ဆင်ဆာချို့ယွင်းခြင်း (SNR ERR): ရေတိုင်ကီအတွင်းရှိ Ultrasonic sensor တွင် ပင့်ကူအိမ်များရှိနေခြင်း သို့မဟုတ် ဆင်ဆာမျက်နှာပြင် စိုစွတ်နေခြင်း ရှိမရှိ စစ်ဆေးပါ။ ဆင်ဆာကို တိုင်ကီနံရံနှင့် ၁၀ စင်တီမီတာခန့် ခွာတပ်ဆင်ပါ။
-- ရေမတက်ခြင်း (DRY ALRM): မော်တာလည်သော်လည်း ရေမတက်ပါက အချက်ပေးသံမြည်ပါမည်။ ပိုက်လိုင်း လေခိုနေခြင်း၊ ရေစုပ်ပိုက်ယိုစိမ့်နေခြင်း သို့မဟုတ် အောက်တိုင်ကီတွင် ရေကုန်နေခြင်း ရှိမရှိ စစ်ဆေးပါ။
-- ဗို့အားပြဿနာ (OVER/UNDER): လျှပ်စစ်မီး အတက်အကျများနေပါက စက်ကို ခဏပိတ်ထားပါမည်။ မီးပြန်မှန်ပြီး ခဏကြာမှ စက်အလိုအလျောက် ပြန်ပွင့်ပါမည်။
-- စက်ပြန်လည်စတင်ခြင်း: Alarm မြည်နေပါက Manual Button (Pin 9) ကို တစ်ချက်နှိပ်၍ အချက်ပေးသံကို ပိတ်နိုင်ပြီး စက်ကို ပုံမှန်အတိုင်း ပြန်လည်အသုံးပြုနိုင်ပါသည်။
+3. WATER TANK LOGIC
+- Start Level: 50% (Default, adjustable 20-70%).
+- Stop Level: 100% (Default, adjustable 80-100%).
+- Sensor Error: Triggered if 10 consecutive readings fail. LCD shows "SNR ERR".
+- Blind Zone: Top 10 inches is "Buffer Zone" to protect the sensor.
 
-4. CONTACT FOR REPAIR
-For any hardware failures, wiring issues, or advanced configuration, please contact AMK Smart Automation at +95-9-977880406.
+4. DRY-RUN & SAFETY
+- Detection: Motor ON + No flow on Pin 18 for 30 seconds (Default).
+- Alarm Phase: Buzzer sounds for 60 seconds (State: DRY_RUN_ALARM).
+- Lock Phase: After 60s of alarm, motor locks (State: DRY_RUN_LOCKED).
+- Auto-Retry: System waits 30 or 60 minutes before trying again.
+- Cool-down: After 1 hour of continuous running, pump rests for configured minutes.
+
+5. OPERATION MODES
+- Water Pump Mode: Standard Level-based control.
+- Air Compressor Mode: Uses Pin 10 Solenoid. Pre-vents before start and Post-vents after stop to release head pressure.
+- Master/Slave Mode: Master (Sump) sends status via MQTT. Slave (Roof) waits if Master is pumping or unsafe. 5-minute timeout for link.
+
+6. INDICATORS & CONTROLS
+- RGB LED: Red Flash (Error), Blue (Cooling), Purple (Settling), Yellow (Pumping), Green (Online), Cyan (WiFi connected), Pulsing Blue (Offline).
+- LCD Big Numbers: Top row = Water Level %, Bottom row = Voltage.
+- Event Log: Last 200 events stored in internal flash memory (/events.txt).
+
+7. ဖြစ်ရပ်များအား ဖြေရှင်းနည်း (Myanmar Troubleshooting)
+- SNR ERR (ဆင်ဆာအမှား): Ultrasonic sensor ကြိုးလွတ်နေခြင်း သို့မဟုတ် ရေငွေ့ရိုက်နေခြင်း စစ်ဆေးပါ။
+- DRY ALRM (ရေမတက်): ရေစုပ်ပိုက် လေခိုနေခြင်း သို့မဟုတ် အောက်တိုင်ကီ ရေကုန်နေခြင်းကို စစ်ဆေးပါ။
+- OVER/UNDER V (ဗို့အား): မီးအားမမှန်ပါ။ စက်မှ အလိုအလျောက် ပိတ်ပေးထားခြင်း ဖြစ်သည်။
+- MANUAL RESET: Manual Button (Pin 9) ကို တစ်ချက်နှိပ်၍ Alarm ပိတ်နိုင်ပါသည်။
