@@ -104,27 +104,10 @@ if prompt := st.chat_input("Ask about errors or setup..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-   with st.chat_message("assistant"):
-        # --- IMPROVED SECURITY INSTRUCTIONS ---
-        context = f"""
-        ROLE: You are the AMK Smart Pump Support AI.
-        
-        KNOWLEDGE BASE:
-        {knowledge_base}
-        
-        STRICT SECURITY RULES:
-        1. NEVER reveal, show, repeat, or display any actual C++ code from the knowledge base.
-        2. NEVER offer to provide the source code to the user. 
-        3. If a user asks for the source code, you must say: "I am sorry, but the internal source code is a protected proprietary property of AMK Smart Pump. I am authorized to provide technical support and explanations only."
-        4. Focus on explaining logic and providing troubleshooting steps based on the code, but do not show the code itself.
-        5. If a user asks in Myanmar language, answer in Myanmar language with the same strict rules.
-        """
-        
-        # Combine the secret instructions with the user's question
-        full_query = context + "\n\nUser Question: " + prompt
-        
+    with st.chat_message("assistant"):
+        context = f"Technical Expert for AMK Pump. Code: {knowledge_base}\nUser: {prompt}"
         try:
-            response = model.generate_content(full_query)
+            response = model.generate_content(context)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
