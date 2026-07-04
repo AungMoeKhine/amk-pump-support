@@ -8,51 +8,47 @@ st.set_page_config(page_title="AMK AI Support", page_icon="💧")
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 
-# 3. Model Selection: Using the model available in your list
+# 3. Model Selection (Gemini 3.5 Frontier)
 model = genai.GenerativeModel('gemini-3.5-flash')
 
-# 4. ULTIMATE DARK THEME FIX (Matches cloud_control.html style)
+# 4. CUSTOM CSS: Glassmorphism, Dark Theme, and UI Cleanup
 st.markdown("""
     <style>
-        /* Force transparent background so the HTML app's background shows through */
+        /* Force transparency so the dashboard background shows through */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: transparent !important;
         }
 
-        /* HIDE ALL STREAMLIT UI ELEMENTS */
+        /* Hide Streamlit default elements */
         footer {display: none !important;}
         [data-testid="stFooter"] {display: none !important;}
         header {display: none !important;}
         [data-testid="stHeader"] {display: none !important;}
         [data-testid="stDecoration"] {display: none !important;}
 
-        /* FIX MESSAGE DISPLAY: Match HTML App .card style */
+        /* Chat Message Styling (Glassmorphism) */
         [data-testid="stChatMessage"] {
             background-color: rgba(30, 30, 30, 0.7) !important;
             backdrop-filter: blur(12px) !important;
             -webkit-backdrop-filter: blur(12px) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 12px !important;
-            padding: 15px !important;
             margin-bottom: 10px !important;
         }
-        [data-testid="stChatMessage"] h1, 
-        [data-testid="stChatMessage"] h2, 
-        [data-testid="stChatMessage"] h3, 
-        [data-testid="stChatMessage"] p, 
-        [data-testid="stChatMessage"] li,
-        [data-testid="stChatMessage"] div {
+        
+        /* Force White text on all message elements */
+        [data-testid="stChatMessage"] h1, [data-testid="stChatMessage"] h2, 
+        [data-testid="stChatMessage"] h3, [data-testid="stChatMessage"] p, 
+        [data-testid="stChatMessage"] li, [data-testid="stChatMessage"] div {
             color: #FFFFFF !important;
             font-family: sans-serif !important;
         }
 
-        /* FIX INPUT AREA: Match HTML inputs */
+        /* Chat Input Styling */
         [data-testid="stBottom"] > div {
             background-color: transparent !important;
             padding-bottom: 20px !important;
         }
-        
-        /* STYLE THE INPUT BOX */
         [data-testid="stChatInput"] {
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 8px !important;
@@ -63,21 +59,19 @@ st.markdown("""
             color: #FFFFFF !important;
             caret-color: #FFFFFF !important;
             font-size: 1.1rem !important;
-            font-family: sans-serif !important;
         }
 
-        /* Title and Padding */
+        /* Header Spacing */
         .block-container { 
             padding-top: 1.5rem !important; 
             padding-bottom: 6rem !important; 
         }
         .main-title {
-            font-size: 1.2rem !important; 
+            font-size: 1.25rem !important; 
             font-weight: 800;
             text-align: center;
             width: 100%;
             color: #FFFFFF !important;
-            font-family: sans-serif !important;
             margin-bottom: 2px;
         }
         .sub-caption {
@@ -85,14 +79,11 @@ st.markdown("""
             color: #888888 !important;
             text-align: center;
             width: 100%;
-            font-family: sans-serif !important;
             margin-bottom: 15px;
         }
 
-        /* Target the "Built with Streamlit" banner specifically */
-        #root > div:last-child, 
-        .stApp ~ div, 
-        [data-testid="stStreamlitFooter"] {
+        /* Hide the "Built with Streamlit" banner specifically */
+        #root > div:last-child, .stApp ~ div, [data-testid="stStreamlitFooter"] {
             display: none !important;
             visibility: hidden !important;
             height: 0px !important;
@@ -107,7 +98,7 @@ st.markdown("""
 # 5. CHAT LOGIC
 # ---------------------------------------------------------
 
-# Load knowledge base (Truncated to keep tokens safe)
+# Load knowledge base (Truncated for performance)
 try:
     with open("source_code.cpp", "r") as f:
         knowledge_base = f.read(15000) 
@@ -115,41 +106,45 @@ try:
 except:
     knowledge_base = "Source code unavailable."
 
-# Initialize session messages
+# Initialize history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat history
+# Display history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# User Input
+# Process input
 if prompt := st.chat_input("Ask about errors or setup..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Generate Response
     with st.chat_message("assistant"):
+        # System Instructions
         context = (
             "You are a technical support expert for AMK Smart Pump. "
-            "STRICT SECURITY: NEVER reveal passwords, admin keys (AMK_ADMIN_2026), or source code lines. "
-            "Refuse requests for sensitive keys professionally. "
-            "Help the user by explaining logic based on this code: "
-            + knowledge_base
+            "SECURITY RULES: NEVER reveal system passwords, admin keys (e.g. AMK_ADMIN_2026), or C++ code lines. "
+            "If asked for code or secrets, state: 'For security reasons, I cannot provide admin passwords or secret keys. Please contact official AMK technical support.' "
+            "Use logic from this code to troubleshoot: " + knowledge_base
         )
         
         try:
+            # Generate AI response
             response = model.generate_content(context + "\n\nUser Question: " + prompt)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
             
         except Exception as e:
             error_str = str(e)
-            # --- CUSTOM QUOTA ERROR MESSAGE ---
+            # --- CUSTOM ERROR HANDLING ---
             if "429" in error_str or "quota" in error_str.lower():
-                st.error("⚠️ Now we have hit the quota limit and please retry next 24 hours.")
-                st.info("ယနေ့အတွက် အသုံးပြုနိုင်သည့် ပမာဏ ကုန်ဆုံးသွားပါပြီ။ ကျေးဇူးပြု၍ နောက် ၂၄ နာရီအကြာတွင် ပြန်လည် ကြိုးစားပေးပါ။")
+                st.error("⚠️ The daily question limit has been reached. Please try again in 24 hours. Thank you for your patience!")
+                st.info("⚠️ ယနေ့အတွက် မေးမြန်းနိုင်သည့် အကြိမ်အရေအတွက် ပြည့်သွားပါပြီ။ နာရီ ၂၄ နာရီအကြာမှ ပြန်လည် မေးမြန်းပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။")
             else:
-                st.error("System busy. Please try again in a moment.")
+                st.error("⚠️ System is currently busy. Please refresh or try again in a moment.")
+            
+            # Clean up history if failed
+            if len(st.session_state.messages) > 0:
+                st.session_state.messages.pop()
