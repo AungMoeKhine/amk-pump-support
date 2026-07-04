@@ -1,114 +1,119 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Page Config
-st.set_page_config(page_title="AMK AI Support", page_icon="💧")
+# Page Config
+st.set_page_config(page_title="AMK Smart Pump AI Support", page_icon="💧", layout="centered")
 
-# 2. Setup AI 
+# Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-3.5-flash')
 
-# 3. ULTIMATE DARK THEME FIX (Targets Yellow Boxes specifically)
+# ---------------------------------------------------------
+# MODEL SELECTION (Updated to 1.5-flash for stability)
+# ---------------------------------------------------------
+model = genai.GenerativeModel('gemini-1.5-flash') 
+
+# ---------------------------------------------------------
+# TRUE BLACK THEME (Mobile + Desktop Optimized)
+# ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* Force total black background on everything */
-        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
+        /* Force background to pure black */
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main {
             background-color: #000000 !important;
+            color: #FFFFFF !important;
         }
 
-        /* HIDE ALL STREAMLIT UI ELEMENTS (Footer, Header, Line) */
-        footer {display: none !important;}
-        [data-testid="stFooter"] {display: none !important;}
-        header {display: none !important;}
-        [data-testid="stHeader"] {display: none !important;}
-        [data-testid="stDecoration"] {display: none !important;}
-
-        /* FIX MESSAGE DISPLAY (Yellow Box 1): Force White on ALL text levels */
-        [data-testid="stChatMessage"] {
-            background-color: #1A1A1A !important;
-            border: 1px solid #333 !important;
-        }
-        [data-testid="stChatMessage"] h1, 
-        [data-testid="stChatMessage"] h2, 
-        [data-testid="stChatMessage"] h3, 
-        [data-testid="stChatMessage"] p, 
-        [data-testid="stChatMessage"] li,
-        [data-testid="stChatMessage"] div {
-            color: #FFFFFF !important; /* Fixes the hard-to-see grey text */
+        /* Fix for Mobile Header/Top Bar */
+        [data-testid="stHeader"] {
+            background-color: rgba(0,0,0,0) !important;
         }
 
-        /* FIX INPUT AREA (Yellow Box 2): Nuke the White Container */
-        [data-testid="stBottom"] > div {
+        /* Hide Streamlit elements */
+        footer {visibility: hidden;}
+        #MainMenu {visibility: hidden;}
+        [data-testid="stDecoration"] {display:none;}
+
+        /* Chat Input Container Styling */
+        [data-testid="stBottom"] {
             background-color: #000000 !important;
-            padding: 0px !important;
+            border-top: 1px solid #222;
         }
         
-        /* STYLE THE INPUT BOX: Dark Grey with White Text */
+        /* Input Box Styling */
         [data-testid="stChatInput"] {
-            border: 1px solid #444 !important;
-            border-radius: 12px !important;
-            background-color: #262626 !important;
-        }
-        [data-testid="stChatInput"] textarea {
-            background-color: #262626 !important;
-            color: #FFFFFF !important;
-            caret-color: #FFFFFF !important;
-        }
-        /* Fix placeholder text color */
-        [data-testid="stChatInput"] textarea::placeholder {
-            color: #888888 !important;
+            background-color: #1a1a1a !important;
+            border-radius: 10px !important;
+            border: 1px solid #333 !important;
         }
 
-        /* Title and Padding */
-        .block-container { 
-            padding-top: 3.5rem !important; 
-            padding-bottom: 8rem !important; 
+        /* Message Bubbles */
+        [data-testid="stChatMessage"] {
+            background-color: #111111 !important;
+            border: 1px solid #222 !important;
+            margin-bottom: 10px !important;
         }
-        .main-title {
-            font-size: 1.2rem !important; 
-            font-weight: 800;
-            text-align: center;
-            width: 100%;
+
+        /* Text colors */
+        p, li, h1, h2, h3, span {
             color: #FFFFFF !important;
-            margin-bottom: 2px;
+        }
+
+        /* Title & Caption Styling */
+        .main-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-top: -30px;
+            color: #FFFFFF;
         }
         .sub-caption {
-            font-size: 0.7rem !important;
-            color: #888888 !important;
+            font-size: 0.8rem;
+            color: #888;
             text-align: center;
-            width: 100%;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
     </style>
+    
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Connected via Gemini 3.5 Frontier (Preview Quota)</div>
+    <div class="sub-caption">Stable Support Engine • High Quota Mode</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. CHAT LOGIC
+# LOGIC & KNOWLEDGE BASE
 # ---------------------------------------------------------
 
-with open("source_code.cpp", "r") as f:
-    knowledge_base = f.read()
+# Try to load source code for context
+try:
+    with open("source_code.cpp", "r") as f:
+        knowledge_base = f.read()
+except FileNotFoundError:
+    knowledge_base = "No source code loaded."
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display Chat History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# Chat Input
 if prompt := st.chat_input("Ask about errors or setup..."):
+    # Add User Message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Generate AI Response
     with st.chat_message("assistant"):
-        context = f"Technical Expert for AMK Pump. Code: {knowledge_base}\nUser: {prompt}"
+        # We provide the knowledge base as context for every prompt
+        full_prompt = f"System Context: {knowledge_base}\n\nUser Question: {prompt}"
+        
         try:
-            response = model.generate_content(context)
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            response = model.generate_content(full_prompt)
+            ai_response = response.text
+            st.markdown(ai_response)
+            st.session_state.messages.append({"role": "assistant", "content": ai_response})
         except Exception as e:
             st.error(f"Error: {str(e)}")
