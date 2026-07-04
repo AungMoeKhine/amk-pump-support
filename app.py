@@ -1,68 +1,97 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Page Config (Must be the very first Streamlit command)
-st.set_page_config(page_title="AMK Smart Pump AI Support", page_icon="💧", layout="centered")
+# 1. Page Config
+st.set_page_config(page_title="AMK AI Support", page_icon="💧")
 
 # 2. Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
+model = genai.GenerativeModel('gemini-3.5-flash')
 
-# 3. Dynamic Model Picker (Ensures Gemini 3.5 Flash compatibility)
-@st.cache_resource
-def get_active_model():
-    try:
-        available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        priority = ["models/gemini-3.5-flash", "models/gemini-3.1-flash-lite", "models/gemini-1.5-flash"]
-        for p in priority:
-            if p in available:
-                return genai.GenerativeModel(p)
-        return genai.GenerativeModel(available[0])
-    except Exception:
-        return genai.GenerativeModel("models/gemini-3.5-flash")
-
-model = get_active_model()
-
-# 4. FIXED CUSTOM STYLING (Fixed visibility issue)
-st.markdown(f"""
+# 3. ULTIMATE DARK THEME FIX (Targets Yellow Boxes specifically)
+st.markdown("""
     <style>
-        /* Hide the default Streamlit header to save space */
-        header {{visibility: hidden;}}
+        /* Force total black background on everything */
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
+            background-color: #000000 !important;
+        }
+
+        /* HIDE ALL STREAMLIT UI ELEMENTS (Footer, Header, Line) */
+        footer {display: none !important;}
+        [data-testid="stFooter"] {display: none !important;}
+        header {display: none !important;}
+        [data-testid="stHeader"] {display: none !important;}
+        [data-testid="stDecoration"] {display: none !important;}
+
+        /* FIX MESSAGE DISPLAY (Yellow Box 1): Force White on ALL text levels */
+        [data-testid="stChatMessage"] {
+            background-color: #1A1A1A !important;
+            border: 1px solid #333 !important;
+        }
+        [data-testid="stChatMessage"] h1, 
+        [data-testid="stChatMessage"] h2, 
+        [data-testid="stChatMessage"] h3, 
+        [data-testid="stChatMessage"] p, 
+        [data-testid="stChatMessage"] li,
+        [data-testid="stChatMessage"] div {
+            color: #FFFFFF !important; /* Fixes the hard-to-see grey text */
+        }
+
+        /* FIX INPUT AREA (Yellow Box 2): Nuke the White Container */
+        [data-testid="stBottom"] > div {
+            background-color: #000000 !important;
+            padding: 0px !important;
+        }
         
-        /* Adjust top padding - not too small so it doesn't get cut off */
-        .block-container {{ 
+        /* STYLE THE INPUT BOX: Dark Grey with White Text */
+        [data-testid="stChatInput"] {
+            border: 1px solid #444 !important;
+            border-radius: 12px !important;
+            background-color: #262626 !important;
+        }
+        [data-testid="stChatInput"] textarea {
+            background-color: #262626 !important;
+            color: #FFFFFF !important;
+            caret-color: #FFFFFF !important;
+        }
+        /* Fix placeholder text color */
+        [data-testid="stChatInput"] textarea::placeholder {
+            color: #888888 !important;
+        }
+
+        /* Title and Padding */
+        .block-container { 
             padding-top: 3.5rem !important; 
-            padding-bottom: 1rem !important; 
-            max-width: 800px;
-        }}
-        
-        .main-title {{
-            font-size: 1.6rem !important; 
+            padding-bottom: 8rem !important; 
+        }
+        .main-title {
+            font-size: 1.2rem !important; 
             font-weight: 800;
-            margin-bottom: 5px;
-            color: #FFFFFF;
             text-align: center;
-        }}
-        
-        .sub-caption {{
-            font-size: 0.85rem !important;
-            color: #AAAAAA;
-            margin-bottom: 25px;
+            width: 100%;
+            color: #FFFFFF !important;
+            margin-bottom: 2px;
+        }
+        .sub-caption {
+            font-size: 0.7rem !important;
+            color: #888888 !important;
             text-align: center;
-        }}
+            width: 100%;
+            margin-bottom: 15px;
+        }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Connected via {model.model_name.split('/')[-1].replace('-', ' ').title()}</div>
+    <div class="sub-caption">Connected via Gemini 3.5 Frontier (Preview Quota)</div>
     """, unsafe_allow_html=True)
 
-# 5. KNOWLEDGE BASE LOADING
-try:
-    with open("source_code.cpp", "r") as f:
-        knowledge_base = f.read()
-except FileNotFoundError:
-    knowledge_base = "Source code not found."
+# ---------------------------------------------------------
+# 4. CHAT LOGIC
+# ---------------------------------------------------------
 
-# 6. CHAT LOGIC
+with open("source_code.cpp", "r") as f:
+    knowledge_base = f.read()
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
