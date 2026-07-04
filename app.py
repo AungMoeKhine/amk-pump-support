@@ -1,54 +1,50 @@
 import streamlit as st
 import google.generativeai as genai
 
-# Page Config
+# 1. Page Config
 st.set_page_config(page_title="AMK Smart Pump AI Support", page_icon="💧")
 
-# Setup AI 
+# 2. Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 
-# ---------------------------------------------------------
-# FRONTIER MODEL SELECTION (Matching your Gemini 3 account)
-# ---------------------------------------------------------
-# We use the specific 3.5 model from your available list
+# 3. Model Selection (Gemini 3.5 Frontier)
 model = genai.GenerativeModel('gemini-3.5-flash')
-# ---------------------------------------------------------
 
-# ---------------------------------------------------------
-# TOTAL DARK MODE STYLING (Fixes White Bottom & Input Bar)
-# ---------------------------------------------------------
+# 4. COMPLETE UI FIXES (Dark Mode, No Footer, No Cut-off)
 st.markdown(f"""
     <style>
-        /* 1. Force the entire app background to Black */
-        html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"] {{
+        /* Force total black background on everything */
+        html, body, .stApp, .main, [data-testid="stAppViewContainer"], [data-testid="stBottom"] {{
             background-color: #000000 !important;
             color: #FFFFFF !important;
         }}
 
-        /* 2. Fix the White Bottom Input area */
+        /* HIDE THE WHITE FOOTER BAR COMPLETELY */
+        footer {{visibility: hidden !important; height: 0px !important;}}
+        [data-testid="stFooter"] {{display: none !important;}}
+        [data-testid="stDecoration"] {{display: none !important;}}
+        
+        /* Fix the Chat Input container (remove white/grey background) */
         [data-testid="stBottom"] > div {{
             background-color: #000000 !important;
+            border-top: 1px solid #333 !important;
         }}
 
-        /* 3. Style the Chat Input box itself */
+        /* Style the Chat Input text box */
         [data-testid="stChatInput"] textarea {{
-            background-color: #1E1E1E !important;
+            background-color: #1A1A1A !important;
             color: #FFFFFF !important;
-            border: 1px solid #333333 !important;
+            border-radius: 10px !important;
         }}
 
-        /* 4. Hide the "Built with Streamlit" footer for a cleaner look */
-        footer {{ visibility: hidden !important; }}
-        [data-testid="stHeader"] {{ background: rgba(0,0,0,0); }}
-
-        /* 5. Adjust padding so title sits correctly */
+        /* Fix Top Padding to prevent cut-off */
         .block-container {{ 
-            padding-top: 3rem !important; 
-            padding-bottom: 5rem !important; 
+            padding-top: 4.5rem !important; 
+            padding-bottom: 6rem !important; 
         }}
-        
-        /* 6. Title and Caption Centering */
+
+        /* Header Styling (Small, Centered, White) */
         .main-title {{
             font-size: 1.2rem !important; 
             font-weight: 800;
@@ -59,17 +55,25 @@ st.markdown(f"""
         }}
         .sub-caption {{
             font-size: 0.7rem !important;
-            color: #AAAAAA !important;
+            color: #888888 !important;
             text-align: center;
             width: 100%;
             margin-bottom: 15px;
+        }}
+        
+        /* Make chat bubbles darker to match */
+        [data-testid="stChatMessage"] {{
+            background-color: #111111 !important;
+            border: 1px solid #222 !important;
+            border-radius: 15px !important;
         }}
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
     <div class="sub-caption">Connected via Gemini 3.5 Frontier (Preview Quota)</div>
     """, unsafe_allow_html=True)
+
 # ---------------------------------------------------------
-# LOGIC & CHAT UI
+# 5. CHAT LOGIC
 # ---------------------------------------------------------
 
 # Load the hardware code knowledge
@@ -89,8 +93,8 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # The Secret Sauce: System Instruction + User Prompt
-        context = f"Technical Expert for AMK Pump. Code: {knowledge_base}\n\nUser Question: {prompt}"
+        # The System Instruction + User Prompt
+        context = f"Technical Expert for AMK Pump. Source Code: {knowledge_base}\n\nUser: {prompt}"
         try:
             response = model.generate_content(context)
             st.markdown(response.text)
