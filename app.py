@@ -1,15 +1,13 @@
 import streamlit as st
-import google.generativeai as genai
+from groq import Groq
 
 # 1. Page Config
 st.set_page_config(page_title="AMK AI Support", page_icon="💧")
 
 # 2. Setup AI 
-api_key = st.secrets["GEMINI_API_KEY"]
-genai.configure(api_key=api_key)
-
-# 3. Model Selection: Using the model available in your list
-model = genai.GenerativeModel('gemini-3.5-flash')
+# Make sure to add GROQ_API_KEY to your Streamlit Secrets!
+api_key = st.secrets["GROQ_API_KEY"]
+client = Groq(api_key=api_key)
 
 # 4. ULTIMATE DARK THEME FIX (Matches cloud_control.html)
 st.markdown("""
@@ -104,7 +102,7 @@ st.markdown("""
     </style>
     
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Connected via Gemini 3.5 Frontier (Preview)</div>
+    <div class="sub-caption">Powered by Llama 3 (Groq)</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
@@ -147,9 +145,24 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         )
         
         try:
-            # Combine logic
-            response = model.generate_content(context + "\n\nUser Question: " + prompt)
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            # Format messages for Groq API
+            api_messages = [
+                {"role": "system", "content": context},
+                {"role": "user", "content": prompt}
+            ]
+            
+            # Request response from Groq using Llama 3
+            chat_completion = client.chat.completions.create(
+                messages=api_messages,
+                model="llama3-70b-8192", 
+            )
+            
+            # Extract response text
+            response_text = chat_completion.choices[0].message.content
+            
+            # Display and save to session state
+            st.markdown(response_text)
+            st.session_state.messages.append({"role": "assistant", "content": response_text})
+            
         except Exception as e:
             st.error(f"System Error: {str(e)}")
