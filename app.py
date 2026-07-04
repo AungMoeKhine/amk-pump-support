@@ -27,7 +27,8 @@ def get_working_model():
     except:
         return "gemini-1.5-flash" # Last resort guess
 
-model_id = get_working_model()
+# We are forcing the 'latest' version string to try and bypass the 2.5 fallback
+model_id = "models/gemini-1.5-flash-latest" 
 model = genai.GenerativeModel(model_id)
 # ---------------------------------------------------------
 
