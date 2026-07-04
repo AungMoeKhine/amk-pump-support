@@ -98,13 +98,23 @@ st.markdown("""
 # 5. CHAT LOGIC
 # ---------------------------------------------------------
 
-# Load knowledge base (Truncated for performance)
+# Load BOTH the code and the human manual
 try:
     with open("source_code.cpp", "r") as f:
-        knowledge_base = f.read(15000) 
-        knowledge_base += "\n\n...[CODE TRUNCATED]..."
-except:
-    knowledge_base = "Source code unavailable."
+        code_data = f.read(10000) # Read first 10k chars of code
+    
+    # NEW: Loading the manual file
+    with open("manual.txt", "r") as f:
+        manual_data = f.read()    # Read the troubleshooting/FAQ
+        
+    knowledge_base = f"HARDWARE CODE:\n{code_data}\n\nHUMAN MANUAL & FAQ:\n{manual_data}"
+except Exception as e:
+    # If manual.txt is missing, just use the code
+    try:
+        with open("source_code.cpp", "r") as f:
+            knowledge_base = f.read(15000)
+    except:
+        knowledge_base = "Knowledge base unavailable."
 
 # Initialize history
 if "messages" not in st.session_state:
