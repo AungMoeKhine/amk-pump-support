@@ -154,7 +154,7 @@ if prompt := st.chat_input("Ask about errors or setup..."):
             # Request response from Groq using Llama 3
             chat_completion = client.chat.completions.create(
                 messages=api_messages,
-                model="llama3-70b-8192", 
+                model="llama-3.3-70b-versatile", 
             )
             
             # Extract response text
