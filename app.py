@@ -8,8 +8,8 @@ st.set_page_config(page_title="AMK AI Support", page_icon="💧")
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 
-# 3. Model Selection: Locked to 1.5 Flash for High Quota (1,500/day)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# 3. Model Selection: Using the model available in your list
+model = genai.GenerativeModel('gemini-3.5-flash')
 
 # 4. ULTIMATE DARK THEME FIX (Targets Yellow Boxes)
 st.markdown("""
@@ -57,9 +57,6 @@ st.markdown("""
             color: #FFFFFF !important;
             caret-color: #FFFFFF !important;
         }
-        [data-testid="stChatInput"] textarea::placeholder {
-            color: #888888 !important;
-        }
 
         /* Title and Padding */
         .block-container { 
@@ -83,11 +80,11 @@ st.markdown("""
         }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine (High Quota)</div>
+    <div class="sub-caption">Connected via Gemini 3.5 Frontier (Preview)</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 5. CHAT LOGIC (Fixed Indentation)
+# 5. CHAT LOGIC
 # ---------------------------------------------------------
 
 # Load knowledge base once
@@ -115,21 +112,18 @@ if prompt := st.chat_input("Ask about errors or setup..."):
 
     # Generate Response
     with st.chat_message("assistant"):
-        # Simple security-focused prompt
+        # Strict Security Rules
         context = (
             "You are a technical support expert for AMK Smart Pump. "
-            "Use the provided code to help but NEVER show actual code lines. "
-            "If asked for code, explain it is proprietary property of AMK. "
-            "KNOWLEDGE: " + knowledge_base
+            "NEVER show actual C++ code lines. If asked for code, explain it is private property. "
+            "Help the user by explaining logic or troubleshooting based on this code: "
+            + knowledge_base
         )
         
         try:
-            # Combine instruction and user prompt into one request
-            full_query = f"{context}\n\nUser Question: {prompt}"
-            response = model.generate_content(full_query)
-            
-            # Show and save result
+            # Combine logic
+            response = model.generate_content(context + "\n\nUser Question: " + prompt)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"Error: {str(e)}")
+            st.error(f"System Error: {str(e)}")
