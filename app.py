@@ -9,61 +9,43 @@ api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 
 # ---------------------------------------------------------
-# AUTO-DETECT CORRECT MODEL
+# SAFE MODEL SELECTION (Fixes 404 and 429 Quota)
 # ---------------------------------------------------------
 @st.cache_resource
-def get_best_model():
+def get_working_model():
     try:
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        if "models/gemini-1.5-flash" in available_models:
-            return "models/gemini-1.5-flash"
-        elif "models/gemini-1.5-pro" in available_models:
-            return "models/gemini-1.5-pro"
-        else:
-            return available_models[0]
-    except Exception as e:
-        return "models/gemini-1.5-flash" 
+        # Get all models your API key is allowed to use
+        available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        # 1. Try to find the Stable 1.5 Flash (1,500 requests/day)
+        for target in ["models/gemini-1.5-flash", "models/gemini-1.5-flash-latest", "models/gemini-1.5-pro"]:
+            if target in available:
+                return target
+        
+        # 2. Fallback to whatever Google gives you (like 2.5 or 3.0)
+        return available[0]
+    except:
+        return "gemini-1.5-flash" # Last resort guess
 
-# Force use of 1.5-flash to get the 1,500 requests/day quota
-model_name = "models/gemini-1.5-flash"
-model = genai.GenerativeModel(model_name)
+model_id = get_working_model()
+model = genai.GenerativeModel(model_id)
+# ---------------------------------------------------------
 
-# ---------------------------------------------------------
-# CUSTOM STYLING (Smaller, Centered, Fit for Mobile)
-# ---------------------------------------------------------
+# Custom Styling
 st.markdown(f"""
     <style>
-        /* 1. Reduce huge top space */
         .block-container {{ padding-top: 1rem !important; padding-bottom: 0rem !important; }}
-        
-        /* 2. Center and resize the Title */
-        .main-title {{
-            font-size: 1.3rem !important; 
-            font-weight: 800;
-            margin-bottom: 2px;
-            letter-spacing: -0.5px;
-            text-align: center;
-            width: 100%;
-        }}
-        
-        /* 3. Center and resize the Caption */
-        .sub-caption {{
-            font-size: 0.72rem !important;
-            color: #888;
-            margin-bottom: 15px;
-            text-align: center;
-            width: 100%;
-        }}
+        .main-title {{ font-size: 1.3rem !important; font-weight: 800; text-align: center; width: 100%; }}
+        .sub-caption {{ font-size: 0.72rem !important; color: #888; text-align: center; width: 100%; margin-bottom: 15px; }}
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Connected via Gemini 1.5 Flash (High Quota)</div>
+    <div class="sub-caption">Connected to: {model_id.replace('models/', '')}</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# LOGIC & CHAT UI
+# CHAT LOGIC
 # ---------------------------------------------------------
 
-# Load the hardware code
 with open("source_code.cpp", "r") as f:
     knowledge_base = f.read()
 
@@ -80,19 +62,10 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        context = f"""
-        You are the technical expert for the AMK Smart Pump System. 
-        Knowledge Source: {knowledge_base}
-        
-        Instructions:
-        1. Answer based ONLY on the logic in the source code.
-        2. Answer in Myanmar language if asked in Myanmar.
-        3. Mention hardware pins when helpful.
-        """
-        
+        context = f"Technical Expert for AMK Pump. Code: {knowledge_base}\nUser: {prompt}"
         try:
-            response = model.generate_content(context + "\n\nUser: " + prompt)
+            response = model.generate_content(context)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"Error: {str(e)}")
+            st.error(f"System Error: {str(e)}")
