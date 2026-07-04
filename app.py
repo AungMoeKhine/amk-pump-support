@@ -24,8 +24,9 @@ def get_best_model():
     except Exception as e:
         return "models/gemini-1.5-flash" 
 
-best_model_name = get_best_model()
-model = genai.GenerativeModel(best_model_name)
+# Force use of 1.5-flash to get the 1,500 requests/day quota
+model_name = "models/gemini-1.5-flash"
+model = genai.GenerativeModel(model_name)
 
 # ---------------------------------------------------------
 # CUSTOM STYLING (Smaller, Centered, Fit for Mobile)
@@ -55,7 +56,7 @@ st.markdown(f"""
         }}
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Connected via {best_model_name}</div>
+    <div class="sub-caption">Connected via Gemini 1.5 Flash (High Quota)</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
