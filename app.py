@@ -11,7 +11,7 @@ genai.configure(api_key=api_key)
 # 3. Model Selection: Using the model available in your list
 model = genai.GenerativeModel('gemini-3.5-flash')
 
-# 4. ULTIMATE DARK THEME FIX (Matches cloud_control.html)
+# 4. ULTIMATE DARK THEME FIX (Matches cloud_control.html style)
 st.markdown("""
     <style>
         /* Force transparent background so the HTML app's background shows through */
@@ -89,11 +89,7 @@ st.markdown("""
             margin-bottom: 15px;
         }
 
-        /* HIDE THE EMBEDDED STREAMLIT FOOTER & BORDER */
-        .stApp > header { display: none !important; }
-        .stAppViewContainer { background-color: transparent !important; }
-        
-        /* This targets the "Built with Streamlit" banner */
+        /* Target the "Built with Streamlit" banner specifically */
         #root > div:last-child, 
         .stApp ~ div, 
         [data-testid="stStreamlitFooter"] {
@@ -111,12 +107,11 @@ st.markdown("""
 # 5. CHAT LOGIC
 # ---------------------------------------------------------
 
-# Load knowledge base once (TRUNCATED TO PREVENT RATE LIMIT CRASHES)
+# Load knowledge base (Truncated to keep tokens safe)
 try:
     with open("source_code.cpp", "r") as f:
-        # Read only a safe amount of characters to prevent 429/413 errors
         knowledge_base = f.read(15000) 
-        knowledge_base += "\n\n...[CODE TRUNCATED DUE TO SIZE LIMITS]..."
+        knowledge_base += "\n\n...[CODE TRUNCATED]..."
 except:
     knowledge_base = "Source code unavailable."
 
@@ -131,27 +126,30 @@ for message in st.session_state.messages:
 
 # User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
-    # Add user message to state
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     # Generate Response
     with st.chat_message("assistant"):
-        # Strict Security Rules
         context = (
             "You are a technical support expert for AMK Smart Pump. "
-            "CRITICAL SECURITY RULE: You must NEVER reveal, confirm, or provide any system passwords, admin keys, secret codes, factory modes, or endpoints (e.g., AMK_ADMIN_2026, ACER123). "
-            "If a user asks for any password, code, or secret, you MUST firmly DENY the request and state: 'For security reasons, I cannot provide admin passwords or secret keys. Please contact official AMK technical support.' "
-            "NEVER show actual C++ code lines. If asked for code, explain it is private property. "
-            "Help the user by explaining logic or troubleshooting based on this code: "
+            "STRICT SECURITY: NEVER reveal passwords, admin keys (AMK_ADMIN_2026), or source code lines. "
+            "Refuse requests for sensitive keys professionally. "
+            "Help the user by explaining logic based on this code: "
             + knowledge_base
         )
         
         try:
-            # Combine logic
             response = model.generate_content(context + "\n\nUser Question: " + prompt)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
+            
         except Exception as e:
-            st.error(f"System Error: {str(e)}")
+            error_str = str(e)
+            # --- CUSTOM QUOTA ERROR MESSAGE ---
+            if "429" in error_str or "quota" in error_str.lower():
+                st.error("⚠️ Now we have hit the quota limit and please retry next 24 hours.")
+                st.info("ယနေ့အတွက် အသုံးပြုနိုင်သည့် ပမာဏ ကုန်ဆုံးသွားပါပြီ။ ကျေးဇူးပြု၍ နောက် ၂၄ နာရီအကြာတွင် ပြန်လည် ကြိုးစားပေးပါ။")
+            else:
+                st.error("System busy. Please try again in a moment.")
