@@ -7,9 +7,11 @@ st.set_page_config(page_title="AMK AI Support", page_icon="💧")
 # 2. Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-3.5-flash')
 
-# 3. ULTIMATE DARK THEME FIX (Targets Yellow Boxes specifically)
+# 3. Model Selection: Locked to 1.5 Flash for High Quota (1,500/day)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+# 4. ULTIMATE DARK THEME FIX (Targets Yellow Boxes)
 st.markdown("""
     <style>
         /* Force total black background on everything */
@@ -17,14 +19,14 @@ st.markdown("""
             background-color: #000000 !important;
         }
 
-        /* HIDE ALL STREAMLIT UI ELEMENTS (Footer, Header, Line) */
+        /* HIDE ALL STREAMLIT UI ELEMENTS */
         footer {display: none !important;}
         [data-testid="stFooter"] {display: none !important;}
         header {display: none !important;}
         [data-testid="stHeader"] {display: none !important;}
         [data-testid="stDecoration"] {display: none !important;}
 
-        /* FIX MESSAGE DISPLAY (Yellow Box 1): Force White on ALL text levels */
+        /* FIX MESSAGE DISPLAY: Force White on ALL text levels */
         [data-testid="stChatMessage"] {
             background-color: #1A1A1A !important;
             border: 1px solid #333 !important;
@@ -35,10 +37,10 @@ st.markdown("""
         [data-testid="stChatMessage"] p, 
         [data-testid="stChatMessage"] li,
         [data-testid="stChatMessage"] div {
-            color: #FFFFFF !important; /* Fixes the hard-to-see grey text */
+            color: #FFFFFF !important;
         }
 
-        /* FIX INPUT AREA (Yellow Box 2): Nuke the White Container */
+        /* FIX INPUT AREA: Nuke the White Container */
         [data-testid="stBottom"] > div {
             background-color: #000000 !important;
             padding: 0px !important;
@@ -55,7 +57,6 @@ st.markdown("""
             color: #FFFFFF !important;
             caret-color: #FFFFFF !important;
         }
-        /* Fix placeholder text color */
         [data-testid="stChatInput"] textarea::placeholder {
             color: #888888 !important;
         }
@@ -82,32 +83,52 @@ st.markdown("""
         }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Connected via Gemini 3.5 Frontier (Preview Quota)</div>
+    <div class="sub-caption">Stable Support Engine (High Quota)</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. CHAT LOGIC
+# 5. CHAT LOGIC (Fixed Indentation)
 # ---------------------------------------------------------
 
-with open("source_code.cpp", "r") as f:
-    knowledge_base = f.read()
+# Load knowledge base once
+try:
+    with open("source_code.cpp", "r") as f:
+        knowledge_base = f.read()
+except:
+    knowledge_base = "Source code unavailable."
 
+# Initialize session messages
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
+    # Add user message to state
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Generate Response
     with st.chat_message("assistant"):
-        context = f"Technical Expert for AMK Pump. Code: {knowledge_base}\nUser: {prompt}"
+        # Simple security-focused prompt
+        context = (
+            "You are a technical support expert for AMK Smart Pump. "
+            "Use the provided code to help but NEVER show actual code lines. "
+            "If asked for code, explain it is proprietary property of AMK. "
+            "KNOWLEDGE: " + knowledge_base
+        )
+        
         try:
-            response = model.generate_content(context)
+            # Combine instruction and user prompt into one request
+            full_query = f"{context}\n\nUser Question: {prompt}"
+            response = model.generate_content(full_query)
+            
+            # Show and save result
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
