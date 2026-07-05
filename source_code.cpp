@@ -2,6 +2,18 @@
  * SYSTEM: AMK Smart Pump & Compressor Control (Dual-Core)
  * VERSION: 2.1 (Premium) | HARDWARE: ESP32-S3
  * LOGIC SUMMARY FOR AI SUPPORT:
+ * --- USER-CONFIGURABLE RANGES (via Web/Cloud) ---
+ * Voltage High Set: 230V to 260V (Default: 250V)
+ * Voltage Low Set: 150V to 190V (Default: 170V)
+ * Voltage Resume Gap: 1V to 10V (Default: 5V)
+ * Tank Height: 1.0 ft to 7.0 ft (12 to 84 inches)
+ * High Tank Stop Level: 80% to 100%
+ * Low Tank Start Level: 20% to 70%
+ * Dry-Run Delay: 30s to 180s (Default: 30s)
+ * Auto-Retry Wait: Disabled, 30 min, or 60 min
+ * Pump Cool-down: Disabled, 5 min, 10 min, or 15 min
+ * Compressor Valve Delay: 5s to 15s
+ * Master Settling Time: 0 to 30 min
  */
 
 // --- PINOUT CONFIGURATION ---
@@ -58,6 +70,17 @@ struct MasterSlaveConfig {
 };
 
 enum class PumpState { IDLE, PRE_START_VALVE, PUMPING, POST_STOP_VALVE, DRY_RUN_ALARM, DRY_RUN_LOCKED, SENSOR_ERROR, VOLTAGE_ERROR, VOLTAGE_WAIT, COOLING_DOWN, SETTLING_WATER };
+
+// --- LOGIC SUMMARY FOR AI SUPPORT ---
+// 1. Dual-Core Logic: Core 1 handles safety (Sensors/Motor), Core 0 handles Network (WiFi/MQTT).
+// 2. Voltage Guard: Stops motor immediately if Voltage > High_Set or < Low_Set.
+//    - It only restarts after Voltage returns to (High_Set - Gap) or (Low_Set + Gap).
+// 3. Dry-Run: If Motor is ON and Pin 18 has no pulses for 'Dry-Run Delay' -> 60s Buzzer Alarm -> System Lock.
+// 4. Tank Logic: Starts at 'Low Tank %', stops at 'Full Tank %'.
+//    - Calculation: (Effective_Height - Measured_Inches) / Tank_Height * 100.
+// 5. Compressor Mode: Unloader sequence uses Pin 10 to vent pressure before start and after stop.
+// 6. Master/Slave: Master sends status via MQTT. Slave pauses if Master is pumping or water is settling.
+// 7. Licensing: Base64/MD5 hardware-locked token. Disables Motor Pin 8 if expired.
 
 // --- CORE SENSOR LOGIC ---
 // monitorSensors() handles Ultrasonic median filtering (20 samples) 
