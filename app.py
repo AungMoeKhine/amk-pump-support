@@ -56,7 +56,6 @@ st.markdown("""
             font-size: 0.95rem !important;
         }
 
-
         /* Header Spacing */
         .block-container { padding-top: 1.5rem !important; padding-bottom: 6rem !important; }
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; }
