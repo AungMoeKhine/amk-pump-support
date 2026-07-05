@@ -109,8 +109,7 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         
         KNOWLEDGE BASE:
         {knowledge_base}
-        """
-        
+        """        
         try:
             # Generate Response
             response = model.generate_content(context + "\n\nUser Question: " + prompt)
