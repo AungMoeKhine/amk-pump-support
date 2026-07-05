@@ -1,90 +1,141 @@
-AMK SMART PUMP SYSTEM V2.1 PREMIUM - COMPLETE SYSTEM MANUAL
+AMK SMART PUMP SYSTEM V2.1 PREMIUM - TECHNICAL DATA SHEET
 Support: +95-9-977880406 (Aung Moe Khine)
-System Architecture: ESP32-S3 Dual-Core (FreeRTOS)
 
-1. SYSTEM ARCHITECTURE (DUAL-CORE)
+1. HARDWARE ARCHITECTURE (ESP32-S3)
+- Motor Control: Pin 8 (Active HIGH)
+- Solenoid/Valve: Pin 10 (For Compressor Unloader)
+- Flow Sensor: Pin 18 (Input Pullup, Logic LOW = Flow detected)
+- Manual Button: Pin 9 (Single click: Toggle, Double: Info, Long 3s: AP Mode)
+- Buzzer: Pin 7 (Oscillating for Dry-Run, Pulsed for Sensor Error)
+- Ultrasonic: Trig Pin 5, Echo Pin 6 (Max distance 8ft, logic uses 7ft usable)
+- Voltage Sensor: Pin 4 (ZMPT101B)
+- Display: 20x4 I2C LCD (Address 0x27)
+- Status LED: Pin 48 (NeoPixel RGB)
 
-Unlike standard controllers, this system runs on two separate processor cores to ensure safety:
-Core 1 (Control Loop): Dedicated to real-time tasks. It monitors sensors (Ultrasonic, Voltage, Flow) every 1–4 seconds and controls the Motor/Solenoid. It is immune to WiFi lag.
-Core 0 (Network Loop): Handles WiFi, Captive Portal, Web Server, MQTT TLS Security, and OTA Updates. If the internet hangs, Core 1 continues to protect the motor.
+2. VOLTAGE PROTECTION LOGIC
+- Safe Range: 170V (Low) to 250V (High).
+- Resume Gap: 5V (Voltage must recover by 5V before restarting).
+- Stabilization Delay: 15 seconds (System waits 15s after power is stable).
+- LCD Status: "OVER" (High), "UNDER" (Low), "DELAY" (Waiting).
 
-2. ADVANCED SENSING LOGIC
+3. WATER TANK LOGIC
+- Start Level: 50% (Default, adjustable 20-70%).
+- Stop Level: 100% (Default, adjustable 80-100%).
+- Sensor Error: Triggered if 10 consecutive readings fail. LCD shows "SNR ERR".
+- Blind Zone: Top 10 inches is "Buffer Zone" to protect the sensor.
 
-2.1 Ultrasonic Level Monitoring
-Filtering: Uses a 20-sample median filter to ignore "splash" or "ripples."
-Range: Configurable for tanks between 1.0 ft and 7.0 ft.
-Blind Zone: Includes a hardcoded 10-inch "Buffer Height" to account for sensor placement above the water line.
-Error Handling: If the sensor fails (disconnected or obscured) for 10 consecutive cycles, the system enters SENSOR_ERROR and kills the motor.
+4. DRY-RUN & SAFETY
+- Detection: Motor ON + No flow on Pin 18 for 30 seconds (Default).
+- Alarm Phase: Buzzer sounds for 60 seconds (State: DRY_RUN_ALARM).
+- Lock Phase: After 60s of alarm, motor locks (State: DRY_RUN_LOCKED).
+- Auto-Retry: System waits 30 or 60 minutes before trying again.
+- Cool-down: After 1 hour of continuous running, pump rests for configured minutes.
 
-2.2 ZMPT101B Voltage Intelligence
-High-Speed Sampling: RMS voltage is monitored constantly.
-Stability Filter: Includes a "Slew Rate Limit" of 3V per sample and a 5-sample median filter. This prevents the pump from tripping during harmless micro-spikes.
-Hysteresis (Resume Gap): If the voltage trips, it must return to the safe range by a user-defined gap (e.g., 5V) for 15 seconds before the motor is allowed to restart.
+5. OPERATION MODES
+- Water Pump Mode: Standard Level-based control.
+- Air Compressor Mode: Uses Pin 10 Solenoid. Pre-vents before start and Post-vents after stop to release head pressure.
+- Master/Slave Mode: Master (Sump) sends status via MQTT. Slave (Roof) waits if Master is pumping or unsafe. 5-minute timeout for link.
 
-2.3 Flow & Dry-Run Detection (Pin 18)
-Initial Grace Period: 60-second bypass upon starting to allow the pipes to prime.
-Slug Logic: A 60-second "Persistence Window." If water flow flickers for a few seconds (air bubbles), the system does not trip immediately, preventing "nuisance" alarms.
+6. INDICATORS & CONTROLS
+- RGB LED: Red Flash (Error), Blue (Cooling), Purple (Settling), Yellow (Pumping), Green (Online), Cyan (WiFi connected), Pulsing Blue (Offline).
+- LCD Big Numbers: Top row = Water Level %, Bottom row = Voltage.
+- Event Log: Last 200 events stored in internal flash memory (/events.txt).
 
-3. DETAILED OPERATIONAL MODES
+7. ဖြစ်ရပ်များအား ဖြေရှင်းနည်း (Myanmar Troubleshooting)
+- SNR ERR (ဆင်ဆာအမှား): Ultrasonic sensor ကြိုးလွတ်နေခြင်း သို့မဟုတ် ရေငွေ့ရိုက်နေခြင်း စစ်ဆေးပါ။
+- DRY ALRM (ရေမတက်): ရေစုပ်ပိုက် လေခိုနေခြင်း သို့မဟုတ် အောက်တိုင်ကီ ရေကုန်နေခြင်းကို စစ်ဆေးပါ။
+- OVER/UNDER V (ဗို့အား): မီးအားမမှန်ပါ။ စက်မှ အလိုအလျောက် ပိတ်ပေးထားခြင်း ဖြစ်သည်။
+- MANUAL RESET: Manual Button (Pin 9) ကို တစ်ချက်နှိပ်၍ Alarm ပိတ်နိုင်ပါသည်။
 
-3.1 Water Pump Mode
-Logic: Starts at Low %, Stops at Full %.
-DND Integration: Respects the "Do Not Disturb" schedule unless a manual start is triggered.
 
-3.2 Air Compressor Mode
-Pre-Start Valve (Pre-Venting): When the motor needs to start, it first opens the Solenoid (Pin 10) for 5–15 seconds to release head pressure, then starts the motor.
-Post-Stop Valve (Post-Venting): After the motor stops, the solenoid opens again to ensure the compressor head is empty for the next cycle.
+Briefing Document: AMK Smart Pump and Compressor Control System (v2.1)
 
-3.3 Master/Slave Pairing (Multi-Tank)
-Role 1 (Master/Sump): Reports status to smartpump/<ID>/status. It includes a "Settling Time" (0–30 mins) where it stays "Busy" after pumping to let silt settle.
-Role 2 (Slave/Roof): Subscribes to the Master's topic. It will block pumping if the Master is: Offline, Pumping, Empty, or Settling.
+Executive Summary
 
-4. SYSTEM STATES & LED FEEDBACK (Pin 48)
+The AMK Smart Pump and Compressor Control System v2.1 is an advanced industrial-grade automation solution built on the ESP32-S3 dual-core architecture. Utilizing the FreeRTOS framework, the system decouples safety-critical motor control from network services to ensure real-time reliability. Key capabilities include dual-mode operation (Water Pump or Air Compressor), a sophisticated Master-Slave configuration for multi-tank environments, and a robust suite of protections including voltage guards, dry-run prevention, and thermal cool-down cycles. Connectivity is managed through a TLS-secured MQTT cloud interface and a local web dashboard, supported by a token-based licensing system and Over-the-Air (OTA) update functionality.
 
-State	          Description	                              LED Color
-IDLE	          System Standby, all guards OK.	          Green (if Cloud) / Cyan (if WiFi)
-PUMPING	        Motor is running.	                        Yellow
-PRE/POST VENT	  Compressor solenoid is active.	          Yellow (Blinking)
-DRY_RUN_ALARM	  No flow detected (60s limit).	            Red (Rapid Flash)
-DRY_RUN_LOCKED	Alarm active, waiting for Auto-Retry.	    Red (Slow Flash)
-VOLTAGE_ERROR	  Voltage outside High/Low limits.	        Red (Steady)
-COOLING_DOWN	  1-Hour continuous run limit reached.	    Blue (Steady)
-SETTLING_WATER	Master tank is letting sediment settle.	  Purple
+1. System Architecture and Core Logic
 
-5. PROTECTION SUITES
+Dual-Core Framework (FreeRTOS)
 
-Thermal Protection: After 60 minutes of continuous runtime, the system forces a cool-down period (5–15 mins).
-Voltage Guard: Cut-offs at user-defined High (up to 260V) and Low (down to 150V) levels.
-Smart Scheduling (DND): Uses NTP time (GMT+6.5 for Myanmar) to silence the motor during night hours (e.g., 22:00 to 06:00).
-Dry-Run Auto-Retry: If the tank runs dry, the system can automatically try again after 30 or 60 minutes.
+The system leverages the ESP32-S3's dual cores to prevent network latency from interfering with physical hardware safety:
 
-6. USER INTERFACE & CONTROLS
+* Core 1 (Control Loop): Dedicated to real-time safety and control logic.
+* Core 0 (Network Loop): Manages connectivity services (WiFi, MQTT, Web Server).
+* Scheduler Performance: General logic runs on a ~1-second cadence, with ultrasonic measurement cycles every 4 seconds.
 
-6.1 Physical Button (Pin 9)
-1x Click: Toggle Pump OR Stop Alarm.
-Note: The system will block a "Manual Stop" if the water is below the Low Threshold to prevent the tank from staying empty.
-2x Click: LCD Info Overlay. Displays:
-License: Days remaining.
-IP Address: Local network address.
-Device ID: Unique Cloud identifier.
-Hold 3s: Activates AP Mode (WiFi: Auto-Pump-Config, Pass: 12345678).
+Multi-Role Connectivity
 
-6.2 20x4 LCD Display
-Big Numbers: The water level (%) and Voltage (V) are displayed using custom-generated large characters across 2 rows for high visibility.
-Status Column (Right Side): Shows real-time status: FLOW OK, WAIT SUMP, SNR ERR, OVER V, etc.
+The system can be configured in three primary roles:
 
-7. CLOUD & MAINTENANCE
+1. Standalone: Operates independently based on local sensor data.
+2. Master (Sump Tank): Publishes pump and status states to an MQTT topic.
+3. Slave (Upper Tank): Subscribes to the Master's status to enforce sequential logic.
+  * Link Timeout: If the Master does not update for 5 minutes, the Slave enters a fallback behavior.
 
-MQTT Cloud: Secure TLS connection to hivemq.cloud on Port 8883.
-Event Logging: Stores the last ~200 events in events.txt (LittleFS). Logs include timestamps for starts, stops, and errors.
-License Management: Premium features are tied to a hardware-encrypted license. Expiry disables Cloud control and Auto-Start functions.
-OTA (Over-The-Air): Check for updates via the Web Dashboard. The system compares the local version against the GitHub version.txt.
+Operational Modes
 
-8. မြန်မာဘာသာဖြင့် အနှစ်ချုပ် (Myanmar Summary)
+Mode	Primary Function	Specific Logic
+Water Pump	Tank level management	Starts at low level %, stops at full level %.
+Air Compressor	Pressure management	Utilizes a solenoid "unloader sequence" with pre-vent and post-vent timing.
 
-ဗို့အားကာကွယ်မှု: မီးအား ၁၇၀အောက် ရောက်လျှင်သော်လည်းကောင်း၊ ၂၅၀အထက် ရောက်လျှင်သော်လည်းကောင်း မော်တာကို အလိုအလျောက် ပိတ်ပေးပါသည်။
-ရေမပါဘဲမောင်းခြင်းမှကာကွယ်ခြင်း: ရေမတက်ဘဲ စက္ကန့် ၃၀ (သို့) ၆၀ ကြာလျှင် စက်ကိုပိတ်ပြီး အချက်ပေးသံ (Buzzer) မြည်ပါမည်။
-အလိုအလျောက်ပြန်လည်စတင်ခြင်း: ရေပြတ်၍ စက်ပိတ်သွားပါက မိနစ် ၃၀ (သို့) ၆၀ အကြာတွင် စက်ကို အလိုအလျောက် ပြန်မောင်းရန် ကြိုးစားပေးပါသည်။
-ညဘက်အသံပိတ်စနစ်: ညဘက်သတ်မှတ်ထားသော အချိန်အတွင်း မော်တာ အလိုအလျောက် မနိုးစေရန် ပိတ်ထားနိုင်ပါသည်။
-စက်အခြေအနေစစ်ဆေးရန်: ခလုတ်ကို ၂ ချက်ဆက်တိုက်နှိပ်ပါက စက်၏ IP Address နှင့် Device ID ကို LCD တွင် ကြည့်နိုင်ပါသည်။
-Technical Note: All configurations are saved to Non-Volatile Storage (NVS) and are retained even after a power outage.
+2. Hardware and Sensor Integration
+
+Pinout Configuration
+
+Component	Pin(s)	Function
+I2C Interface	SDA (1), SCL (2)	LCD 20x4 and other peripherals.
+Voltage Sensor	4	ZMPT101B for RMS voltage monitoring.
+Ultrasonic Sensor	Trig (5), Echo (6)	Level detection (1 to 7 feet range).
+Motor Control	8	Main relay/motor trigger.
+Manual Button	9	Multi-click interface for user override.
+Solenoid Valve	10	Used for Air Compressor venting.
+Flow Sensor	18	Dry-run detection.
+RGB LED	48	Visual system status (NeoPixel).
+
+Sensing Specifications
+
+* Ultrasonic Range: Optimized for heights between 12 and 84 inches.
+* Voltage Guarding: Includes high/low cutoffs with a "Resume Gap" and delayed restart to protect against power instability.
+* Flow Persistence: Uses "initial grace" and "slug windowing" (60 seconds) to prevent false dry-run alarms during air pockets or initial start-up.
+
+3. Protection and Recovery Mechanisms
+
+The system prioritizes hardware longevity through several automated guards:
+
+* Dry-Run Guard: If the motor is active but no flow is detected within a configurable delay, the system triggers an alarm and locks the motor.
+* Auto-Retry: Following a dry-run lock, the system re-attempts operation after a rest period (default 30/60 minutes).
+* Thermal Cool-Down: A mandatory rest window is enforced after 1 hour of continuous runtime to reduce motor heat stress.
+* Voltage Stabilization: Employs an anti-spike filter and median sampling. If voltage is abnormal, the motor is cut, and a "Wait Seconds" timer must expire before resuming.
+
+4. Connectivity and User Interface
+
+Local and Remote Access
+
+* Web Dashboard: Accessible via local IP or Access Point mode. Provides live data, threshold settings, and maintenance logs.
+* Captive Portal: Automatically redirects users to the configuration page when connected to the device's Access Point.
+* MQTT Cloud Control: Allows remote command and status monitoring using TLS (Root CA-based) for secure transport.
+
+User Interaction Logic
+
+The manual button supports sophisticated multi-input logic:
+
+* Single Click: Toggles the pump (Start/Stop).
+* Double Click: Toggles an information overlay on the LCD (IP address/Device ID).
+* Long Press (3s): Manually triggers Access Point (AP) mode for configuration.
+* Smart Scheduling (DND): NTP-based time windows prevent auto-starting during night hours (Do Not Disturb).
+
+5. Maintenance and Security
+
+Data Persistence and Security
+
+* NVS (Non-Volatile Storage): Saves all thresholds, WiFi credentials, and runtime states to ensure recovery after power loss.
+* Licensing System: A token-based validity system using Base64/MD5 signatures. The system tracks "Valid Days" and disables motor operation upon expiry.
+* Event Logging: The system maintains a rolling log (events.txt) in LittleFS, tracking power cycles, sensor errors, and manual overrides.
+
+Firmware Management
+
+* OTA Updates: Supports local firmware uploads and remote update checks via GitHub.
+* Diagnostic Strings: The system provides real-time status updates such as FLOW_CHECKING!, SETTLING_WATER!, and VOLT_DELAY.
+
+Log Note Example: [SYS] Log Rolled Over (Memory Full) — The system automatically manages log size to prevent memory exhaustion.
