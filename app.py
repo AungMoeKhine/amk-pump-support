@@ -36,24 +36,31 @@ st.markdown("""
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
 
         /* FIX INPUT BOX ALIGNMENT (Prevents button from jumping to next line) */
+        /* FIX INPUT BOX ALIGNMENT (Forces button to stay on the right side) */
         [data-testid="stBottom"] > div {
             background-color: transparent !important;
             padding: 10px 0px 25px 0px !important;
         }
 
-        [data-testid="stChatInput"] {
+        /* Target BOTH the container and the internal wrapper to stop the jump */
+        [data-testid="stChatInput"], [data-testid="stChatInput"] > div {
             background-color: #262626 !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 10px !important;
             display: flex !important;
-            flex-direction: row !important; /* Force one line */
+            flex-direction: row !important; 
             align-items: center !important;
+            flex-wrap: nowrap !important; /* This prevents the button from moving to next line */
+        }
+
+        [data-testid="stChatInput"] {
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
         [data-testid="stChatInput"] textarea {
             background-color: transparent !important;
             color: #FFFFFF !important;
             font-size: 0.95rem !important;
+            flex-grow: 1 !important; /* Let the text area fill the space */
         }
 
         /* Header Spacing */
