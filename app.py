@@ -36,19 +36,29 @@ st.markdown("""
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
 
         /* FIX INPUT BOX ALIGNMENT (Prevents button from jumping to next line) */
-        /* THE ULTIMATE INPUT BOX FIX (Side-by-Side Grid) */
-        [data-testid="stBottom"] > div { background: transparent !important; padding: 10px 0px 25px 0px !important; }
+        /* THE WIDE INPUT BOX FIX (Stretches to edges) */
+        [data-testid="stBottom"] { background: transparent !important; }
+        [data-testid="stBottom"] > div { 
+            width: 100% !important; 
+            max-width: 100% !important; 
+            padding: 10px 0px 25px 0px !important; /* Removed side padding */
+        }
 
-        /* Force 2 permanent columns: Left for Text, Right for Button */
+        /* Force the Grey Box and its container to be full width */
+        [data-testid="stChatInput"] { 
+            width: 100% !important; 
+            background: transparent !important; 
+        }
+
         [data-testid="stChatInput"] > div {
             display: grid !important;
             grid-template-columns: 1fr 45px !important; 
-            gap: 5px !important;
             background-color: #262626 !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 10px !important;
             padding: 5px !important;
             align-items: center !important;
+            width: 100% !important;
         }
 
         [data-testid="stChatInput"] textarea {
@@ -58,12 +68,11 @@ st.markdown("""
             min-height: 40px !important;
         }
 
-        /* Stop the button from moving/floating */
+        /* Keep button from moving */
         [data-testid="stChatInput"] button {
             position: relative !important;
             right: 0 !important;
             bottom: 0 !important;
-            margin: 0 !important;
         }
 
         /* Header Spacing */
