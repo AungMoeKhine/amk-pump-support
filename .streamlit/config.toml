@@ -1,14 +1,6 @@
 [theme]
-# Matches the blue 'Tank Water Level' title and the 'Refresh' icon in your code
 primaryColor = "#039be5"
-
-# Matches 'body { background: #121212; }' in your code
 backgroundColor = "#121212"
-
-# Matches '.card { background: rgba(30, 30, 30, 0.7); }' (Approx #1E1E1E)
 secondaryBackgroundColor = "#1E1E1E"
-
-# Matches 'color: white;' in your code
 textColor = "#FFFFFF"
-
 font = "sans serif"
