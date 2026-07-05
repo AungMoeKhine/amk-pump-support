@@ -11,85 +11,60 @@ genai.configure(api_key=api_key)
 # 3. Model Selection (Gemini 3.5 Frontier)
 model = genai.GenerativeModel('gemini-3.5-flash')
 
-# 4. ULTIMATE DARK THEME & GLASSMORPHISM (Matches your Dashboard)
+# 4. ULTIMATE DARK THEME & LAYOUT FIX
 st.markdown("""
     <style>
-        /* Force Deep Grey background (No White light-mode leaks) */
+        /* Force Deep Grey background */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
 
-        /* HIDE ALL STREAMLIT UI ELEMENTS */
+        /* Hide Clutter */
         footer, header, [data-testid="stHeader"], [data-testid="stDecoration"] {
             display: none !important;
             visibility: hidden !important;
         }
 
-        /* GLASSMORPHISM MESSAGE BUBBLES: Match Dashboard .card style */
+        /* Fix Message Bubbles */
         [data-testid="stChatMessage"] {
             background-color: rgba(30, 30, 30, 0.7) !important;
             backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 12px !important;
-            margin-bottom: 10px !important;
         }
-        
-        /* Force White text on all headings and paragraphs */
-        [data-testid="stChatMessage"] h1, [data-testid="stChatMessage"] h2, 
-        [data-testid="stChatMessage"] h3, [data-testid="stChatMessage"] p, 
-        [data-testid="stChatMessage"] li, [data-testid="stChatMessage"] div {
-            color: #FFFFFF !important;
-            font-family: sans-serif !important;
-        }
+        [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
 
-        /* TYPING AREA FIX: Forced Grey Background with White Text */
+        /* FIX INPUT BOX ALIGNMENT (Prevents button from jumping to next line) */
         [data-testid="stBottom"] > div {
             background-color: transparent !important;
-            padding-bottom: 25px !important;
+            padding: 10px 0px 25px 0px !important;
         }
+
         [data-testid="stChatInput"] {
+            background-color: #262626 !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 10px !important;
-            background-color: rgba(42, 42, 42, 0.9) !important; /* Solid Grey Box */
+            display: flex !important;
+            flex-direction: row !important; /* Force one line */
+            align-items: center !important;
         }
+
         [data-testid="stChatInput"] textarea {
             background-color: transparent !important;
             color: #FFFFFF !important;
-            caret-color: #FFFFFF !important;
-            font-size: 1.1rem !important;
+            font-size: 0.95rem !important;
         }
 
-        /* Header Spacing and Mobile Centering */
-        .block-container { 
-            padding-top: 2rem !important; 
-            padding-bottom: 7rem !important; 
-        }
-        .main-title {
-            font-size: 1.3rem !important; 
-            font-weight: 800;
-            text-align: center;
-            width: 100%;
-            color: #FFFFFF !important;
-            margin-bottom: 2px;
-        }
-        .sub-caption {
-            font-size: 0.72rem !important;
-            color: #888888 !important;
-            text-align: center;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        
-        /* Hide the Streamlit Balloon/Banner at bottom */
+        /* Header Spacing */
+        .block-container { padding-top: 1.5rem !important; padding-bottom: 6rem !important; }
+        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; }
+        .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
         #root > div:last-child, .stApp ~ div, [data-testid="stStreamlitFooter"] { display: none !important; }
     </style>
-    
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Glassmorphism Mode • Gemini 3.5 Frontier</div>
+    <div class="sub-caption">Stable Support Engine • Gemini 3.5 Frontier</div>
     """, unsafe_allow_html=True)
-
 # ---------------------------------------------------------
 # 5. KNOWLEDGE LOADING (Reads Code + Manual)
 # ---------------------------------------------------------
