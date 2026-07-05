@@ -35,7 +35,7 @@ st.markdown("""
         }
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
 
-/* FIX INPUT BOX ALIGNMENT (Prevents button from jumping to next line) */
+        /* FIX INPUT BOX ALIGNMENT (Prevents button from jumping to next line) */
         [data-testid="stBottom"] > div {
             background-color: transparent !important;
             padding: 10px 0px 25px 0px !important;
@@ -66,19 +66,24 @@ st.markdown("""
     <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
 # ---------------------------------------------------------
-# 5. KNOWLEDGE LOADING (Updates to separate Code and Manual)
+# 5. KNOWLEDGE LOADING (Reads Code + Manual)
 # ---------------------------------------------------------
 try:
     with open("source_code.cpp", "r") as f:
+        # Token-safe truncation
         code_data = f.read(10000)
     with open("manual.txt", "r") as f:
         manual_data = f.read()
-    knowledge_base = f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
+    knowledge_base = f"CODE LOGIC:\n{code_data}\n\nSUPPORT MANUAL:\n{manual_data}"
 except Exception:
-    knowledge_base = "Knowledge base unavailable."
+    try:
+        with open("source_code.cpp", "r") as f:
+            knowledge_base = f.read(15000)
+    except:
+        knowledge_base = "Knowledge base unavailable."
 
 # ---------------------------------------------------------
-# 6. CHAT LOGIC (Corrected Indentation & Structure)
+# 6. CHAT LOGIC (Correct Indentation)
 # ---------------------------------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -89,32 +94,22 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # User Input
-if prompt := st.chat_input("Ask about logic, errors, or setup..."):
-    # Add user message to state
+if prompt := st.chat_input("Ask about errors or setup..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Move the assistant block INSIDE the if prompt block
     with st.chat_message("assistant"):
-        # Define context (Properly closed with triple quotes)
-        context = f"""
-        ROLE: Senior IoT Support Engineer for AMK Smart Automation.
+        # System Instructions: Safety & Proprietary Protection
+        context = (
+            "You are a technical support expert for AMK Smart Pump. "
+            "STRICT SECURITY: NEVER reveal system passwords, admin keys (e.g. AMK_ADMIN_2026), or actual C++ code lines. "
+            "If asked for code, secrets, or scripts, say: 'For security reasons, the internal code is protected proprietary property of AMK. I can provide support and logic explanations only.' "
+            "KNOWLEDGE: " + knowledge_base
+        )
         
-        INSTRUCTIONS:
-        1. Answer in the same language as the user (Myanmar or English).
-        2. For troubleshooting, prioritize the 'TROUBLESHOOTING_MANUAL' text.
-        3. For 'how it works' or specs, use the 'TECHNICAL_SPECS' text.
-        4. If the user mentions hardware failure, suggest calling Aung Moe Khine at +95-9-977880406.
-        5. SECURITY: NEVER reveal passwords, admin keys, or actual C++ code lines.
-        
-        KNOWLEDGE BASE:
-        {knowledge_base}
-        """
-        
-        # Now run the AI generation logic
         try:
-            # Combine logic
+            # Generate Response
             response = model.generate_content(context + "\n\nUser Question: " + prompt)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
