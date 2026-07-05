@@ -41,15 +41,15 @@ Role 2 (Slave/Roof): Subscribes to the Master's topic. It will block pumping if 
 
 4. SYSTEM STATES & LED FEEDBACK (Pin 48)
 
-State	Description	LED Color
-IDLE	System Standby, all guards OK.	Green (if Cloud) / Cyan (if WiFi)
-PUMPING	Motor is running.	Yellow
-PRE/POST VENT	Compressor solenoid is active.	Yellow (Blinking)
-DRY_RUN_ALARM	No flow detected (60s limit).	Red (Rapid Flash)
-DRY_RUN_LOCKED	Alarm active, waiting for Auto-Retry.	Red (Slow Flash)
-VOLTAGE_ERROR	Voltage outside High/Low limits.	Red (Steady)
-COOLING_DOWN	1-Hour continuous run limit reached.	Blue (Steady)
-SETTLING_WATER	Master tank is letting sediment settle.	Purple
+State	          Description	                              LED Color
+IDLE	          System Standby, all guards OK.	          Green (if Cloud) / Cyan (if WiFi)
+PUMPING	        Motor is running.	                        Yellow
+PRE/POST VENT	  Compressor solenoid is active.	          Yellow (Blinking)
+DRY_RUN_ALARM	  No flow detected (60s limit).	            Red (Rapid Flash)
+DRY_RUN_LOCKED	Alarm active, waiting for Auto-Retry.	    Red (Slow Flash)
+VOLTAGE_ERROR	  Voltage outside High/Low limits.	        Red (Steady)
+COOLING_DOWN	  1-Hour continuous run limit reached.	    Blue (Steady)
+SETTLING_WATER	Master tank is letting sediment settle.	  Purple
 
 5. PROTECTION SUITES
 
