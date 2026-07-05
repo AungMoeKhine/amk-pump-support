@@ -67,17 +67,33 @@ st.markdown("""
     <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
 # ---------------------------------------------------------
-# 5. KNOWLEDGE LOADING (Reads Code + Manual)
+# 5. KNOWLEDGE LOADING (Reads Code + Manual + Live Logs)
 # ---------------------------------------------------------
+# A. Load static files from GitHub
 try:
     with open("source_code.cpp", "r") as f:
-        # Token-safe truncation
         code_data = f.read(10000)
     with open("manual.txt", "r") as f:
         manual_data = f.read()
-    knowledge_base = f"CODE LOGIC:\n{code_data}\n\nSUPPORT MANUAL:\n{manual_data}"
-except Exception:
-    knowledge_base = "Knowledge base unavailable."
+except:
+    code_data = "Logic unavailable."
+    manual_data = "Manual unavailable."
+
+# B. Catch LIVE LOGS from the Dashboard URL
+# This is where the "magic" happens
+live_logs = st.query_params.get("logs", "No live logs detected. Ask the user for details.")
+
+# C. Combine everything into one "Brain"
+knowledge_base = f"""
+TECHNICAL_SPECS:
+{code_data}
+
+TROUBLESHOOTING_MANUAL:
+{manual_data}
+
+CURRENT_LIVE_SYSTEM_LOGS:
+{live_logs}
+"""
 
 # ---------------------------------------------------------
 # 6. CHAT LOGIC (Correct Indentation)
