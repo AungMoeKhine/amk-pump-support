@@ -1,5 +1,10 @@
 import streamlit as st
 import google.generativeai as genai
+import paho.mqtt.client as mqtt  # NEW
+import json                      # NEW
+
+import streamlit as st
+import google.generativeai as genai
 
 # 1. Page Config
 st.set_page_config(page_title="AMK AI Support", page_icon="💧")
@@ -7,6 +12,33 @@ st.set_page_config(page_title="AMK AI Support", page_icon="💧")
 # 2. Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
+
+# ---------------------------------------------------------
+# NEW: SILENT BACKGROUND SYNC (MQTT)
+# ---------------------------------------------------------
+if 'live_logs' not in st.session_state:
+    st.session_state.live_logs = "Waiting for live data sync..."
+
+def on_message(client, userdata, message):
+    try:
+        payload = json.loads(message.payload.decode("utf-8"))
+        # Extracts only the logs and info strings from your ESP32 status JSON
+        st.session_state.live_logs = f"Status: {payload.get('info')}\nLogs: {payload.get('logs')}"
+    except:
+        pass
+
+@st.cache_resource
+def start_mqtt():
+    client = mqtt.Client()
+    client.username_pw_set("Smart_Pump", "Sm@rt_Pump_2026")
+    client.on_message = on_message
+    client.tls_set() # Required for HiveMQ Port 8883
+    client.connect("210195b635414206adcd944325fe6f59.s1.eu.hivemq.cloud", 8883)
+    client.subscribe("smartpump/+/status") # Listens to all your devices
+    client.loop_start()
+    return client
+
+mqtt_client = start_mqtt()
 
 # 3. Model Selection (Gemini 3.1 Lite)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
@@ -67,23 +99,19 @@ st.markdown("""
     <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
 # ---------------------------------------------------------
-# 5. KNOWLEDGE LOADING (Reads Code + Manual + Live Logs)
+# 5. KNOWLEDGE LOADING (Silent Background Version)
 # ---------------------------------------------------------
-# A. Load static files from GitHub
 try:
     with open("source_code.cpp", "r") as f:
         code_data = f.read(10000)
     with open("manual.txt", "r") as f:
         manual_data = f.read()
 except:
-    code_data = "Logic unavailable."
-    manual_data = "Manual unavailable."
-
-# B. Catch LIVE LOGS from the Dashboard URL
-# This is where the "magic" happens
-live_logs = st.query_params.get("logs", "No live logs detected. Ask the user for details.")
+    code_data = "Logic hidden."
+    manual_data = "Manual offline."
 
 # C. Combine everything into one "Brain"
+# We now use st.session_state.live_logs which updates silently
 knowledge_base = f"""
 TECHNICAL_SPECS:
 {code_data}
@@ -91,8 +119,8 @@ TECHNICAL_SPECS:
 TROUBLESHOOTING_MANUAL:
 {manual_data}
 
-CURRENT_LIVE_SYSTEM_LOGS:
-{live_logs}
+CURRENT_LIVE_SYSTEM_LOGS (SYNCED IN BACKGROUND):
+{st.session_state.live_logs}
 """
 
 # ---------------------------------------------------------
