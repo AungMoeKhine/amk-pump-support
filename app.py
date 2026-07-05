@@ -1,4 +1,4 @@
-" import streamlit as st
+import streamlit as st
 import google.generativeai as genai
 1. Page Config
 st.set_page_config(page_title="AMK AI Support", page_icon="💧")
