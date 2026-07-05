@@ -47,6 +47,7 @@ st.markdown("""
             border-radius: 10px !important;
             display: flex !important;
             flex-direction: row !important; /* Force one line */
+            flex-wrap: nowrap !important;
             align-items: center !important;
         }
 
