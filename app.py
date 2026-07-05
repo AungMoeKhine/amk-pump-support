@@ -46,7 +46,8 @@ st.markdown("""
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 10px !important;
             display: flex !important;
-            flex-direction: row !important; /* Force one line */
+            flex-direction: row !important; 
+            flex-wrap: nowrap !important; /* <--- THIS FORCES THE BUTTON TO STAY RIGHT */
             align-items: center !important;
         }
 
