@@ -108,6 +108,7 @@ with st.chat_message("assistant"):
         
         KNOWLEDGE BASE:
         {knowledge_base}
+        """
         
         try:
             # Generate Response
