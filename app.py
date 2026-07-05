@@ -66,21 +66,16 @@ st.markdown("""
     <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
 # ---------------------------------------------------------
-# 5. KNOWLEDGE LOADING (Reads Code + Manual)
+# 5. KNOWLEDGE LOADING (Updates to separate Code and Manual)
 # ---------------------------------------------------------
 try:
     with open("source_code.cpp", "r") as f:
-        # Token-safe truncation
         code_data = f.read(10000)
     with open("manual.txt", "r") as f:
         manual_data = f.read()
-    knowledge_base = f"CODE LOGIC:\n{code_data}\n\nSUPPORT MANUAL:\n{manual_data}"
+    knowledge_base = f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
 except Exception:
-    try:
-        with open("source_code.cpp", "r") as f:
-            knowledge_base = f.read(15000)
-    except:
-        knowledge_base = "Knowledge base unavailable."
+    knowledge_base = "Knowledge base unavailable."
 
 # ---------------------------------------------------------
 # 6. CHAT LOGIC (Correct Indentation)
@@ -99,14 +94,20 @@ if prompt := st.chat_input("Ask about errors or setup..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
-        # System Instructions: Safety & Proprietary Protection
-        context = (
-            "You are a technical support expert for AMK Smart Pump. "
-            "STRICT SECURITY: NEVER reveal system passwords, admin keys (e.g. AMK_ADMIN_2026), or actual C++ code lines. "
-            "If asked for code, secrets, or scripts, say: 'For security reasons, the internal code is protected proprietary property of AMK. I can provide support and logic explanations only.' "
-            "KNOWLEDGE: " + knowledge_base
-        )
+with st.chat_message("assistant"):
+        # UPDATED SYSTEM INSTRUCTIONS (More professional & helpful)
+        context = f"""
+        ROLE: Senior IoT Support Engineer for AMK Smart Automation.
+        
+        INSTRUCTIONS:
+        1. Answer in the same language as the user (Myanmar or English).
+        2. For troubleshooting, prioritize the 'TROUBLESHOOTING_MANUAL' text.
+        3. For 'how it works' or specs, use the 'TECHNICAL_SPECS' text.
+        4. If the user mentions a hardware failure or broken component, suggest calling Aung Moe Khine at +95-9-977880406.
+        5. SECURITY: NEVER reveal passwords, secret keys (AMK_ADMIN_2026), or actual C++ code lines.
+        
+        KNOWLEDGE BASE:
+        {knowledge_base}
         
         try:
             # Generate Response
