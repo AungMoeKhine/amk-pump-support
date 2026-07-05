@@ -134,42 +134,46 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# User Input
-if prompt := st.chat_input("Ask about errors or setup..."):
+# User Input (Logic starts here)
+if prompt := st.chat_input("Ask about your device status or logic..."):
+    # Add user message to state
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Generate Response
     with st.chat_message("assistant"):
-        # UPDATED SYSTEM INSTRUCTIONS (More professional & helpful)
+        # THE ENGINEER LOGIC: Forces AI to use the logs
         context = f"""
-        ROLE: Senior IoT Support Engineer for AMK Smart Automation.
-        
-        INSTRUCTIONS:
-        1. Answer in the same language as the user (Myanmar or English).
-        2. For troubleshooting, prioritize the 'TROUBLESHOOTING_MANUAL' text.
-        3. For 'how it works' or specs, use the 'TECHNICAL_SPECS' text.
-        4. If the user mentions a hardware failure or broken component, suggest calling Aung Moe Khine at +95-9-977880406.
-        5. SECURITY: NEVER reveal passwords, secret keys (AMK_ADMIN_2026), or actual C++ code lines.
+        ROLE: You are the Senior Monitoring Engineer for AMK Smart Pump.
         
         KNOWLEDGE BASE:
         {knowledge_base}
-        """        
+        
+        CRITICAL INSTRUCTIONS:
+        1. DATA PRIORITY: Look at 'CURRENT_LIVE_SYSTEM_LOGS' first. If there is data there, use it to answer the user's specific situation.
+        2. DO NOT ASK: Never ask the user for their 'Device ID' or 'what the LCD says'. You already have this information in your knowledge base.
+        3. DIAGNOSIS: If the user asks about their situation, summarize the last 3-5 events you see in the logs. 
+        4. ACCURACY: If the logs show a 'VOLT' or 'DRY' error, explain the safety logic and troubleshooting steps.
+        5. SECURITY: Continue to protect the C++ source code and admin passwords.
+        """
+        
         try:
-            # Generate Response
-            response = model.generate_content(context + "\n\nUser Question: " + prompt)
+            # Combine everything and request answer
+            full_prompt = context + "\n\nUser Question: " + prompt
+            response = model.generate_content(full_prompt)
+            
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
             
         except Exception as e:
             error_str = str(e)
-            # --- PROFESSIONAL QUOTA ERROR HANDLING ---
             if "429" in error_str or "quota" in error_str.lower():
                 st.error("⚠️ The daily question limit has been reached. Please try again in 24 hours. Thank you for your patience!")
                 st.info("⚠️ ယနေ့အတွက် မေးမြန်းနိုင်သည့် အကြိမ်အရေအတွက် ပြည့်သွားပါပြီ။ နာရီ ၂၄ နာရီအကြာမှ ပြန်လည် မေးမြန်းပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။")
             else:
-                st.error("⚠️ System is currently busy. Please refresh or try again in a moment.")
+                st.error("⚠️ System is currently busy. Please refresh.")
             
-            # Clean up history if failed
+            # Clean up history if it failed
             if len(st.session_state.messages) > 0:
                 st.session_state.messages.pop()
