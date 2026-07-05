@@ -78,7 +78,7 @@ except Exception:
     knowledge_base = "Knowledge base unavailable."
 
 # ---------------------------------------------------------
-# 6. CHAT LOGIC (Correct Indentation)
+# 6. CHAT LOGIC (Corrected Indentation & Structure)
 # ---------------------------------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -89,13 +89,15 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # User Input
-if prompt := st.chat_input("Ask about errors or setup..."):
+if prompt := st.chat_input("Ask about logic, errors, or setup..."):
+    # Add user message to state
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-with st.chat_message("assistant"):
-        # UPDATED SYSTEM INSTRUCTIONS (More professional & helpful)
+    # Move the assistant block INSIDE the if prompt block
+    with st.chat_message("assistant"):
+        # Define context (Properly closed with triple quotes)
         context = f"""
         ROLE: Senior IoT Support Engineer for AMK Smart Automation.
         
@@ -103,15 +105,16 @@ with st.chat_message("assistant"):
         1. Answer in the same language as the user (Myanmar or English).
         2. For troubleshooting, prioritize the 'TROUBLESHOOTING_MANUAL' text.
         3. For 'how it works' or specs, use the 'TECHNICAL_SPECS' text.
-        4. If the user mentions a hardware failure or broken component, suggest calling Aung Moe Khine at +95-9-977880406.
-        5. SECURITY: NEVER reveal passwords, secret keys (AMK_ADMIN_2026), or actual C++ code lines.
+        4. If the user mentions hardware failure, suggest calling Aung Moe Khine at +95-9-977880406.
+        5. SECURITY: NEVER reveal passwords, admin keys, or actual C++ code lines.
         
         KNOWLEDGE BASE:
         {knowledge_base}
         """
         
+        # Now run the AI generation logic
         try:
-            # Generate Response
+            # Combine logic
             response = model.generate_content(context + "\n\nUser Question: " + prompt)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
