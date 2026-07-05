@@ -8,8 +8,8 @@ st.set_page_config(page_title="AMK AI Support", page_icon="💧")
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 
-# 3. Model Selection (Gemini 3.5 Frontier)
-model = genai.GenerativeModel('gemini-3.5-flash')
+# 3. Model Selection (Gemini 3.1 Lite)
+model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # 4. ULTIMATE DARK THEME & LAYOUT FIX
 st.markdown("""
@@ -63,7 +63,7 @@ st.markdown("""
         #root > div:last-child, .stApp ~ div, [data-testid="stStreamlitFooter"] { display: none !important; }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Gemini 3.5 Frontier</div>
+    <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
 # ---------------------------------------------------------
 # 5. KNOWLEDGE LOADING (Reads Code + Manual)
