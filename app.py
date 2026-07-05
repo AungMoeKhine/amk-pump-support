@@ -36,25 +36,34 @@ st.markdown("""
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
 
         /* FIX INPUT BOX ALIGNMENT (Prevents button from jumping to next line) */
-        [data-testid="stBottom"] > div {
-            background-color: transparent !important;
-            padding: 10px 0px 25px 0px !important;
-        }
+        /* THE ULTIMATE INPUT BOX FIX (Side-by-Side Grid) */
+        [data-testid="stBottom"] > div { background: transparent !important; padding: 10px 0px 25px 0px !important; }
 
-        [data-testid="stChatInput"] {
+        /* Force 2 permanent columns: Left for Text, Right for Button */
+        [data-testid="stChatInput"] > div {
+            display: grid !important;
+            grid-template-columns: 1fr 45px !important; 
+            gap: 5px !important;
             background-color: #262626 !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 10px !important;
-            display: flex !important;
-            flex-direction: row !important; /* Force one line */
-            flex-wrap: nowrap !important;
+            padding: 5px !important;
             align-items: center !important;
         }
 
         [data-testid="stChatInput"] textarea {
             background-color: transparent !important;
             color: #FFFFFF !important;
-            font-size: 0.95rem !important;
+            border: none !important;
+            min-height: 40px !important;
+        }
+
+        /* Stop the button from moving/floating */
+        [data-testid="stChatInput"] button {
+            position: relative !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            margin: 0 !important;
         }
 
         /* Header Spacing */
