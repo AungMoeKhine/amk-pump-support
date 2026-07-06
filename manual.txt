@@ -1,53 +1,3 @@
-AMK SMART PUMP SYSTEM V2.1 PREMIUM - TECHNICAL DATA SHEET
-Support: +95-9-977880406 (Aung Moe Khine)
-
-1. HARDWARE ARCHITECTURE (ESP32-S3)
-- Motor Control: Pin 8 (Active HIGH)
-- Solenoid/Valve: Pin 10 (For Compressor Unloader)
-- Flow Sensor: Pin 18 (Input Pullup, Logic LOW = Flow detected)
-- Manual Button: Pin 9 (Single click: Toggle, Double: Info, Long 3s: AP Mode)
-- Buzzer: Pin 7 (Oscillating for Dry-Run, Pulsed for Sensor Error)
-- Ultrasonic: Trig Pin 5, Echo Pin 6 (Max distance 8ft, logic uses 7ft usable)
-- Voltage Sensor: Pin 4 (ZMPT101B)
-- Display: 20x4 I2C LCD (Address 0x27)
-- Status LED: Pin 48 (NeoPixel RGB)
-
-2. VOLTAGE PROTECTION LOGIC
-- Safe Range: 170V (Low) to 250V (High).
-- Resume Gap: 5V (Voltage must recover by 5V before restarting).
-- Stabilization Delay: 15 seconds (System waits 15s after power is stable).
-- LCD Status: "OVER" (High), "UNDER" (Low), "DELAY" (Waiting).
-
-3. WATER TANK LOGIC
-- Start Level: 50% (Default, adjustable 20-70%).
-- Stop Level: 100% (Default, adjustable 80-100%).
-- Sensor Error: Triggered if 10 consecutive readings fail. LCD shows "SNR ERR".
-- Blind Zone: Top 10 inches is "Buffer Zone" to protect the sensor.
-
-4. DRY-RUN & SAFETY
-- Detection: Motor ON + No flow on Pin 18 for 30 seconds (Default).
-- Alarm Phase: Buzzer sounds for 60 seconds (State: DRY_RUN_ALARM).
-- Lock Phase: After 60s of alarm, motor locks (State: DRY_RUN_LOCKED).
-- Auto-Retry: System waits 30 or 60 minutes before trying again.
-- Cool-down: After 1 hour of continuous running, pump rests for configured minutes.
-
-5. OPERATION MODES
-- Water Pump Mode: Standard Level-based control.
-- Air Compressor Mode: Uses Pin 10 Solenoid. Pre-vents before start and Post-vents after stop to release head pressure.
-- Master/Slave Mode: Master (Sump) sends status via MQTT. Slave (Roof) waits if Master is pumping or unsafe. 5-minute timeout for link.
-
-6. INDICATORS & CONTROLS
-- RGB LED: Red Flash (Error), Blue (Cooling), Purple (Settling), Yellow (Pumping), Green (Online), Cyan (WiFi connected), Pulsing Blue (Offline).
-- LCD Big Numbers: Top row = Water Level %, Bottom row = Voltage.
-- Event Log: Last 200 events stored in internal flash memory (/events.txt).
-
-7. ဖြစ်ရပ်များအား ဖြေရှင်းနည်း (Myanmar Troubleshooting)
-- SNR ERR (ဆင်ဆာအမှား): Ultrasonic sensor ကြိုးလွတ်နေခြင်း သို့မဟုတ် ရေငွေ့ရိုက်နေခြင်း စစ်ဆေးပါ။
-- DRY ALRM (ရေမတက်): ရေစုပ်ပိုက် လေခိုနေခြင်း သို့မဟုတ် အောက်တိုင်ကီ ရေကုန်နေခြင်းကို စစ်ဆေးပါ။
-- OVER/UNDER V (ဗို့အား): မီးအားမမှန်ပါ။ စက်မှ အလိုအလျောက် ပိတ်ပေးထားခြင်း ဖြစ်သည်။
-- MANUAL RESET: Manual Button (Pin 9) ကို တစ်ချက်နှိပ်၍ Alarm ပိတ်နိုင်ပါသည်။
-
-
 Briefing Document: AMK Smart Pump and Compressor Control System (v2.1)
 
 Executive Summary
@@ -139,3 +89,11 @@ Firmware Management
 * Diagnostic Strings: The system provides real-time status updates such as FLOW_CHECKING!, SETTLING_WATER!, and VOLT_DELAY.
 
 Log Note Example: [SYS] Log Rolled Over (Memory Full) — The system automatically manages log size to prevent memory exhaustion.
+
+
+Error Code / Issue,Description & Action (English),ဖြေရှင်းနည်း (Myanmar)
+SNR ERR,Ultrasonic sensor disconnected or obstructed by moisture. Check sensor wiring.,ဆင်ဆာအမှား - Ultrasonic sensor ကြိုးလွတ်နေခြင်း သို့မဟုတ် ရေငွေ့ရိုက်နေခြင်း စစ်ဆေးပါ။
+DRY ALRM,No water flow. Check for airlocks in the pipe or an empty lower tank.,ရေမတက် - ရေစုပ်ပိုက် လေခိုနေခြင်း သို့မဟုတ် အောက်တိုင်ကီ ရေကုန်နေခြင်းကို စစ်ဆေးပါ။
+OVER / UNDER V,Unstable power. The system automatically turns off for protection.,ဗို့အား - မီးအားမမှန်ပါ။ စက်မှ အလိုအလျောက် ပိတ်ပေးထားခြင်း ဖြစ်သည်။
+MANUAL RESET,Clears active alarms.,Manual Button (Pin 9) ကို တစ်ချက်နှိပ်၍ Alarm ပိတ်နိုင်ပါသည်။
+
