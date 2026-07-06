@@ -1,99 +1,252 @@
-Briefing Document: AMK Smart Pump and Compressor Control System (v2.1)
+## Comprehensive System Specifications & Feature Documentation
 
-Executive Summary
+---
 
-The AMK Smart Pump and Compressor Control System v2.1 is an advanced industrial-grade automation solution built on the ESP32-S3 dual-core architecture. Utilizing the FreeRTOS framework, the system decouples safety-critical motor control from network services to ensure real-time reliability. Key capabilities include dual-mode operation (Water Pump or Air Compressor), a sophisticated Master-Slave configuration for multi-tank environments, and a robust suite of protections including voltage guards, dry-run prevention, and thermal cool-down cycles. Connectivity is managed through a TLS-secured MQTT cloud interface and a local web dashboard, supported by a token-based licensing system and Over-the-Air (OTA) update functionality.
+### ## 1. System Metadata & Technical Overview
 
-1. System Architecture and Core Logic
-
-Dual-Core Framework (FreeRTOS)
-
-The system leverages the ESP32-S3's dual cores to prevent network latency from interfering with physical hardware safety:
-
-* Core 1 (Control Loop): Dedicated to real-time safety and control logic.
-* Core 0 (Network Loop): Manages connectivity services (WiFi, MQTT, Web Server).
-* Scheduler Performance: General logic runs on a ~1-second cadence, with ultrasonic measurement cycles every 4 seconds.
-
-Multi-Role Connectivity
-
-The system can be configured in three primary roles:
-
-1. Standalone: Operates independently based on local sensor data.
-2. Master (Sump Tank): Publishes pump and status states to an MQTT topic.
-3. Slave (Upper Tank): Subscribes to the Master's status to enforce sequential logic.
-  * Link Timeout: If the Master does not update for 5 minutes, the Slave enters a fallback behavior.
-
-Operational Modes
-
-Mode	Primary Function	Specific Logic
-Water Pump	Tank level management	Starts at low level %, stops at full level %.
-Air Compressor	Pressure management	Utilizes a solenoid "unloader sequence" with pre-vent and post-vent timing.
-
-2. Hardware and Sensor Integration
-
-Pinout Configuration
-
-Component	Pin(s)	Function
-I2C Interface	SDA (1), SCL (2)	LCD 20x4 and other peripherals.
-Voltage Sensor	4	ZMPT101B for RMS voltage monitoring.
-Ultrasonic Sensor	Trig (5), Echo (6)	Level detection (1 to 7 feet range).
-Motor Control	8	Main relay/motor trigger.
-Manual Button	9	Multi-click interface for user override.
-Solenoid Valve	10	Used for Air Compressor venting.
-Flow Sensor	18	Dry-run detection.
-RGB LED	48	Visual system status (NeoPixel).
-
-Sensing Specifications
-
-* Ultrasonic Range: Optimized for heights between 12 and 84 inches.
-* Voltage Guarding: Includes high/low cutoffs with a "Resume Gap" and delayed restart to protect against power instability.
-* Flow Persistence: Uses "initial grace" and "slug windowing" (60 seconds) to prevent false dry-run alarms during air pockets or initial start-up.
-
-3. Protection and Recovery Mechanisms
-
-The system prioritizes hardware longevity through several automated guards:
-
-* Dry-Run Guard: If the motor is active but no flow is detected within a configurable delay, the system triggers an alarm and locks the motor.
-* Auto-Retry: Following a dry-run lock, the system re-attempts operation after a rest period (default 30/60 minutes).
-* Thermal Cool-Down: A mandatory rest window is enforced after 1 hour of continuous runtime to reduce motor heat stress.
-* Voltage Stabilization: Employs an anti-spike filter and median sampling. If voltage is abnormal, the motor is cut, and a "Wait Seconds" timer must expire before resuming.
-
-4. Connectivity and User Interface
-
-Local and Remote Access
-
-* Web Dashboard: Accessible via local IP or Access Point mode. Provides live data, threshold settings, and maintenance logs.
-* Captive Portal: Automatically redirects users to the configuration page when connected to the device's Access Point.
-* MQTT Cloud Control: Allows remote command and status monitoring using TLS (Root CA-based) for secure transport.
-
-User Interaction Logic
-
-The manual button supports sophisticated multi-input logic:
-
-* Single Click: Toggles the pump (Start/Stop).
-* Double Click: Toggles an information overlay on the LCD (IP address/Device ID).
-* Long Press (3s): Manually triggers Access Point (AP) mode for configuration.
-* Smart Scheduling (DND): NTP-based time windows prevent auto-starting during night hours (Do Not Disturb).
-
-5. Maintenance and Security
-
-Data Persistence and Security
-
-* NVS (Non-Volatile Storage): Saves all thresholds, WiFi credentials, and runtime states to ensure recovery after power loss.
-* Licensing System: A token-based validity system using Base64/MD5 signatures. The system tracks "Valid Days" and disables motor operation upon expiry.
-* Event Logging: The system maintains a rolling log (events.txt) in LittleFS, tracking power cycles, sensor errors, and manual overrides.
-
-Firmware Management
-
-* OTA Updates: Supports local firmware uploads and remote update checks via GitHub.
-* Diagnostic Strings: The system provides real-time status updates such as FLOW_CHECKING!, SETTLING_WATER!, and VOLT_DELAY.
-
-Log Note Example: [SYS] Log Rolled Over (Memory Full) — The system automatically manages log size to prevent memory exhaustion.
+* **System Name:** Automatic Pump & Compressor Control System (Dual-Core + Master/Slave)
 
 
-Error Code / Issue,Description & Action (English),ဖြေရှင်းနည်း (Myanmar)
-SNR ERR,Ultrasonic sensor disconnected or obstructed by moisture. Check sensor wiring.,ဆင်ဆာအမှား - Ultrasonic sensor ကြိုးလွတ်နေခြင်း သို့မဟုတ် ရေငွေ့ရိုက်နေခြင်း စစ်ဆေးပါ။
-DRY ALRM,No water flow. Check for airlocks in the pipe or an empty lower tank.,ရေမတက် - ရေစုပ်ပိုက် လေခိုနေခြင်း သို့မဟုတ် အောက်တိုင်ကီ ရေကုန်နေခြင်းကို စစ်ဆေးပါ။
-OVER / UNDER V,Unstable power. The system automatically turns off for protection.,ဗို့အား - မီးအားမမှန်ပါ။ စက်မှ အလိုအလျောက် ပိတ်ပေးထားခြင်း ဖြစ်သည်။
-MANUAL RESET,Clears active alarms.,Manual Button (Pin 9) ကို တစ်ချက်နှိပ်၍ Alarm ပိတ်နိုင်ပါသည်။
+* **Author / Brand:** [AMK Smart Pump Control System]
 
+
+* **Firmware Version:** Version 2.1 (Premium Updated) / Internal Revision 1
+
+
+* **Release/Update Date:** May 16, 2026
+
+
+* **Remote Update Base URL:** `[https://raw.githubusercontent.com/AungMoeKhine/smart_water_pump-control/main/](https://raw.githubusercontent.com/AungMoeKhine/smart_water_pump-control/main/)`
+
+
+---
+
+### ## 2. Core Architecture & Operating Paradigms
+
+#### ### Dual-Core Process Separation (FreeRTOS)
+
+* **Core 1 (Control Loop):** Executes real-time, safety-critical routines at a ~1-second cadence. It continuously handles ultrasonic depth profiling (~4-second intervals), AC voltage sensing, flow sensor validation, physical relay manipulation (pumps/solenoids), safety alarms, and local 20x4 LCD updates.
+
+
+* **Core 0 (Network Loop):** Isolates all latency-prone communications so they never block physical equipment protection mechanisms. It executes WiFi management (Station and Access Point), Capative Portal DNS processing, the native local HTTP web server (:80), secure MQTT over TLS cloud transactions (:8883), and Over-The-Air (OTA) firmware upgrade routines.
+
+
+
+#### ### Inter-Device Orchestration (Pair Mode)
+
+* **Standalone Mode:** The device functions fully autonomously using local parameters and direct sensor feedback.
+
+
+* **Master Mode (Sump Tank Role):** Configured at the water source. It dynamically broadcasts current state variables to the cloud infrastructure via the secure MQTT topic:
+
+
+`smartpump/<master_device_id>/status`
+
+* **Slave Mode (Upper/Roof Tank Role):** Subscribes directly to the paired Master's telemetry string to coordinate complex, sequential pumping sequences. Pumping operations are automatically inhibited whenever the remote Master reports active pumping, an unsafe trip state, a water source settling delay, or if the network link status is marked invalid.
+
+
+* **Fallback Timeout Safeguard:** If the Master device fails to upload an updated status packet for 5 continuous minutes (300,000 ms), the Slave trips a communication fault and invokes a local fallback routine to protect physical equipment.
+
+
+
+---
+
+### ## 3. Physical Hardware & Pinout Specifications
+
+| Hardware Component | I/O Pin Assignment | Functional Specifications & Signal Mechanics |
+| --- | --- | --- |
+| **I2C Serial Data (SDA)** | `GPIO 1`<br> | Bus interface line for display communications.
+
+ |
+| **I2C Serial Clock (SCL)** | `GPIO 2`<br> | Bus clock synchronization line.
+
+ |
+| **ZMPT101B Voltage Sensor** | `GPIO 4`<br> | Read via a 12-bit ADC interface with an 11dB hardware attenuation gate and an operational sensitivity constant set to 500.0f.
+
+ |
+| **Ultrasonic Echo Trigger** | `GPIO 5`<br> | Outputs an active ultrasonic transmission pulse.
+
+ |
+| **Ultrasonic Pulse Echo** | `GPIO 6`<br> | Input pin captured by non-blocking pulse telemetry routines.
+
+ |
+| **Audible Alarm Buzzer** | `GPIO 7`<br> | Standard digital high drive triggering the audio alarm circuit.
+
+ |
+| **Primary Motor Relay** | `GPIO 8`<br> | Digital output managing high-current motor contacts.
+
+ |
+| **Physical Override Button** | `GPIO 9`<br> | Pulled high internally (`INPUT_PULLUP`); manages hardware manual override inputs.
+
+ |
+| **Unloader Solenoid Valve** | `GPIO 10`<br> | Controls pressure vents during compressor load phases.
+
+ |
+| **Flow Sensor Input** | `GPIO 18`<br> | Pulled high internally (`INPUT_PULLUP`); reads electronic flow signals.
+
+ |
+| **Onboard RGB Status LED** | `GPIO 48`<br> | Managed via Adafruit NeoPixel drivers (1-pixel GRB configuration running at 800kHz; throttled to a default brightness level of 30).
+
+ |
+
+---
+
+### ## 4. Advanced Protection Frameworks & Timing Tuning
+
+#### ### ZMPT101B Voltage Guard & DSP Engine
+
+The voltage framework features a digital signal processing pipeline running on a 500 ms sample window to eliminate high-voltage transient spikes:
+
+* **Median Filter Window:** Computes the true median of a 5-sample ring buffer.
+
+
+* **Outlier Hold Filter:** A reading variant greater than 18.0V away from the current running estimate must persist for 3 sequential cycles before being applied.
+
+
+* **Slew Rate Clamping:** Constrains the absolute shift value to a maximum of 3.0V per 500 ms sample cycle.
+
+
+* **EMA Smoothing:** Applies a final Exponential Moving Average filter equation:
+$$\text{Filtered} = 0.25 \times \text{Median} + 0.75 \times \text{Filtered}$$
+
+
+* **Voltage Trip Boundaries:** High Cutoff Range (**230V – 260V**), Low Cutoff Range (**150V – 190V**), with a programmable Hysteresis Resume Gap (**1V – 10V**).
+
+
+* **Recovery Cadence:** Features a mandatory delay restart countdown timer set to a fixed 15-second window once input power characteristics normalize.
+
+
+
+#### ### Flow-Based Dry-Run Guard
+
+* Continually tracks flow states when the pump is powered on.
+
+
+* If flow signals vanish for a programmable window (**60s – 180s**), the system triggers a `DRY_RUN_ALARM`, activates the audible hardware buzzer, and switches to a hard `DRY_RUN_LOCKED` trip state.
+
+
+* **Automated Recovery Testing:** Features an automatic cycle retry timer configured for either a 30-minute or 60-minute background countdown.
+
+
+
+#### ### Thermal Duty-Cycle Cool-Down
+
+* Monitors continuous run times. If the motor remains active for a solid 1-hour block, the system executes a protective thermal shutdown.
+
+
+* Enforces a cool-down window configurable between **5 and 15 minutes**.
+
+
+
+---
+
+### ## 5. Operations & Dual-Mode Profiles
+
+The system state machine dynamically handles 11 separate operational conditions: `IDLE`, `PRE_START_VALVE`, `PUMPING`, `POST_STOP_VALVE`, `DRY_RUN_ALARM`, `DRY_RUN_LOCKED`, `SENSOR_ERROR`, `VOLTAGE_ERROR`, `VOLTAGE_WAIT`, `COOLING_DOWN`, and `SETTLING_WATER`.
+
+```
+                +-------------------+
+                |       IDLE        |
+                +---------+---------+
+                          |
+             Trigger Low % / Manual On
+                          |
+       +------------------+------------------+
+       |                                     |
+       v                                     v
+[Water Pump Mode]                   [Compressor Mode]
+Pumping State Engaged               Pre-Start Valve Delay (5-15s)
+       |                                     |
+       |                                     v
+       |                             Motor State Engaged
+       |                                     |
+       v                                     v
+  Full % Reached                      Target Pressure Reached
+       |                                     |
+       |                                     v
+ Motor Stops                         Post-Stop Valve Delay (5-15s)
+       |                                     |
+       +------------------+------------------+
+                          |
+                          v
+                +-------------------+
+                |    Motor Stops    |
+                +-------------------+
+
+```
+
+* **Mode 0: Water Pump Control:** Automates filling loops based on level tracking. Pumping starts when water drops to a set low point (**20% – 70%**) and stops when water reaches full capacity (**80% – 100%**).
+
+
+* **Mode 1: Air Compressor Control:** Implements an unloader sequence around motor runs to dump head pressure using an electronic solenoid valve. It executes a pre-vent window before the motor turns on and maintains a post-vent duration after a cycle stops (adjustable from **5 to 15 seconds**).
+
+
+
+---
+
+### ## 6. Network Management & Security Features
+
+#### ### WiFi & Captive Portal Redirection
+
+* **First-Time / Out-of-Box Boot:** If no SSID credentials exist in the non-volatile storage, the system enters Access Point mode. It generates a local network named `Auto-Pump-Config` (WPA2 Key: `12345678`).
+
+
+* **Captive Portal:** Launches a background DNS hijacking engine on Port 53. It intercepts user DNS requests and redirects traffic straight to the control dashboard at `192.168.4.1`.
+
+
+* **Station Mode:** When network credentials are saved, it acts as a dedicated station client. If connections drop, background retry handlers re-acquire links without disrupting core equipment loops.
+
+
+
+#### ### Secure MQTT TLS Integration & Telemetry
+
+* Implements encrypted communication over port 8883. Authenticates using hardcoded ISRG Root X1 certificates.
+
+
+* Core network values include a 4096-byte packet buffer, a 60-second keep-alive loop, and a 10-second socket timeout threshold.
+
+
+* **Traffic Control:** Enforces a minimum 500 ms spacing window between background cloud updates to prevent server flooding.
+
+
+* **Safety Access Control:** External cloud operations require a validation match with a configured 6-digit hardware device PIN.
+
+
+
+#### ### Hardware Security & License Validation
+
+* **Factory Access Gate:** Advanced network server settings are locked behind an administrative master key string: `AMK_ADMIN_2026`.
+
+
+* **Subscription & Licensing Tracker:** Features an integrated operational validation module. It uses Base64 and MD5 verification workflows to validate uploaded token files, preventing unauthorized firmware duplication or use.
+
+
+
+---
+
+### ## 7. End-User Interface Features
+
+#### ### 20x4 Character I2C LCD Display
+
+* Features a dynamic bar-graph generator using 8 custom-programmed LCD characters to show live system capacity updates.
+
+
+* Provides real-time readouts for line voltage, operational states, active countdown timers, and warning flags.
+
+
+
+#### ### Local Web-Based Administration Dashboard
+
+* Serves a lightweight web interface built using responsive HTML and CSS.
+
+
+* **Dual-Language Engine:** Features complete UI translations between English and Myanmar (မြန်မာ) language sets.
+
+
+* **Background Telemetry Sync:** Continually refreshes live data (such as tank levels, AC voltage metrics, active restrictions, and sensor health flags) via background RESTful asynchronous JSON loops.
+
+
+* **Smart DND Mode Scheduler:** Synchronizes time over NTP networks to enforce local Do-Not-Disturb (DND) scheduling blocks. This safely prevents loud pump startups during customizable night hours.
+
+
+* **Unified Update Suite:** Supports local binary file uploads via the browser dashboard alongside background GitHub repository version checks.
