@@ -140,3 +140,108 @@ Pumping State Engaged               Pre-Start Valve Delay (5-15s)
 * **Background Telemetry Sync:** Continually refreshes live data (such as tank levels, AC voltage metrics, active restrictions, and sensor health flags) via background RESTful asynchronous JSON loops.
 * **Smart DND Mode Scheduler:** Synchronizes time over NTP networks to enforce local Do-Not-Disturb (DND) scheduling blocks. This safely prevents loud pump startups during customizable night hours.
 * **Unified Update Suite:** Supports local binary file uploads via the browser dashboard alongside background GitHub repository version checks.
+
+
+------------------------
+
+
+Briefing Document: AMK Smart Pump and Compressor Control System (v2.1)
+
+Executive Summary
+
+The AMK Smart Pump and Compressor Control System v2.1 is an advanced industrial-grade automation solution built on the ESP32-S3 dual-core architecture. Utilizing the FreeRTOS framework, the system decouples safety-critical motor control from network services to ensure real-time reliability. Key capabilities include dual-mode operation (Water Pump or Air Compressor), a sophisticated Master-Slave configuration for multi-tank environments, and a robust suite of protections including voltage guards, dry-run prevention, and thermal cool-down cycles. Connectivity is managed through a TLS-secured MQTT cloud interface and a local web dashboard, supported by a token-based licensing system and Over-the-Air (OTA) update functionality.
+
+1. System Architecture and Core Logic
+
+Dual-Core Framework (FreeRTOS)
+
+The system leverages the ESP32-S3's dual cores to prevent network latency from interfering with physical hardware safety:
+
+* Core 1 (Control Loop): Dedicated to real-time safety and control logic.
+* Core 0 (Network Loop): Manages connectivity services (WiFi, MQTT, Web Server).
+* Scheduler Performance: General logic runs on a ~1-second cadence, with ultrasonic measurement cycles every 4 seconds.
+
+Multi-Role Connectivity
+
+The system can be configured in three primary roles:
+
+1. Standalone: Operates independently based on local sensor data.
+2. Master (Sump Tank): Publishes pump and status states to an MQTT topic.
+3. Slave (Upper Tank): Subscribes to the Master's status to enforce sequential logic.
+  * Link Timeout: If the Master does not update for 5 minutes, the Slave enters a fallback behavior.
+
+Operational Modes
+
+Mode	Primary Function	Specific Logic
+Water Pump	Tank level management	Starts at low level %, stops at full level %.
+Air Compressor	Pressure management	Utilizes a solenoid "unloader sequence" with pre-vent and post-vent timing.
+
+2. Hardware and Sensor Integration
+
+Pinout Configuration
+
+Component	Pin(s)	Function
+I2C Interface	SDA (1), SCL (2)	LCD 20x4 and other peripherals.
+Voltage Sensor	4	ZMPT101B for RMS voltage monitoring.
+Ultrasonic Sensor	Trig (5), Echo (6)	Level detection (1 to 7 feet range).
+Motor Control	8	Main relay/motor trigger.
+Manual Button	9	Multi-click interface for user override.
+Solenoid Valve	10	Used for Air Compressor venting.
+Flow Sensor	18	Dry-run detection.
+RGB LED	48	Visual system status (NeoPixel).
+
+Sensing Specifications
+
+* Ultrasonic Range: Optimized for heights between 12 and 84 inches.
+* Voltage Guarding: Includes high/low cutoffs with a "Resume Gap" and delayed restart to protect against power instability.
+* Flow Persistence: Uses "initial grace" and "slug windowing" (60 seconds) to prevent false dry-run alarms during air pockets or initial start-up.
+
+3. Protection and Recovery Mechanisms
+
+The system prioritizes hardware longevity through several automated guards:
+
+* Dry-Run Guard: If the motor is active but no flow is detected within a configurable delay, the system triggers an alarm and locks the motor.
+* Auto-Retry: Following a dry-run lock, the system re-attempts operation after a rest period (default 30/60 minutes).
+* Thermal Cool-Down: A mandatory rest window is enforced after 1 hour of continuous runtime to reduce motor heat stress.
+* Voltage Stabilization: Employs an anti-spike filter and median sampling. If voltage is abnormal, the motor is cut, and a "Wait Seconds" timer must expire before resuming.
+
+4. Connectivity and User Interface
+
+Local and Remote Access
+
+* Web Dashboard: Accessible via local IP or Access Point mode. Provides live data, threshold settings, and maintenance logs.
+* Captive Portal: Automatically redirects users to the configuration page when connected to the device's Access Point.
+* MQTT Cloud Control: Allows remote command and status monitoring using TLS (Root CA-based) for secure transport.
+
+User Interaction Logic
+
+The manual button supports sophisticated multi-input logic:
+
+* Single Click: Toggles the pump (Start/Stop).
+* Double Click: Toggles an information overlay on the LCD (IP address/Device ID).
+* Long Press (3s): Manually triggers Access Point (AP) mode for configuration.
+* Smart Scheduling (DND): NTP-based time windows prevent auto-starting during night hours (Do Not Disturb).
+
+5. Maintenance and Security
+
+Data Persistence and Security
+
+* NVS (Non-Volatile Storage): Saves all thresholds, WiFi credentials, and runtime states to ensure recovery after power loss.
+* Licensing System: A token-based validity system using Base64/MD5 signatures. The system tracks "Valid Days" and disables motor operation upon expiry.
+* Event Logging: The system maintains a rolling log (events.txt) in LittleFS, tracking power cycles, sensor errors, and manual overrides.
+
+Firmware Management
+
+* OTA Updates: Supports local firmware uploads and remote update checks via GitHub.
+* Diagnostic Strings: The system provides real-time status updates such as FLOW_CHECKING!, SETTLING_WATER!, and VOLT_DELAY.
+
+Log Note Example: [SYS] Log Rolled Over (Memory Full) — The system automatically manages log size to prevent memory exhaustion.
+
+
+Error Code / Issue,Description & Action (English),ဖြေရှင်းနည်း (Myanmar)
+SNR ERR,Ultrasonic sensor disconnected or obstructed by moisture. Check sensor wiring.,ဆင်ဆာအမှား - Ultrasonic sensor ကြိုးလွတ်နေခြင်း သို့မဟုတ် ရေငွေ့ရိုက်နေခြင်း စစ်ဆေးပါ။
+DRY ALRM,No water flow. Check for airlocks in the pipe or an empty lower tank.,ရေမတက် - ရေစုပ်ပိုက် လေခိုနေခြင်း သို့မဟုတ် အောက်တိုင်ကီ ရေကုန်နေခြင်းကို စစ်ဆေးပါ။
+OVER / UNDER V,Unstable power. The system automatically turns off for protection.,ဗို့အား - မီးအားမမှန်ပါ။ စက်မှ အလိုအလျောက် ပိတ်ပေးထားခြင်း ဖြစ်သည်။
+MANUAL RESET,Clears active alarms.,Manual Button (Pin 9) ကို တစ်ချက်နှိပ်၍ Alarm ပိတ်နိုင်ပါသည်။
+
+
