@@ -1,4 +1,5 @@
 🏷️ AMK Smart Pump System V2.1 Premium | Full Technical Specification
+
 1. Core Hardware & System Architecture
 Microcontroller: ESP32-S3 Dual-Core.
 Core 1 (Real-Time Control): Handles logic, sensors, and safety (1s tick).
@@ -14,6 +15,7 @@ GPIO 9: Manual Multi-Function Button (Internal Pull-up).
 GPIO 10: Solenoid Valve (Unloader).
 GPIO 18: Flow Sensor (Internal Pull-up).
 GPIO 48: Onboard NeoPixel RGB LED.
+
 2. Advanced Sensor Intelligence
 A. Voltage Guard (ZMPT101B Pipeline)
 Sensitivity: 500.0f.
@@ -29,6 +31,7 @@ Sampling: Median of 20 samples (60ms intervals).
 Range: 12 inches (Min) to 84 inches (Max).
 Buffer (Blind Zone): Top 10 inches ignored to protect the sensor.
 Reliability: "SNR ERR" triggered after 10 consecutive invalid readings.
+
 3. Operation Profiles & Logic
 A. Operation Modes
 Water Pump: Starts at Low % (20-70), stops at Full % (80-100).
@@ -39,6 +42,7 @@ Master (Sump): Reports pump status and source stability.
 Slave (Roof): Subscribes to Master's ID. Blocks if Master is pumping or unsafe.
 Link Timeout: 5-minute (300,000ms) safety fallback if Master goes offline.
 Settling Delay: Master can enforce a 5, 10, 15, 20, or 30-minute "Settling" window after pumping.
+
 4. Protection & Safety Mechanisms
 Flow Persistence (Dry-Run):
 60s Initial Grace (startup).
@@ -50,6 +54,7 @@ Phase 2: DRY_RUN_LOCKED.
 Phase 3: Auto-Retry after 30 or 60 minutes.
 Thermal Guard: 1-hour continuous run triggers mandatory 5-15 minute rest.
 Auto-Resume: Remembers if the pump was running before a Voltage or Thermal interruption and restarts when safe (if not in DND).
+
 5. Connectivity & UI
 A. Manual Button Logic (Pin 9)
 15ms Debounce: High-speed filter.
@@ -66,6 +71,7 @@ C. Visual/Audio Status
 Buzzer Patterns: Oscillating (Dry-Run), Pulsed (Sensor Error).
 NeoPixel Colors: Red (Error), Blue (Cooling), Purple (Settling), Yellow (Pumping), Green (Online), Cyan (WiFi), Pulsing Blue (Offline).
 LCD Big Numbers: Custom 8-character generation for high-visibility Level/Voltage.
+
 6. Maintenance & Logging
 Smarter Event Log: events.txt in LittleFS.
 Timestamp: [dd/mm HH:MM] format.
@@ -73,6 +79,7 @@ Limit: 8,000 bytes (~200 entries).
 Rollover: Automatically clears and logs [SYS] Log Rolled Over when full.
 OTA: Supports GitHub remote updates and local .bin file uploads via Web UI.
 Factory Access: Advanced MQTT settings locked via Key AMK_ADMIN_2026.
+
 7. Troubleshooting (ဖြစ်ရပ်များအား ဖြေရှင်းနည်း)
 Error Code	Web Dashboard String	Myanmar Translation (ဖြေရှင်းနည်း)
 SNR ERR	SENSOR_ERROR!	ဆင်ဆာအမှား - Ultrasonic sensor ကြိုးစစ်ဆေးပါ။
