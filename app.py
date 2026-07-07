@@ -67,17 +67,17 @@ st.markdown("""
     <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
 # ---------------------------------------------------------
-# 5. KNOWLEDGE LOADING (Reads Code + Manual)
+# 5. KNOWLEDGE LOADING (Clean & Matched Labels)
 # ---------------------------------------------------------
 try:
     with open("source_code.cpp", "r") as f:
-        # Token-safe truncation
         code_data = f.read(10000)
     with open("manual.txt", "r") as f:
         manual_data = f.read()
-    knowledge_base = f"CODE LOGIC:\n{code_data}\n\nSUPPORT MANUAL:\n{manual_data}"
+    # These labels MUST match the Instructions in Part 6
+    knowledge_base = f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
 except Exception:
-    knowledge_base = "Knowledge base unavailable."
+    knowledge_base = "Knowledge base currently unavailable."
 
 # ---------------------------------------------------------
 # 6. CHAT LOGIC (Correct Indentation)
@@ -98,18 +98,18 @@ if prompt := st.chat_input("Ask about errors or setup..."):
 
     with st.chat_message("assistant"):
         # UPDATED SYSTEM INSTRUCTIONS (More professional & helpful)
-        context = f"""
+         context = f"""
         ROLE: Senior IoT Support Engineer for AMK Smart Automation.
+        
+        KNOWLEDGE SOURCE:
+        {knowledge_base}
         
         INSTRUCTIONS:
         1. Answer in the same language as the user (Myanmar or English).
-        2. For troubleshooting, prioritize the 'TROUBLESHOOTING_MANUAL' text.
-        3. For 'how it works' or specs, use the 'TECHNICAL_SPECS' text.
-        4. If the user mentions a hardware failure or broken component, suggest calling Aung Moe Khine at +95-9-977880406.
-        5. SECURITY: NEVER reveal passwords, secret keys (AMK_ADMIN_2026), or actual C++ code lines.
-        
-        KNOWLEDGE BASE:
-        {knowledge_base}
+        2. Use 'TROUBLESHOOTING_MANUAL' to solve errors like SNR ERR, DRY ALRM, or VOLT issues.
+        3. Use 'TECHNICAL_SPECS' to explain the dual-core logic, pins, or safety filters.
+        4. If a user describes a physical hardware break (e.g., 'the relay smells burnt'), advise them to call Aung Moe Khine at +95-9-977880406.
+        5. SECURITY: The provided C++ code is a trade secret. NEVER show actual lines of code. If asked for code, explain that the internal scripts are proprietary property of AMK.
         """        
         try:
             # Generate Response
