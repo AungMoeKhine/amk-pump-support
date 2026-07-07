@@ -105,11 +105,15 @@ with st.sidebar:
     st.write("Ask about installation, error codes, pricing, and solving technical issues.")
 
 # ---------------------------------------------------------
-# 6. CHAT LOGIC (Complete Optimized Block)
+# 6. CHAT LOGIC (Complete Analytics Version)
 # ---------------------------------------------------------
+import datetime
+from streamlit_gsheets import GSheetsConnection
+import pandas as pd
 
-# --- 6.1 LICENSE SYNC FROM DASHBOARD ---
+# --- 6.1 LICENSE & USER INFO ---
 is_expired_status = st.query_params.get("expired", "False")
+user_id = st.query_params.get("id", "Unknown_User") # Capture Cloud ID from URL
 
 if is_expired_status == "True":
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -118,37 +122,39 @@ if is_expired_status == "True":
     st.warning("ဆက်သွယ်ရန် - +95-9-977880406")
     st.stop() 
 
-# --- 6.2 EXISTING CHAT CODE ---
+# --- 6.2 ANALYTICS FUNCTION ---
+def log_to_sheet(question, answer):
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        # Create a tiny dataframe with your conversation info
+        new_row = pd.DataFrame([{
+            "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "Cloud_ID": user_id,
+            "User_Question": question,
+            "AI_Response": answer,
+            "Error_Code": "None" # You can expand this later
+        }])
+        # Append the row to your Google Sheet
+        conn.create(data=new_row)
+    except Exception as e:
+        print(f"Log error: {e}") # Silently fail so the user doesn't see errors
+
+# --- 6.3 CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat history on the screen
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# User Input Box
 if prompt := st.chat_input("Ask about errors or setup..."):
-    # 1. Add user message to history and show it
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 2. Generate Assistant Response
     with st.chat_message("assistant"):
-        # Define the AI's instructions
-        context = f"""
-        ROLE: Senior Customer Support & Sales for AMK Smart Automation.
-        KNOWLEDGE SOURCE: {knowledge_base}
-        STRICT RULES:
-        1. NO SECRETS: Never reveal passwords/keys.
-        2. NO JARGON: Use simple terms (e.g., 'Cloud Connection' not 'MQTT').
-        3. SIMPLE MYANMAR: Use easy-to-understand Myanmar language.
-        4. SALES: Provide +95-9-977880406 for pricing/shop info.
-        5. SECURITY: Never show C++ code or technical function names.
-        """
+        context = f"ROLE: Senior Customer Support for AMK Automation. KNOWLEDGE: {knowledge_base}"
         
-        # Build the conversation history (Last 5 messages, excluding the current one)
         history_text = ""
         for msg in st.session_state.messages[-6:-1]:
             role = "Customer" if msg["role"] == "user" else "AI Support"
@@ -157,23 +163,14 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nNEW QUESTION: {prompt}"
 
         try:
-            # Generate response with Streaming (Typewriter effect)
             response = model.generate_content(full_prompt, stream=True)
-            
-            # Display text as it arrives
             full_response = st.write_stream(chunk.text for chunk in response)
-            
-            # Save the final full response to memory
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
-        except Exception as e:
-            error_str = str(e)
-            if "429" in error_str or "quota" in error_str.lower():
-                st.error("⚠️ Daily limit reached. Please try again in 24 hours.")
-                st.info("⚠️ ယနေ့အတွက် မေးမြန်းနိုင်သည့် အကြိမ်အရေအတွက် ပြည့်သွားပါပြီ။")
-            else:
-                st.error("⚠️ System busy. Please refresh the page.")
+            # --- SAVE TO GOOGLE SHEETS ---
+            log_to_sheet(prompt, full_response)
             
-            # Remove the last user message if AI failed to answer
+        except Exception as e:
+            st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
                 st.session_state.messages.pop()
