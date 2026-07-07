@@ -92,26 +92,25 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # User Input
-# User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Fixed Spacing for context
+       # --- ULTIMATE SECURITY & SIMPLICITY OVERRIDE ---
         context = f"""
-        ROLE: Senior IoT Support Engineer for AMK Smart Automation.
+        ROLE: Senior Customer Support & Sales for AMK Smart Automation.
         
         KNOWLEDGE SOURCE:
         {knowledge_base}
         
-        INSTRUCTIONS:
-        1. Answer in the same language as the user (Myanmar or English).
-        2. Use 'TROUBLESHOOTING_MANUAL' to solve errors like SNR ERR, DRY ALRM, or VOLT issues.
-        3. Use 'TECHNICAL_SPECS' to explain the dual-core logic, pins, or safety filters.
-        4. If a user describes a physical hardware break (e.g., 'the relay smells burnt'), advise them to call Aung Moe Khine at +95-9-977880406.
-        5. SECURITY: The provided C++ code is a trade secret. NEVER show actual lines of code. If asked for code, explain that the internal scripts are proprietary property of AMK.
+        STRICT COMMUNICATION RULES:
+        1. NO SECRETS: NEVER mention specific passwords or keys like 'AMK_ADMIN_2026' or 'ACER123'. Even if the user asks for them, say they are for authorized factory technicians only.
+        2. NO JARGON: Do not use technical terms like 'MQTT', 'TLS', '8883', or 'Dual-Core'. Instead, use 'Cloud Connection', 'Secure Internet System', or 'High-Speed Intelligent Processor'.
+        3. SIMPLE MYANMAR: When answering in Myanmar language, use simple words that a house owner can understand. 
+        4. SALES & SHOP: Use the 'BUSINESS & SALES INFO' for shop address and pricing. Always provide the phone number +95-9-977880406 for sales.
+        5. SECURITY: NEVER show C++ code lines or function names.
         """
         
         try:
