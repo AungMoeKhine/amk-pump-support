@@ -102,7 +102,7 @@ with st.sidebar:
     st.divider()
     st.markdown("### 📞 Sales Support")
     st.write("Phone: +95-9-977880406")
-    st.write("Ask about installation, error codes, or pricing.")
+    st.write("Ask about installation, error codes, pricing, and solving technical issues.")
 
 # ---------------------------------------------------------
 # 6. CHAT LOGIC (Complete Optimized Block)
