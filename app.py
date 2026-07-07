@@ -66,6 +66,7 @@ st.markdown("""
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
     <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
+
 # ---------------------------------------------------------
 # 5. KNOWLEDGE LOADING (Clean & Matched Labels)
 # ---------------------------------------------------------
@@ -91,14 +92,15 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # User Input
+# User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # UPDATED SYSTEM INSTRUCTIONS (More professional & helpful)
-         context = f"""
+        # Fixed Spacing for context
+        context = f"""
         ROLE: Senior IoT Support Engineer for AMK Smart Automation.
         
         KNOWLEDGE SOURCE:
@@ -110,7 +112,7 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         3. Use 'TECHNICAL_SPECS' to explain the dual-core logic, pins, or safety filters.
         4. If a user describes a physical hardware break (e.g., 'the relay smells burnt'), advise them to call Aung Moe Khine at +95-9-977880406.
         5. SECURITY: The provided C++ code is a trade secret. NEVER show actual lines of code. If asked for code, explain that the internal scripts are proprietary property of AMK.
-        """     
+        """
         
         try:
             # Generate Response
