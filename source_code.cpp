@@ -1,11 +1,15 @@
 /* 
- * SYSTEM: AMK Smart Pump & Compressor Control (Dual-Core V2.1 Premium)
- * HARDWARE: ESP32-S3 | Logic Reference for AI Support
- * 
- * ============================================================================
- * 1. HARDWARE ARCHITECTURE & PINOUT (ESP32-S3)
- * ============================================================================
+ * ============================================================================================
+ * SYSTEM: AMK Smart Pump & Compressor Control System (Dual-Core V2.1 Premium)
+ * HARDWARE: ESP32-S3 | Logic & Architecture Map for AI Technical Support
+ * ============================================================================================
  */
+
+// --- 1. HARDWARE ARCHITECTURE (FreeRTOS) ---
+// CORE 1: Safety & Control Loop (Real-time). High priority, zero-latency.
+// CORE 0: Network Loop (WiFi, MQTT TLS 8883, Web Server, OTA). 
+// BENEFIT: Network delays or cloud reconnects NEVER block motor safety or sensor reading.
+
 const int VOLTAGE_SENSOR_PIN = 4;   // Analog ZMPT101B
 const int UPPER_TANK_TRIG_PIN = 5;  // Ultrasonic Trigger
 const int UPPER_TANK_ECHO_PIN = 6;  // Ultrasonic Echo
