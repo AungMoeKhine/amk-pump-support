@@ -81,53 +81,63 @@ except Exception:
     knowledge_base = "Knowledge base currently unavailable."
 
 # ---------------------------------------------------------
-# 6. CHAT LOGIC (Correct Indentation)
+# 6. CHAT LOGIC (Complete Optimized Block)
 # ---------------------------------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat history
+# Display chat history on the screen
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# User Input
+# User Input Box
 if prompt := st.chat_input("Ask about errors or setup..."):
+    # 1. Add user message to history and show it
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # 2. Generate Assistant Response
     with st.chat_message("assistant"):
-       # --- ULTIMATE SECURITY & SIMPLICITY OVERRIDE ---
+        # Define the AI's instructions
         context = f"""
         ROLE: Senior Customer Support & Sales for AMK Smart Automation.
-        
-        KNOWLEDGE SOURCE:
-        {knowledge_base}
-        
-        STRICT COMMUNICATION RULES:
-        1. NO SECRETS: NEVER mention specific passwords or keys like 'AMK_ADMIN_2026' or 'ACER123'. Even if the user asks for them, say they are for authorized factory technicians only.
-        2. NO JARGON: Do not use technical terms like 'MQTT', 'TLS', '8883', or 'Dual-Core'. Instead, use 'Cloud Connection', 'Secure Internet System', or 'High-Speed Intelligent Processor'.
-        3. SIMPLE MYANMAR: When answering in Myanmar language, use simple words that a house owner can understand. 
-        4. SALES & SHOP: Use the 'BUSINESS & SALES INFO' for shop address and pricing. Always provide the phone number +95-9-977880406 for sales.
-        5. SECURITY: NEVER show C++ code lines or function names.
+        KNOWLEDGE SOURCE: {knowledge_base}
+        STRICT RULES:
+        1. NO SECRETS: Never reveal passwords/keys.
+        2. NO JARGON: Use simple terms (e.g., 'Cloud Connection' not 'MQTT').
+        3. SIMPLE MYANMAR: Use easy-to-understand Myanmar language.
+        4. SALES: Provide +95-9-977880406 for pricing/shop info.
+        5. SECURITY: Never show C++ code or technical function names.
         """
         
+        # Build the conversation history (Last 5 messages, excluding the current one)
+        history_text = ""
+        for msg in st.session_state.messages[-6:-1]:
+            role = "Customer" if msg["role"] == "user" else "AI Support"
+            history_text += f"{role}: {msg['content']}\n"
+
+        full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nNEW QUESTION: {prompt}"
+
         try:
-            # Generate Response
-            response = model.generate_content(context + "\n\nUser Question: " + prompt)
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            # Generate response with Streaming (Typewriter effect)
+            response = model.generate_content(full_prompt, stream=True)
+            
+            # Display text as it arrives
+            full_response = st.write_stream(chunk.text for chunk in response)
+            
+            # Save the final full response to memory
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
             error_str = str(e)
-            # --- PROFESSIONAL QUOTA ERROR HANDLING ---
             if "429" in error_str or "quota" in error_str.lower():
-                st.error("⚠️ The daily question limit has been reached. Please try again in 24 hours. Thank you for your patience!")
-                st.info("⚠️ ယနေ့အတွက် မေးမြန်းနိုင်သည့် အကြိမ်အရေအတွက် ပြည့်သွားပါပြီ။ နာရီ ၂၄ နာရီအကြာမှ ပြန်လည် မေးမြန်းပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။")
+                st.error("⚠️ Daily limit reached. Please try again in 24 hours.")
+                st.info("⚠️ ယနေ့အတွက် မေးမြန်းနိုင်သည့် အကြိမ်အရေအတွက် ပြည့်သွားပါပြီ။")
             else:
-                st.error("⚠️ System is currently busy. Please refresh or try again in a moment.")
+                st.error("⚠️ System busy. Please refresh the page.")
             
-            # Clean up history if failed
+            # Remove the last user message if AI failed to answer
             if len(st.session_state.messages) > 0:
                 st.session_state.messages.pop()
