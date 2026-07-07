@@ -125,7 +125,7 @@ if is_expired_status == "True":
 # --- 6.2 ANALYTICS FUNCTION ---
 def log_to_sheet(question, answer):
     try:
-        conn = st.connection("gsheets", type=GSheetsConnection)
+        conn = st.connection("gsheets", type=GSheetsConnection, ttl=0)
         # Create a tiny dataframe with your conversation info
         new_row = pd.DataFrame([{
             "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
