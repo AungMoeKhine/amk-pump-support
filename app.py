@@ -135,7 +135,14 @@ def log_to_sheet(question, answer):
             "Error_Code": "None" 
         }])
         # Append the row to your Google Sheet
-        conn.create(data=new_row, worksheet="Analytics")
+        # 1. Read the existing data first
+        existing_data = conn.read(worksheet="Analytics", ttl=0)
+        
+        # 2. Add the new row to the existing data
+        updated_data = pd.concat([existing_data, new_row], ignore_index=True)
+        
+        # 3. Save the whole thing back to the sheet
+        conn.update(data=updated_data, worksheet="Analytics")
     except Exception as e:
         # Now exactly 4 spaces before 'st.error'
         st.error(f"Google Sheets Error: {e}")
