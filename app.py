@@ -79,11 +79,8 @@ def load_knowledge_data():
             manual_data = f.read()
         # We keep the exact same labels so Part 6 works perfectly
         return f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
-    except Exception as e:
-        # We use print() instead of st.error() 
-        # This logs the error in the server console (for you) 
-        # but keeps the screen clean for the customer.
-        print(f"Google Sheet Log Error: {e}")
+    except Exception:
+        return "Knowledge base currently unavailable."
 
 # ---------------------------------------------------------
 # SIDEBAR CONTROLS (Updated)
@@ -143,8 +140,8 @@ def log_to_sheet(question, answer):
         # 3. Save the whole thing back to the sheet
         conn.update(data=updated_data, worksheet="Analytics")
     except Exception as e:
-        # Now exactly 4 spaces before 'st.error'
-        st.error(f"Google Sheets Error: {e}")
+        # This prints to YOUR server log, not the customer's screen
+        print(f"Analytics failure: {e}")
 
 # --- 6.3 CHAT INTERFACE ---
 if "messages" not in st.session_state:
