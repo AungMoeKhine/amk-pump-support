@@ -107,6 +107,19 @@ with st.sidebar:
 # ---------------------------------------------------------
 # 6. CHAT LOGIC (Complete Optimized Block)
 # ---------------------------------------------------------
+
+# --- 6.1 LICENSE SYNC FROM DASHBOARD (NEW BLOCK) ---
+is_expired_status = st.query_params.get("expired", "False")
+
+if is_expired_status == "True":
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
+    st.info("Please renew your AMK Smart Pump subscription to continue using AI Support.")
+    st.warning("ဆက်သွယ်ရန် - +95-9-977880406")
+    st.stop() # This kills the rest of the script below
+
+# --- 6.2 EXISTING CHAT CODE ---
+if "messages" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
