@@ -68,19 +68,19 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 5. KNOWLEDGE LOADING (Safe & Fast Cache)
+# 5. KNOWLEDGE LOADING
 # ---------------------------------------------------------
 @st.cache_data
 def load_knowledge_data():
     try:
-        with open("source_code.cpp", "r") as f:
-            code_data = f.read(10000)
-        with open("manual.txt", "r") as f:
-            manual_data = f.read()
-        # We keep the exact same labels so Part 6 works perfectly
+        with open("source_code.cpp", "r") as f: code_data = f.read(10000)
+        with open("manual.txt", "r") as f: manual_data = f.read()
         return f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
     except Exception:
-        return "Knowledge base currently unavailable."
+        return "Knowledge base unavailable."
+
+# --- IMPORTANT: THIS LINE MUST EXIST ---
+knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
 # SIDEBAR CONTROLS (Updated)
@@ -122,7 +122,6 @@ if is_expired_status == "True":
 def log_to_sheet(question, answer):
     try:
         conn = st.connection("gsheets", type=GSheetsConnection, ttl=0)
-        # Create a tiny dataframe with your conversation info
         new_row = pd.DataFrame([{
             "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
             "Cloud_ID": user_id,
@@ -130,19 +129,11 @@ def log_to_sheet(question, answer):
             "AI_Response": answer,
             "Error_Code": "None" 
         }])
-        # Append the row to your Google Sheet
-        # 1. Read the existing data first
         existing_data = conn.read(worksheet="Analytics", ttl=0)
-        
-        # 2. Add the new row to the existing data
         updated_data = pd.concat([existing_data, new_row], ignore_index=True)
-        
-        # 3. Save the whole thing back to the sheet
         conn.update(data=updated_data, worksheet="Analytics")
     except Exception as e:
-        # This prints to YOUR server log, not the customer's screen
         print(f"Analytics failure: {e}")
-
 # --- 6.3 CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
