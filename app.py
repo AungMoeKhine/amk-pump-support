@@ -135,7 +135,7 @@ def log_to_sheet(question, answer):
             "Error_Code": "None" # You can expand this later
         }])
         # Append the row to your Google Sheet
-        conn.create(data=new_row)
+        conn.create(data=new_row, worksheet="Analytics")
     except Exception as e:
         print(f"Log error: {e}") # Silently fail so the user doesn't see errors
 
