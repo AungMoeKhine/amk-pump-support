@@ -79,12 +79,11 @@ def load_knowledge_data():
             manual_data = f.read()
         # We keep the exact same labels so Part 6 works perfectly
         return f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
-    except Exception:
-        return "Knowledge base currently unavailable."
-
-# This is the variable your Section 6 needs. 
-# It will now load instantly after the first time.
-knowledge_base = load_knowledge_data()
+    except Exception as e:
+        # We use print() instead of st.error() 
+        # This logs the error in the server console (for you) 
+        # but keeps the screen clean for the customer.
+        print(f"Google Sheet Log Error: {e}")
 
 # ---------------------------------------------------------
 # SIDEBAR CONTROLS (Updated)
