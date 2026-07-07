@@ -92,8 +92,7 @@ knowledge_base = load_knowledge_data()
 with st.sidebar:
     # Adding the title back here too
     st.markdown("## 💧 AMK AI Support")
-    st.info("Stable Support Engine • Gemini 3.1")
-    
+        
     st.divider()
     st.markdown("### 🛠️ Chat Settings")
     if st.button("🗑️ Clear Chat History", use_container_width=True):
