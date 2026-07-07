@@ -136,9 +136,9 @@ def log_to_sheet(question, answer):
         }])
         # Append the row to your Google Sheet
         conn.create(data=new_row, worksheet="Analytics")
-    except Exception as e:
-        print(f"Log error: {e}") # Silently fail so the user doesn't see errors
-
+   except Exception as e:
+        # Change 'print' to 'st.error' so you can see the message on your screen
+        st.error(f"Google Sheets Error: {e}")
 # --- 6.3 CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
