@@ -24,12 +24,15 @@ st.markdown("""
             color: #FFFFFF !important;
         }
 
-        /* Hide Clutter but keep Sidebar functional */
+        /* HIDE DEFAULT HEADER BACKGROUND (Keeps sidebar button visible) */
+        header, [data-testid="stHeader"] {
+            background-color: transparent !important;
+        }
+        
         footer, [data-testid="stDecoration"] {
             display: none !important;
         }
         
-        /* This ensures the sidebar background matches your dark theme */
         [data-testid="stSidebar"] {
             background-color: #1a1a1a !important;
         }
@@ -43,7 +46,7 @@ st.markdown("""
         }
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
 
-        /* FIX INPUT BOX ALIGNMENT (Prevents button from jumping to next line) */
+        /* INPUT BOX ALIGNMENT */
         [data-testid="stBottom"] > div {
             background-color: transparent !important;
             padding: 10px 0px 25px 0px !important;
@@ -53,23 +56,12 @@ st.markdown("""
             background-color: #262626 !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 10px !important;
-            display: flex !important;
-            flex-direction: row !important; 
-            flex-wrap: nowrap !important; /* <--- THIS FORCES THE BUTTON TO STAY RIGHT */
-            align-items: center !important;
         }
 
-        [data-testid="stChatInput"] textarea {
-            background-color: transparent !important;
-            color: #FFFFFF !important;
-            font-size: 0.95rem !important;
-        }
-
-        /* Header Spacing */
-        .block-container { padding-top: 1.5rem !important; padding-bottom: 6rem !important; }
+        /* Header Spacing Fix (Added margin to ensure title shows) */
+        .block-container { padding-top: 4rem !important; padding-bottom: 6rem !important; }
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; }
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
-        #root > div:last-child, .stApp ~ div, [data-testid="stStreamlitFooter"] { display: none !important; }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
     <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
@@ -95,9 +87,14 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# SIDEBAR CONTROLS (New Feature)
+# SIDEBAR CONTROLS (Updated)
 # ---------------------------------------------------------
 with st.sidebar:
+    # Adding the title back here too
+    st.markdown("## 💧 AMK AI Support")
+    st.info("Stable Support Engine • Gemini 3.1")
+    
+    st.divider()
     st.markdown("### 🛠️ Chat Settings")
     if st.button("🗑️ Clear Chat History", use_container_width=True):
         st.session_state.messages = []
@@ -106,7 +103,7 @@ with st.sidebar:
     st.divider()
     st.markdown("### 📞 Sales Support")
     st.write("Phone: +95-9-977880406")
-    st.info("Ask me about installation, error codes, or pricing.")
+    st.write("Ask about installation, error codes, or pricing.")
 
 # ---------------------------------------------------------
 # 6. CHAT LOGIC (Complete Optimized Block)
