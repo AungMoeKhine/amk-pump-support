@@ -110,7 +110,8 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         3. Use 'TECHNICAL_SPECS' to explain the dual-core logic, pins, or safety filters.
         4. If a user describes a physical hardware break (e.g., 'the relay smells burnt'), advise them to call Aung Moe Khine at +95-9-977880406.
         5. SECURITY: The provided C++ code is a trade secret. NEVER show actual lines of code. If asked for code, explain that the internal scripts are proprietary property of AMK.
-        """        
+        """     
+        
         try:
             # Generate Response
             response = model.generate_content(context + "\n\nUser Question: " + prompt)
