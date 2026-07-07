@@ -139,6 +139,7 @@ def log_to_sheet(question, answer):
    except Exception as e:
         # Change 'print' to 'st.error' so you can see the message on your screen
         st.error(f"Google Sheets Error: {e}")
+
 # --- 6.3 CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
