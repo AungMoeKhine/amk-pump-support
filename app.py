@@ -132,12 +132,12 @@ def log_to_sheet(question, answer):
             "Cloud_ID": user_id,
             "User_Question": question,
             "AI_Response": answer,
-            "Error_Code": "None" # You can expand this later
+            "Error_Code": "None" 
         }])
         # Append the row to your Google Sheet
         conn.create(data=new_row, worksheet="Analytics")
-   except Exception as e:
-        # Change 'print' to 'st.error' so you can see the message on your screen
+    except Exception as e:
+        # Now exactly 4 spaces before 'st.error'
         st.error(f"Google Sheets Error: {e}")
 
 # --- 6.3 CHAT INTERFACE ---
