@@ -68,17 +68,37 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 5. KNOWLEDGE LOADING (Clean & Matched Labels)
+# 5. KNOWLEDGE LOADING (Safe & Fast Cache)
 # ---------------------------------------------------------
-try:
-    with open("source_code.cpp", "r") as f:
-        code_data = f.read(10000)
-    with open("manual.txt", "r") as f:
-        manual_data = f.read()
-    # These labels MUST match the Instructions in Part 6
-    knowledge_base = f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
-except Exception:
-    knowledge_base = "Knowledge base currently unavailable."
+@st.cache_data
+def load_knowledge_data():
+    try:
+        with open("source_code.cpp", "r") as f:
+            code_data = f.read(10000)
+        with open("manual.txt", "r") as f:
+            manual_data = f.read()
+        # We keep the exact same labels so Part 6 works perfectly
+        return f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
+    except Exception:
+        return "Knowledge base currently unavailable."
+
+# This is the variable your Section 6 needs. 
+# It will now load instantly after the first time.
+knowledge_base = load_knowledge_data()
+
+# ---------------------------------------------------------
+# SIDEBAR CONTROLS (New Feature)
+# ---------------------------------------------------------
+with st.sidebar:
+    st.markdown("### 🛠️ Chat Settings")
+    if st.button("🗑️ Clear Chat History", use_container_width=True):
+        st.session_state.messages = []
+        st.rerun()
+    
+    st.divider()
+    st.markdown("### 📞 Sales Support")
+    st.write("Phone: +95-9-977880406")
+    st.info("Ask me about installation, error codes, or pricing.")
 
 # ---------------------------------------------------------
 # 6. CHAT LOGIC (Complete Optimized Block)
