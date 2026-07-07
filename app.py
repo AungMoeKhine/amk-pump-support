@@ -2,7 +2,11 @@ import streamlit as st
 import google.generativeai as genai
 
 # 1. Page Config
-st.set_page_config(page_title="AMK AI Support", page_icon="💧")
+st.set_page_config(
+    page_title="AMK AI Support", 
+    page_icon="💧",
+    initial_sidebar_state="expanded" # This forces the sidebar to be open by default
+)
 
 # 2. Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
@@ -20,10 +24,14 @@ st.markdown("""
             color: #FFFFFF !important;
         }
 
-        /* Hide Clutter */
-        footer, header, [data-testid="stHeader"], [data-testid="stDecoration"] {
+        /* Hide Clutter but keep Sidebar functional */
+        footer, [data-testid="stDecoration"] {
             display: none !important;
-            visibility: hidden !important;
+        }
+        
+        /* This ensures the sidebar background matches your dark theme */
+        [data-testid="stSidebar"] {
+            background-color: #1a1a1a !important;
         }
 
         /* Fix Message Bubbles */
