@@ -134,8 +134,16 @@ def log_to_sheet(question, answer):
         conn.update(data=updated_data, worksheet="Analytics")
     except Exception as e:
         print(f"Analytics failure: {e}")
-# --- 6.3 CLEAN CHAT INTERFACE ---
-# We use a container to keep the chat history organized
+        
+# ---------------------------------------------------------
+# 6.3 CLEAN CHAT INTERFACE
+# ---------------------------------------------------------
+
+# --- 1. INITIALIZE SESSION STATE (The missing part!) ---
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# --- 2. DISPLAY CHAT ---
 chat_container = st.container()
 
 with chat_container:
@@ -143,12 +151,11 @@ with chat_container:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# User Input Box (Always stays at the bottom)
+# User Input Box
 if prompt := st.chat_input("Ask about errors or setup..."):
-    # 1. Add user message to history
+    # Add user message to history
     st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    # 2. Re-render the chat so the user message appears immediately
+    # Re-render to show user message immediately
     st.rerun()
 
 # This handles generating the response IF the last message was from the user
@@ -157,7 +164,7 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
     
     with st.chat_message("assistant"):
         context = f"ROLE: Senior Support for AMK. KNOWLEDGE: {knowledge_base}"
-        # Simplified history for the AI
+        # Build history for AI context
         history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
         full_prompt = f"{context}\n\nPAST:\n{history_text}\n\nQUESTION: {last_prompt}"
 
@@ -170,9 +177,10 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             log_to_sheet(last_prompt, full_response)
             
-            # CRITICAL: Rerun one last time to "lock" the message in the history loop
+            # Final rerun to lock everything into the history loop
             st.rerun()
             
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
-            st.session_state.messages.pop() # Remove failed prompt
+            if len(st.session_state.messages) > 0:
+                st.session_state.messages.pop()
