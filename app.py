@@ -18,58 +18,69 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. ULTIMATE DARK THEME & CLICK SHIELD
+# 2. ULTIMATE SECURITY LAYER (Total Block)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* 1. THE CLICK SHIELD (The Overlay) */
-        /* This creates an invisible box over the top-right toolbar */
+        /* 1. COMPLETELY DELETE THE TOOLBAR (Not just hide) */
+        /* This removes the Share, GitHub, and Star buttons from the layout */
+        [data-testid="stHeader"], [data-testid="stToolbar"], header {
+            display: none !important;
+        }
+
+        /* 2. DELETE THE FULLSCREEN BUTTONS */
+        button[title="View fullscreen"], [data-testid="stFullScreenFrame"] {
+            display: none !important;
+        }
+
+        /* 3. PHYSICAL CLICK SHIELD (Overlay) */
+        /* Even if Streamlit forces an icon back, this invisible wall blocks the mouse */
         .stApp::before {
             content: "";
             position: fixed;
             top: 0;
             right: 0;
-            width: 250px; /* Adjust width to cover Share/Star/GitHub */
-            height: 60px;  /* Covers the height of the toolbar */
+            width: 300px;
+            height: 100px;
             background-color: transparent; 
-            z-index: 999999; /* Forces it to sit ON TOP of everything */
-            pointer-events: auto; /* It captures the mouse clicks */
+            z-index: 9999999; 
+            pointer-events: auto;
             cursor: default;
         }
 
-        /* 2. MAKE THE ICONS INVISIBLE BUT DON'T DELETE THE AREA */
-        [data-testid="stToolbar"] {
-            visibility: hidden !important;
-        }
-
-        /* 3. HIDE THE RED DECORATION LINE */
-        [data-testid="stDecoration"] {
-            display: none !important;
-        }
-
-        /* 4. BASE THEME (Ensures your branding title stays visible) */
+        /* 4. BASE THEME STYLING */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
-
-        header {
-            background-color: transparent !important;
+        
+        [data-testid="stChatMessage"] {
+            background-color: rgba(30, 30, 30, 0.7) !important;
+            backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
         }
-
+        
         .block-container { padding-top: 2rem !important; padding-bottom: 6rem !important; }
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; }
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
-        
-        /* 5. HIDE FULLSCREEN BUTTONS (On charts/images) */
-        button[title="View fullscreen"] {
-            display: none !important;
-        }
     </style>
+
+    <!-- 5. THE JAVASCRIPT JANITOR -->
+    <script>
+        // This script runs every 100ms to find and DELETE the GitHub link if it spawns
+        const janitor = setInterval(() => {
+            const elements = window.parent.document.querySelectorAll('header, [data-testid="stHeader"], [data-testid="stToolbar"], a[href*="github.com"]');
+            elements.forEach(el => el.remove());
+        }, 100);
+    </script>
     
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Gemini 2.0 Flash Lite</div>
+    <div class="sub-caption">Stable Support Engine • Gemini 1.5 Flash</div>
     """, unsafe_allow_html=True)
+
+# Also corrected model name (3.1 lite is not valid)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # ---------------------------------------------------------
 # 3. KNOWLEDGE LOADING (Cached for Speed)
