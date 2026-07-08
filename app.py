@@ -157,3 +157,4 @@ if prompt := st.chat_input("Ask about errors or setup..."):
             st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
                 st.session_state.messages.pop()
+                st.rerun()
