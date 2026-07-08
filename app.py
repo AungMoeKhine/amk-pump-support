@@ -22,12 +22,12 @@ model = genai.GenerativeModel('gemini-3.1-flash-lite')
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* 1. Keep the app professional by hiding the red line and footer */
+        /* 1. Hide the distracting red top line and footer badge */
         footer, [data-testid="stDecoration"] {
             display: none !important;
         }
 
-        /* 2. Theme Colors */
+        /* 2. Base Dark Theme Colors */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #121212 !important;
             color: #FFFFFF !important;
@@ -35,6 +35,7 @@ st.markdown("""
         
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
         
+        /* 3. Modern Chat Bubbles */
         [data-testid="stChatMessage"] {
             background-color: rgba(30, 30, 30, 0.7) !important;
             backdrop-filter: blur(12px) !important;
@@ -44,16 +45,18 @@ st.markdown("""
         
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
         
+        /* 4. Input Box Spacing */
         [data-testid="stBottom"] > div { background-color: transparent !important; padding-bottom: 25px !important; }
         [data-testid="stChatInput"] { background-color: #262626 !important; border-radius: 10px !important; }
         
         .block-container { padding-top: 2rem !important; padding-bottom: 6rem !important; }
         
+        /* 5. Custom Header Styling */
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; margin-top: 10px;}
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Gemini 1.5 Flash</div>
+    <div class="sub-caption">Stable Support Engine • Secure Environment</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
