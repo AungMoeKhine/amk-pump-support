@@ -134,7 +134,7 @@ def log_to_sheet(question, answer):
         conn.update(data=updated_data, worksheet="Analytics")
     except Exception as e:
         print(f"Analytics failure: {e}")
-# --- 6.3 CHAT INTERFACE ---
+# --- 6.3 CLEAN CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -147,25 +147,23 @@ if prompt := st.chat_input("Ask about errors or setup..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
-        context = f"ROLE: Senior Customer Support for AMK Automation. KNOWLEDGE: {knowledge_base}"
-        
-        history_text = ""
-        for msg in st.session_state.messages[-6:-1]:
-            role = "Customer" if msg["role"] == "user" else "AI Support"
-            history_text += f"{role}: {msg['content']}\n"
+    # We create a variable to hold the response text
+    full_response = ""
 
-        full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nNEW QUESTION: {prompt}"
+    with st.chat_message("assistant"):
+        context = f"ROLE: Senior Support for AMK. KNOWLEDGE: {knowledge_base}"
+        history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
+        full_prompt = f"{context}\n\nPAST:\n{history_text}\n\nQUESTION: {prompt}"
 
         try:
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-            # --- SAVE TO GOOGLE SHEETS ---
-            log_to_sheet(prompt, full_response)
-            
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
-            if len(st.session_state.messages) > 0:
-                st.session_state.messages.pop()
+
+    # --- THE FIX: LOGGING HAPPENS OUTSIDE THE BUBBLE ---
+    if full_response:
+        log_to_sheet(prompt, full_response)
+        # --- THE FIX: RERUN CLEARS THE TECHNICAL STATUS MESSAGE ---
+        st.rerun()
