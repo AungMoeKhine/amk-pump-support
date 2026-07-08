@@ -18,43 +18,57 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. ULTIMATE SECURITY MASK (The "Black Tape" Fix)
+# 2. BRUTE FORCE SECURITY MASK
 # ---------------------------------------------------------
+
+# 1. Create a physical "Mask" element at the very start of the app
+st.markdown('<div class="shield-overlay"></div>', unsafe_allow_html=True)
+
 st.markdown("""
     <style>
-        /* 1. THE PHYSICAL MASK */
-        /* This creates a black rectangle that sits EXACTLY on top of the white bar */
-        .stApp::after {
-            content: "";
+        /* THE SHIELD: A physical black box that sits on top of the Fullscreen bar */
+        .shield-overlay {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 42px; /* Height of the Streamlit badge bar */
-            background-color: #121212; /* Matches your app's background color */
-            z-index: 9999999; /* Forces it to stay on top of everything */
-            pointer-events: auto; /* CAPTURES THE CLICK so 'Fullscreen' cannot be hit */
+            height: 45px; /* Height of the white Streamlit bar */
+            background-color: #121212; /* Matches your background */
+            z-index: 9999999; /* Higher than everything else */
+            pointer-events: auto; /* It catches the mouse so you can't click through it */
         }
 
-        /* 2. PUSH THE CHAT INPUT UP */
-        /* This ensures your text input isn't covered by the black mask */
+        /* Standard Cleanup */
+        header, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] {
+            display: none !important;
+        }
+
+        /* Move the chat input up so the shield doesn't hide it */
         [data-testid="stBottom"] {
             padding-bottom: 50px !important;
             background-color: #121212 !important;
         }
 
-        /* 3. STANDARD CLEANUP */
-        header, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] {
-            display: none !important;
-        }
-        
         .stApp { background-color: #121212 !important; }
-        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #fff; }
-        .sub-caption { font-size: 0.72rem !important; color: #888; text-align: center; margin-bottom: 15px; }
+        .main-title { font-size: 1.25rem; font-weight: 800; text-align: center; color: #fff; }
+        .sub-caption { font-size: 0.72rem; color: #888; text-align: center; }
     </style>
 
+    <script>
+        // REACHING OUT: Try to hide the parent container of the badge
+        const hideParentBadge = () => {
+            const badges = window.parent.document.querySelectorAll('div[class*="viewerBadge"]');
+            badges.forEach(b => {
+                b.style.display = 'none';
+                b.style.visibility = 'hidden';
+            });
+        };
+        // Run repeatedly to catch it if Streamlit re-renders it
+        setInterval(hideParentBadge, 200);
+    </script>
+
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Secure Environment</div>
+    <div class="sub-caption">Stable Support Engine • Secure System</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
