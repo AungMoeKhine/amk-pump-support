@@ -26,13 +26,7 @@ st.markdown("""
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
-
-        /* THE FIX FOR THE GITHUB ICON BACKDOOR */
-        [data-testid="stToolbar"] {
-            display: none !important;
-            visibility: hidden !important;
-        }
-        
+        [data-testid="stToolbar"] { display: none !important; }
         header, [data-testid="stHeader"] { background-color: transparent !important; }
         footer, [data-testid="stDecoration"] { display: none !important; }
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
@@ -53,9 +47,8 @@ st.markdown("""
     <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
 
-
 # ---------------------------------------------------------
-# 3. KNOWLEDGE LOADING (Cached for Speed)
+# 3. KNOWLEDGE LOADING (Cached)
 # ---------------------------------------------------------
 @st.cache_data
 def load_knowledge_data():
@@ -69,11 +62,29 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 4. SIDEBAR CONTROLS
+# 4. IDENTITY & SYNC (Moved up here to fix NameError)
+# ---------------------------------------------------------
+if "user_id" not in st.session_state:
+    st.session_state.user_id = "Unknown_User"
+if "is_expired" not in st.session_state:
+    st.session_state.is_expired = "False"
+
+url_id = st.query_params.get("id")
+url_expired = st.query_params.get("expired")
+
+if url_id:
+    st.session_state.user_id = url_id
+if url_expired:
+    st.session_state.is_expired = url_expired
+
+user_id_from_url = st.session_state.user_id
+is_expired_status = st.session_state.is_expired
+
+# ---------------------------------------------------------
+# 5. SIDEBAR CONTROLS
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## 💧 AMK AI Support")
-    # --- ADD THIS LINE ---
     st.caption(f"Sync ID: {user_id_from_url}") 
     st.divider()
     if st.button("🗑️ Clear Chat History", use_container_width=True):
@@ -81,10 +92,10 @@ with st.sidebar:
         st.rerun()
     st.divider()
     st.write("Phone: +95-9-977880406")
-    st.write("Ask about installation, error codes, pricing, and solving technical issues.")
+    st.write("Ask about installation, error codes, pricing, and technical issues.")
 
 # ---------------------------------------------------------
-# 5. ANALYTICS FUNCTION (Google Sheets)
+# 6. ANALYTICS & CHAT LOGIC
 # ---------------------------------------------------------
 def log_to_sheet(user_id, question, answer):
     try:
@@ -100,88 +111,49 @@ def log_to_sheet(user_id, question, answer):
         updated_data = pd.concat([existing_data, new_row], ignore_index=True)
         conn.update(data=updated_data, worksheet="Analytics")
     except Exception as e:
-        print(f"Analytics failure: {e}")
+        print(f"Log failure: {e}")
 
-# ---------------------------------------------------------
-# 6. CHAT LOGIC
-# ---------------------------------------------------------
-
-# --- 6.1 URL PARAMETER & IDENTITY SYNC ---
-# 1. Check the URL for a new ID
-url_id = st.query_params.get("id")
-url_expired = st.query_params.get("expired")
-
-# 2. Save to Session State so it's remembered during "Full Screen"
-if "user_id" not in st.session_state:
-    st.session_state.user_id = "Unknown_User"
-if "is_expired" not in st.session_state:
-    st.session_state.is_expired = "False"
-
-# 3. Update memory if the URL has data
-if url_id:
-    st.session_state.user_id = url_id
-if url_expired:
-    st.session_state.is_expired = url_expired
-
-# 4. Use the remembered values for the rest of the app
-user_id_from_url = st.session_state.user_id
-is_expired_status = st.session_state.is_expired
-
-# --- 6.2 LICENSE LOCK ---
+# --- 6.1 LICENSE LOCK ---
 if is_expired_status == "True":
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
-    st.info("Please renew your AMK Smart Pump subscription to continue using AI Support.")
     st.stop() 
 
-# --- 6.3 CHAT INTERFACE ---
+# --- 6.2 CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display Message History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
-    # Add User Message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Generate Assistant Response
     with st.chat_message("assistant"):
-        # --- THE SECURITY GUARD ---
+        # --- STRICT SECURITY GUARD ---
         context = f"""
         ROLE: Senior Customer Support & Sales for AMK Smart Automation.
         KNOWLEDGE SOURCE: {knowledge_base}
-        
         STRICT COMMUNICATION RULES:
-        1. NO SECRETS: NEVER mention passwords like 'AMK_ADMIN_2026' or 'ACER123'. Say they are for authorized technicians only.
-        2. NO JARGON: Use simple terms like 'Cloud Connection' (not MQTT) and 'Secure System' (not TLS).
+        1. NO SECRETS: NEVER mention passwords like 'AMK_ADMIN_2026' or 'ACER123'. 
+        2. NO JARGON: Use simple terms like 'Cloud Connection' (not MQTT).
         3. SIMPLE MYANMAR: Always use easy-to-understand Myanmar language. 
         4. SALES: Always provide +95-9-977880406 for pricing.
         5. SECURITY: NEVER show lines of C++ code or technical function names.
         """
         
-        # History Context (Past 5 messages)
         history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
         full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nUSER QUESTION: {prompt}"
 
         try:
-            # Typewriter Effect Generation
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
-            
-            # Save to Memory
             st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-            # Log to Google Sheets
             log_to_sheet(user_id_from_url, prompt, full_response)
-
-            # --- THE GHOST-TEXT & STATUS FIX ---
-            # Adding this here clears the technical GSheets message and streaming lines
+            # This rerun clears the ghost lines and technical status messages
             st.rerun()
             
         except Exception as e:
