@@ -18,29 +18,30 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. IDENTITY SYNC (Must be before Sidebar to avoid errors)
+# 2. IDENTITY SYNC (Sticky Memory Fix)
 # ---------------------------------------------------------
+# Initialize variables in session memory if they don't exist
 if "user_id" not in st.session_state:
     st.session_state.user_id = "Unknown_User"
 if "is_expired" not in st.session_state:
     st.session_state.is_expired = "False"
 
-# Capture from URL parameters (sent by your HTML dashboard)
+# Capture from URL (Sent by Dashboard)
 url_id = st.query_params.get("id")
 url_expired = st.query_params.get("expired")
 
-# If the URL provides data, we "stick" it into the session memory
+# If an ID is found in the URL, save it to memory forever for this session
 if url_id:
     st.session_state.user_id = url_id
 if url_expired:
     st.session_state.is_expired = url_expired
 
-# Assign variables for use in the rest of the app
+# Use these remembered values for the rest of the code
 user_id_from_url = st.session_state.user_id
 is_expired_status = st.session_state.is_expired
 
 # ---------------------------------------------------------
-# 3. DARK THEME & CSS FIX (Hiding the broken Fullscreen button)
+# 3. DARK THEME & UI (Native Button Restored)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
@@ -48,13 +49,11 @@ st.markdown("""
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
-        
-        /* HIDE THE BROKEN FULLSCREEN BUTTON AND GITHUB ICON */
-        [data-testid="stToolbar"], [data-testid="stStreamlitFooter"], footer {
+        /* Only hide the GitHub icon toolbar, but KEEP the bottom footer for Fullscreen button */
+        [data-testid="stToolbar"] {
             display: none !important;
-            visibility: hidden !important;
         }
-
+        
         header, [data-testid="stHeader"] { background-color: transparent !important; }
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
         [data-testid="stChatMessage"] {
@@ -85,24 +84,20 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 5. SIDEBAR CONTROLS (New Full Screen Button)
+# 5. SIDEBAR CONTROLS
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## 💧 AMK AI Support")
-    st.caption(f"Synced ID: {user_id_from_url}")
+    st.caption(f"Connected ID: {user_id_from_url}") 
     st.divider()
-    
-    # NEW PROFESSIONAL FULL SCREEN BUTTON
-    # This button manually carries the ID so logging never breaks
-    full_url = f"https://amk-pump-support.streamlit.app/?id={user_id_from_url}&expired={is_expired_status}&theme=dark"
-    st.link_button("🖥️ Open Full Screen Chat", full_url, use_container_width=True)
     
     if st.button("🗑️ Clear Chat History", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
+    
     st.divider()
     st.write("Phone: +95-9-977880406")
-    st.write("Ask about installation, error codes, and technical issues.")
+    st.write("Ask about installation, error codes, pricing, and solving technical issues.")
 
 # ---------------------------------------------------------
 # 6. ANALYTICS & CHAT LOGIC
@@ -123,6 +118,7 @@ def log_to_sheet(user_id, question, answer):
     except Exception as e:
         print(f"Log failure: {e}")
 
+# LICENSE LOCK
 if is_expired_status == "True":
     st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
     st.stop() 
@@ -130,16 +126,19 @@ if is_expired_status == "True":
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        # --- THE SECURITY GUARD RULES ---
         context = f"""
         ROLE: Senior Customer Support & Sales for AMK Smart Automation.
         KNOWLEDGE SOURCE: {knowledge_base}
@@ -157,11 +156,16 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         try:
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
+            
             st.session_state.messages.append({"role": "assistant", "content": full_response})
+            
+            # --- LOGGING TO GOOGLE SHEET ---
             log_to_sheet(user_id_from_url, prompt, full_response)
-            # The rerun here prevents the Ghost Message overlap
+            
+            # THE GHOST-TEXT FIX (RERUN)
             st.rerun()
+            
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
-                st.session_state.messages.pop()
+                st.session_state.messages.pop()6
