@@ -18,56 +18,70 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. ULTIMATE DARK THEME & UI CLEANUP (Transparent & No Arrow)
+# 2. ULTIMATE TRANSPARENCY SETUP
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* 1. Hide the entire top header and decoration bar */
-        [data-testid="stHeader"], [data-testid="stDecoration"] {
-            display: none !important;
+        /* 1. Make the entire app and all containers transparent */
+        .stApp, 
+        [data-testid="stAppViewContainer"], 
+        [data-testid="stMainViewContainer"], 
+        .main, 
+        [data-testid="stHeader"], 
+        [data-testid="stToolbar"],
+        [data-testid="stBottom"] {
+            background-color: transparent !important;
+            background: transparent !important;
         }
 
-        /* 2. Hide the Sidebar AND the Arrow (collapsedControl) */
-        [data-testid="stSidebar"], [data-testid="collapsedControl"] {
-            display: none !important;
+        /* 2. Specifically make the sidebar arrow container transparent */
+        [data-testid="collapsedControl"] {
+            background-color: transparent !important;
+            background: transparent !important;
+            top: 10px; /* Adjust this to align with your website header if needed */
         }
 
-        /* 3. Make the App background transparent so it doesn't cover your website header */
-        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"] {
+        /* 3. Ensure the chat input area at the bottom doesn't have a solid background */
+        [data-testid="stBottom"] > div {
             background-color: transparent !important;
         }
-        
-        /* 4. Ensure the main content container is also transparent */
-        .main {
-            background-color: transparent !important;
-        }
 
-        /* 5. Style the chat messages so they are still visible against the transparency */
+        /* 4. Keep the Chat Messages readable (semi-transparent dark) */
         [data-testid="stChatMessage"] {
-            background-color: rgba(30, 30, 30, 0.9) !important; /* Slightly more solid for readability */
-            backdrop-filter: blur(12px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 12px !important;
-        }
-        
-        /* 6. Fix the padding at the top so the title doesn't hit the very edge */
-        .block-container { 
-            padding-top: 0rem !important; 
-            padding-bottom: 5rem !important; 
+            background-color: rgba(30, 30, 30, 0.8) !important;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* 7. Hide Action Icons (Copy/Thumbs) */
-        [data-testid="stElementActionGroup"] {
+        /* 5. Adjust padding so your title "AMK Smart Pump..." starts lower */
+        .block-container {
+            padding-top: 4rem !important; /* Increase this if the title is still too high */
+        }
+
+        /* Hide Streamlit decoration bar at the very top */
+        [data-testid="stDecoration"] {
             display: none !important;
         }
 
-        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; margin-top: 0px;}
-        .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
+        /* Title and Caption Styles */
+        .main-title { 
+            font-size: 1.25rem !important; 
+            font-weight: 800; 
+            text-align: center; 
+            width: 100%; 
+            color: #FFFFFF !important; 
+        }
+        .sub-caption { 
+            font-size: 0.72rem !important; 
+            color: #888888 !important; 
+            text-align: center; 
+            width: 100%; 
+            margin-bottom: 15px; 
+        }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
     <div class="sub-caption">Stable Support Engine • Authorized Access Only</div>
     """, unsafe_allow_html=True)
-
 # ---------------------------------------------------------
 # 3. KNOWLEDGE LOADING
 # ---------------------------------------------------------
