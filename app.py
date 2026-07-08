@@ -15,7 +15,7 @@ st.set_page_config(
 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-3.1-flash-lite')
+model = genai.GenerativeModel('gemini-2.0-flash-lite')
 
 # ---------------------------------------------------------
 # 2. IDENTITY SYNC (Sticky Memory Fix)
@@ -40,7 +40,7 @@ user_id_from_url = st.session_state.user_id
 is_expired_status = st.session_state.is_expired
 
 # ---------------------------------------------------------
-# 3. ULTIMATE DARK THEME & UI (UPDATED SELECTORS)
+# 3. ULTIMATE DARK THEME & UI
 # ---------------------------------------------------------
 st.markdown("""
     <style>
@@ -51,16 +51,26 @@ st.markdown("""
         }
 
         /* HIDE EVERY POSSIBLE FOOTER ELEMENT */
-        footer {visibility: hidden !important;}
-        [data-testid="stFooter"] {display: none !important;}
-        .viewerBadge_container__1QSob {display: none !important;}
-        .st-emotion-cache-1gh78i9 {display: none !important;}
-        .st-emotion-cache-6q9sum {display: none !important;}
+        footer { visibility: hidden !important; display: none !important; }
+        [data-testid="stFooter"] { display: none !important; }
+        .viewerBadge_container__1QSob { display: none !important; }
+        .st-emotion-cache-1gh78i9 { display: none !important; }
+        .st-emotion-cache-6q9sum { display: none !important; }
+
+        /* Hide Fullscreen & Streamlit Badge Bar (CSS layer) */
+        [data-testid="stFullScreenFrame"] { display: none !important; }
+        .viewerBadge_link__qRIco { display: none !important; }
+        .viewerBadge_container__r5tak { display: none !important; }
+        button[title="View fullscreen"] { display: none !important; }
+        .st-emotion-cache-fplge5 { display: none !important; }
+        .st-emotion-cache-1dp5vir { display: none !important; }
+        a[href*="?embed=true"] { display: none !important; }
+        a[href*="streamlit.app"] { display: none !important; }
 
         /* Hide Top Toolbar/Header */
         [data-testid="stToolbar"] { display: none !important; }
         header, [data-testid="stHeader"] { background-color: transparent !important; }
-        
+
         /* Chat Styling */
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
         [data-testid="stChatMessage"] {
@@ -68,21 +78,54 @@ st.markdown("""
             border-radius: 12px !important;
         }
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
-        
+
         /* Custom Titles */
         .block-container { padding-top: 4rem !important; padding-bottom: 3rem !important; }
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; }
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }
-
-        /* ✅ Hide Fullscreen Button (Bottom Right) */
-        [data-testid="stFullScreenFrame"] { display: none !important; }
-        .viewerBadge_link__qRIco { display: none !important; }
-        button[title="View fullscreen"] { display: none !important; }
-        .st-emotion-cache-fplge5 { display: none !important; }
-        a[href*="?embed=true"] { display: none !important; }
     </style>
+
+    <!-- JS: Kill "Fullscreen" + "Built with Streamlit" bar (works where CSS cannot reach) -->
+    <script>
+        function killEmbedBar() {
+            // Hide any element whose text is exactly "Fullscreen"
+            document.querySelectorAll('a, button, span, div').forEach(function(el) {
+                try {
+                    var txt = el.innerText ? el.innerText.trim() : '';
+                    if (txt === 'Fullscreen' || txt === 'Built with Streamlit') {
+                        var parent = el.closest('div[class]') || el.parentElement;
+                        if (parent) parent.style.setProperty('display', 'none', 'important');
+                        el.style.setProperty('display', 'none', 'important');
+                    }
+                } catch(e) {}
+            });
+
+            // Also hide by data-testid patterns
+            var targets = [
+                '[data-testid="stFullScreenFrame"]',
+                '.viewerBadge_container__r5tak',
+                '.viewerBadge_link__qRIco'
+            ];
+            targets.forEach(function(sel) {
+                document.querySelectorAll(sel).forEach(function(el) {
+                    el.style.setProperty('display', 'none', 'important');
+                });
+            });
+        }
+
+        // Run immediately + delayed to catch Streamlit's late renders
+        killEmbedBar();
+        setTimeout(killEmbedBar, 300);
+        setTimeout(killEmbedBar, 1000);
+        setTimeout(killEmbedBar, 2500);
+
+        // Watch for any DOM changes (Streamlit re-renders trigger this)
+        var observer = new MutationObserver(killEmbedBar);
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+    </script>
+
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
+    <div class="sub-caption">Stable Support Engine • Gemini 2.0 Flash Lite</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
