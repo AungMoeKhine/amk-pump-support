@@ -40,31 +40,28 @@ user_id_from_url = st.session_state.user_id
 is_expired_status = st.session_state.is_expired
 
 # ---------------------------------------------------------
-# 3. ULTIMATE DARK THEME & UI (FIXED TO HIDE FOOTER)
+# 3. ULTIMATE DARK THEME & UI (UPDATED SELECTORS)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* 1. Base Theme Colors */
+        /* Base Colors */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
 
-        /* 2. COMPLETELY HIDE THE FOOTER & FULLSCREEN BUTTON */
-        footer {
-            visibility: hidden !important;
-            height: 0px !important;
-            display: none !important;
-        }
-        [data-testid="stFooter"] {
-            display: none !important;
-        }
+        /* HIDE EVERY POSSIBLE FOOTER ELEMENT */
+        footer {visibility: hidden !important;}
+        [data-testid="stFooter"] {display: none !important;}
+        .viewerBadge_container__1QSob {display: none !important;}
+        .st-emotion-cache-1gh78i9 {display: none !important;}
+        .st-emotion-cache-6q9sum {display: none !important;}
 
-        /* 3. Hide Top Toolbar/Header */
+        /* Hide Top Toolbar/Header */
         [data-testid="stToolbar"] { display: none !important; }
         header, [data-testid="stHeader"] { background-color: transparent !important; }
         
-        /* 4. Chat Styling */
+        /* Chat Styling */
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
         [data-testid="stChatMessage"] {
             background-color: rgba(30, 30, 30, 0.7) !important;
@@ -72,7 +69,7 @@ st.markdown("""
         }
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
         
-        /* 5. Custom Titles */
+        /* Custom Titles */
         .block-container { padding-top: 4rem !important; padding-bottom: 3rem !important; }
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; }
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }
