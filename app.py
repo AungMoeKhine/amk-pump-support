@@ -40,31 +40,40 @@ user_id_from_url = st.session_state.user_id
 is_expired_status = st.session_state.is_expired
 
 # ---------------------------------------------------------
-# 3. ULTIMATE DARK THEME & UI
+# 3. ULTIMATE DARK THEME & UI (FIXED TO HIDE FOOTER)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
+        /* 1. Base Theme Colors */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
-        
-        /* HIDE FOOTER (Built with Streamlit & Fullscreen) */
-        footer {visibility: hidden;}
-        
-        /* Hide Github toolbar */
+
+        /* 2. COMPLETELY HIDE THE FOOTER & FULLSCREEN BUTTON */
+        footer {
+            visibility: hidden !important;
+            height: 0px !important;
+            display: none !important;
+        }
+        [data-testid="stFooter"] {
+            display: none !important;
+        }
+
+        /* 3. Hide Top Toolbar/Header */
         [data-testid="stToolbar"] { display: none !important; }
-        
         header, [data-testid="stHeader"] { background-color: transparent !important; }
-        [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
         
+        /* 4. Chat Styling */
+        [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
         [data-testid="stChatMessage"] {
             background-color: rgba(30, 30, 30, 0.7) !important;
             border-radius: 12px !important;
         }
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
         
-        .block-container { padding-top: 4rem !important; padding-bottom: 6rem !important; }
+        /* 5. Custom Titles */
+        .block-container { padding-top: 4rem !important; padding-bottom: 3rem !important; }
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; }
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }
     </style>
