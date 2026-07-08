@@ -5,7 +5,7 @@ from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
 # ---------------------------------------------------------
-# 1. PAGE CONFIG
+# 1. PAGE CONFIG & AI SETUP
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="AMK AI Support", 
@@ -13,13 +13,12 @@ st.set_page_config(
     initial_sidebar_state="expanded" 
 )
 
-# 2. Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 3. ULTIMATE DARK THEME & LAYOUT FIX
+# 2. ULTIMATE DARK THEME & LAYOUT
 # ---------------------------------------------------------
 st.markdown("""
     <style>
@@ -48,7 +47,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. KNOWLEDGE LOADING (Cached)
+# 3. KNOWLEDGE LOADING (Cached for Speed)
 # ---------------------------------------------------------
 @st.cache_data
 def load_knowledge_data():
@@ -62,7 +61,7 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 5. SIDEBAR CONTROLS
+# 4. SIDEBAR CONTROLS
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## 💧 AMK AI Support")
@@ -72,24 +71,12 @@ with st.sidebar:
         st.rerun()
     st.divider()
     st.write("Phone: +95-9-977880406")
-    st.write("Ask about installation, error codes, and technical issues.")
+    st.write("Ask about installation, error codes, pricing, and solving technical issues.")
 
 # ---------------------------------------------------------
-# 6. CHAT LOGIC (Fully Synchronized & Ghost-Proof)
+# 5. ANALYTICS FUNCTION (Google Sheets)
 # ---------------------------------------------------------
-
-# --- 6.1 SYNC INFO FROM URL ---
-# Note: These values come from your cloud_control.html iframe link
-is_expired_status = st.query_params.get("expired", "False")
-user_id = st.query_params.get("id", "Unknown_User")
-
-if is_expired_status == "True":
-    st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
-    st.info("Please renew your AMK Smart Pump subscription.")
-    st.stop() 
-
-# --- 6.2 ANALYTICS FUNCTION (Writes to Analytics tab) ---
-def log_to_sheet(question, answer):
+def log_to_sheet(user_id, question, answer):
     try:
         conn = st.connection("gsheets", type=GSheetsConnection, ttl=0)
         new_row = pd.DataFrame([{
@@ -99,50 +86,74 @@ def log_to_sheet(question, answer):
             "AI_Response": answer,
             "Error_Code": "None" 
         }])
-        # Read current data and append new row
         existing_data = conn.read(worksheet="Analytics", ttl=0)
         updated_data = pd.concat([existing_data, new_row], ignore_index=True)
         conn.update(data=updated_data, worksheet="Analytics")
     except Exception as e:
-        print(f"Log failure: {e}") # Silent error
+        print(f"Analytics failure: {e}")
+
+# ---------------------------------------------------------
+# 6. CHAT LOGIC
+# ---------------------------------------------------------
+
+# --- 6.1 URL PARAMETER SYNC ---
+is_expired_status = st.query_params.get("expired", "False")
+user_id_from_url = st.query_params.get("id", "Unknown_User")
+
+# --- 6.2 LICENSE LOCK ---
+if is_expired_status == "True":
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
+    st.info("Please renew your AMK Smart Pump subscription to continue using AI Support.")
+    st.stop() 
 
 # --- 6.3 CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display history
+# Display Message History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Handle User Input
+# User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
-    # Show user message immediately
+    # Add User Message
+    st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # Generate and Stream Assistant Response
+    # Generate Assistant Response
     with st.chat_message("assistant"):
+        # --- THE SECURITY GUARD ---
         context = f"""
-        ROLE: Senior Customer Support for AMK Smart Automation.
-        RULES: No secrets, Simple Myanmar, No jargon.
-        KNOWLEDGE: {knowledge_base}
+        ROLE: Senior Customer Support & Sales for AMK Smart Automation.
+        KNOWLEDGE SOURCE: {knowledge_base}
+        
+        STRICT COMMUNICATION RULES:
+        1. NO SECRETS: NEVER mention passwords like 'AMK_ADMIN_2026' or 'ACER123'. Say they are for authorized technicians only.
+        2. NO JARGON: Use simple terms like 'Cloud Connection' (not MQTT) and 'Secure System' (not TLS).
+        3. SIMPLE MYANMAR: Always use easy-to-understand Myanmar language. 
+        4. SALES: Always provide +95-9-977880406 for pricing.
+        5. SECURITY: NEVER show lines of C++ code or technical function names.
         """
-        # Memory Context (last 5 messages)
+        
+        # History Context (Past 5 messages)
         history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
-        full_prompt = f"{context}\n\nPAST:\n{history_text}\n\nQUESTION: {prompt}"
+        full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nUSER QUESTION: {prompt}"
 
         try:
+            # Typewriter Effect Generation
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
             
-            # Save to Memory & Sheet
+            # Save to Memory
             st.session_state.messages.append({"role": "assistant", "content": full_response})
-            log_to_sheet(prompt, full_response)
             
-            # Final Rerun cleans up 'Ghost Lines' from streaming
-            st.rerun()
+            # Log to Google Sheets
+            log_to_sheet(user_id_from_url, prompt, full_response)
             
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
+            if len(st.session_state.messages) > 0:
+                st.session_state.messages.pop()
