@@ -18,29 +18,14 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. IDENTITY SYNC (Sticky Memory Fix)
+# 2. IDENTITY SYNC
 # ---------------------------------------------------------
-if "user_id" not in st.session_state:
-    st.session_state.user_id = "Unknown_User"
-if "is_expired" not in st.session_state:
-    st.session_state.is_expired = "False"
-
-# Capture ID and Expiry from the Dashboard URL
-url_id = st.query_params.get("id")
-url_expired = st.query_params.get("expired")
-
-# Save to browser session so it "Sticks" even if the URL changes
-if url_id:
-    st.session_state.user_id = url_id
-if url_expired:
-    st.session_state.is_expired = url_expired
-
-# Variables used throughout the app
-user_id_from_url = st.session_state.user_id
-is_expired_status = st.session_state.is_expired
+# Simple identity check from Dashboard URL
+user_id_from_url = st.query_params.get("id", "Unknown_User")
+is_expired_status = st.query_params.get("expired", "False")
 
 # ---------------------------------------------------------
-# 3. ULTIMATE DARK THEME & UI
+# 3. ULTIMATE UI LOCK (Button Removal)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
@@ -48,9 +33,13 @@ st.markdown("""
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
-        /* Hide Github toolbar but keep footer for Fullscreen button */
-        [data-testid="stToolbar"] { display: none !important; }
         
+        /* THIS CODE REMOVES THE FULLSCREEN BUTTON AND GITHUB ICON */
+        [data-testid="stToolbar"], [data-testid="stStreamlitFooter"], footer {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
         header, [data-testid="stHeader"] { background-color: transparent !important; }
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
         [data-testid="stChatMessage"] {
@@ -67,7 +56,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. KNOWLEDGE LOADING (Cached)
+# 4. KNOWLEDGE LOADING
 # ---------------------------------------------------------
 @st.cache_data
 def load_knowledge_data():
@@ -85,14 +74,14 @@ knowledge_base = load_knowledge_data()
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## 💧 AMK AI Support")
-    st.caption(f"Connected ID: {user_id_from_url}") 
+    st.caption(f"Sync ID: {user_id_from_url}") 
     st.divider()
     if st.button("🗑️ Clear Chat History", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
     st.divider()
     st.write("Phone: +95-9-977880406")
-    st.write("Ask about installation, error codes, pricing, and technical issues.")
+    st.write("Ask about installation, error codes, and pricing.")
 
 # ---------------------------------------------------------
 # 6. ANALYTICS FUNCTION
@@ -117,22 +106,19 @@ def log_to_sheet(user_id, question, answer):
 # 7. CHAT LOGIC
 # ---------------------------------------------------------
 
-# License Expiry Check
+# Expiry Block
 if is_expired_status == "True":
     st.markdown("<br>", unsafe_allow_html=True)
     st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
     st.stop() 
 
-# Initialize Messages
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -157,15 +143,9 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         try:
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
-            
             st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-            # Save to Google Sheet Analytics
             log_to_sheet(user_id_from_url, prompt, full_response)
-            
-            # Rerun to clean UI and lock in the identity
             st.rerun()
-            
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
