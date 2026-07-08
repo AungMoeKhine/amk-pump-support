@@ -73,6 +73,13 @@ st.markdown("""
         .block-container { padding-top: 4rem !important; padding-bottom: 3rem !important; }
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; }
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }
+
+        /* ✅ Hide Fullscreen Button (Bottom Right) */
+        [data-testid="stFullScreenFrame"] { display: none !important; }
+        .viewerBadge_link__qRIco { display: none !important; }
+        button[title="View fullscreen"] { display: none !important; }
+        .st-emotion-cache-fplge5 { display: none !important; }
+        a[href*="?embed=true"] { display: none !important; }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
     <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
