@@ -168,4 +168,5 @@ if prompt := st.chat_input("Ask about errors or setup..."):
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
-                st.session_state.messages.pop()6
+                st.session_state.messages.pop()
+                
