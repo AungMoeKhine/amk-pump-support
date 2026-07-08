@@ -134,38 +134,45 @@ def log_to_sheet(question, answer):
         conn.update(data=updated_data, worksheet="Analytics")
     except Exception as e:
         print(f"Analytics failure: {e}")
-# --- 6.3 CHAT INTERFACE ---
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# --- 6.3 CLEAN CHAT INTERFACE ---
+# We use a container to keep the chat history organized
+chat_container = st.container()
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+with chat_container:
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
+# User Input Box (Always stays at the bottom)
 if prompt := st.chat_input("Ask about errors or setup..."):
+    # 1. Add user message to history
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    
+    # 2. Re-render the chat so the user message appears immediately
+    st.rerun()
 
+# This handles generating the response IF the last message was from the user
+if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] == "user":
+    last_prompt = st.session_state.messages[-1]["content"]
+    
     with st.chat_message("assistant"):
-        context = f"ROLE: Senior Customer Support for AMK Automation. KNOWLEDGE: {knowledge_base}"
-        
-        history_text = ""
-        for msg in st.session_state.messages[-6:-1]:
-            role = "Customer" if msg["role"] == "user" else "AI Support"
-            history_text += f"{role}: {msg['content']}\n"
-
-        full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nNEW QUESTION: {prompt}"
+        context = f"ROLE: Senior Support for AMK. KNOWLEDGE: {knowledge_base}"
+        # Simplified history for the AI
+        history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
+        full_prompt = f"{context}\n\nPAST:\n{history_text}\n\nQUESTION: {last_prompt}"
 
         try:
+            # Generate the response
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
             
-            # --- SAVE TO GOOGLE SHEETS ---
-            log_to_sheet(prompt, full_response)
+            # Save response and log to sheet
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            log_to_sheet(last_prompt, full_response)
+            
+            # CRITICAL: Rerun one last time to "lock" the message in the history loop
+            st.rerun()
             
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
-            if len(st.session_state.messages) > 0:
-                st.session_state.messages.pop()
+            st.session_state.messages.pop() # Remove failed prompt
