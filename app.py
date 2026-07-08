@@ -1,70 +1,66 @@
 import streamlit as st
 import google.generativeai as genai
-import datetime
-from streamlit_gsheets import GSheetsConnection
-import pandas as pd
 
-# ---------------------------------------------------------
-# 1. PAGE CONFIG & AI SETUP
-# ---------------------------------------------------------
+# 1. Page Config
 st.set_page_config(
     page_title="AMK AI Support", 
     page_icon="💧",
-    initial_sidebar_state="expanded" 
+    initial_sidebar_state="expanded" # This forces the sidebar to be open by default
 )
 
+# 2. Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
+
+# 3. Model Selection (Gemini 3.1 Lite)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
-# ---------------------------------------------------------
-# 2. ULTIMATE DARK THEME & LAYOUT (Icons Removed)
-# ---------------------------------------------------------
+# 4. ULTIMATE DARK THEME & LAYOUT FIX
 st.markdown("""
     <style>
-        /* 1. Hide the entire top header (Deploy button, Menu, etc.) */
-        [data-testid="stHeader"] {
-            display: none !important;
-        }
-
-        /* 2. Hide the footer and the colorful top decoration bar */
-        footer, [data-testid="stDecoration"] {
-            display: none !important;
-        }
-
-        /* 3. Hide action icons on chat messages (Copy, Thumbs up/down) */
-        [data-testid="stElementActionGroup"] {
-            display: none !important;
-        }
-
-        /* 4. Hide the Main Menu (Hamburger) specifically */
-        #MainMenu {
-            visibility: hidden;
-        }
-
-        /* Existing Theme Logic */
+        /* Force Deep Grey background */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
+
+        /* HIDE DEFAULT HEADER BACKGROUND (Keeps sidebar button visible) */
+        header, [data-testid="stHeader"] {
+            background-color: transparent !important;
+        }
         
-        [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
+        footer, [data-testid="stDecoration"] {
+            display: none !important;
+        }
         
+        [data-testid="stSidebar"] {
+            background-color: #1a1a1a !important;
+        }
+
+        /* Fix Message Bubbles */
         [data-testid="stChatMessage"] {
             background-color: rgba(30, 30, 30, 0.7) !important;
             backdrop-filter: blur(12px) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 12px !important;
         }
-        
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
-        
-        [data-testid="stBottom"] > div { background-color: transparent !important; padding-bottom: 25px !important; }
-        [data-testid="stChatInput"] { background-color: #262626 !important; border-radius: 10px !important; }
-        
-        .block-container { padding-top: 2rem !important; padding-bottom: 6rem !important; }
-        
-        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; margin-top: 10px;}
+
+        /* INPUT BOX ALIGNMENT */
+        [data-testid="stBottom"] > div {
+            background-color: transparent !important;
+            padding: 10px 0px 25px 0px !important;
+        }
+
+        [data-testid="stChatInput"] {
+            background-color: #262626 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 10px !important;
+        }
+
+        /* Header Spacing Fix (Added margin to ensure title shows) */
+        .block-container { padding-top: 4rem !important; padding-bottom: 6rem !important; }
+        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; }
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
@@ -72,7 +68,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. KNOWLEDGE LOADING (Cached for Speed)
+# 5. KNOWLEDGE LOADING
 # ---------------------------------------------------------
 @st.cache_data
 def load_knowledge_data():
@@ -83,25 +79,47 @@ def load_knowledge_data():
     except Exception:
         return "Knowledge base unavailable."
 
+# --- IMPORTANT: THIS LINE MUST EXIST ---
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 4. SIDEBAR CONTROLS
+# SIDEBAR CONTROLS (Updated)
 # ---------------------------------------------------------
 with st.sidebar:
+    # Adding the title back here too
     st.markdown("## 💧 AMK AI Support")
+        
     st.divider()
+    st.markdown("### 🛠️ Chat Settings")
     if st.button("🗑️ Clear Chat History", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
+    
     st.divider()
+    st.markdown("### 📞 Sales Support")
     st.write("Phone: +95-9-977880406")
     st.write("Ask about installation, error codes, pricing, and solving technical issues.")
 
 # ---------------------------------------------------------
-# 5. ANALYTICS FUNCTION (Google Sheets)
+# 6. CHAT LOGIC (Complete Analytics Version)
 # ---------------------------------------------------------
-def log_to_sheet(user_id, question, answer):
+import datetime
+from streamlit_gsheets import GSheetsConnection
+import pandas as pd
+
+# --- 6.1 LICENSE & USER INFO ---
+is_expired_status = st.query_params.get("expired", "False")
+user_id = st.query_params.get("id", "Unknown_User") # Capture Cloud ID from URL
+
+if is_expired_status == "True":
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
+    st.info("Please renew your AMK Smart Pump subscription to continue using AI Support.")
+    st.warning("ဆက်သွယ်ရန် - +95-9-977880406")
+    st.stop() 
+
+# --- 6.2 ANALYTICS FUNCTION ---
+def log_to_sheet(question, answer):
     try:
         conn = st.connection("gsheets", type=GSheetsConnection, ttl=0)
         new_row = pd.DataFrame([{
@@ -116,70 +134,53 @@ def log_to_sheet(user_id, question, answer):
         conn.update(data=updated_data, worksheet="Analytics")
     except Exception as e:
         print(f"Analytics failure: {e}")
-
+        
 # ---------------------------------------------------------
-# 6. CHAT LOGIC
+# 6.3 CLEAN CHAT INTERFACE
 # ---------------------------------------------------------
 
-# --- 6.1 URL PARAMETER SYNC ---
-is_expired_status = st.query_params.get("expired", "False")
-user_id_from_url = st.query_params.get("id", "Unknown_User")
-
-# --- 6.2 LICENSE LOCK ---
-if is_expired_status == "True":
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
-    st.info("Please renew your AMK Smart Pump subscription to continue using AI Support.")
-    st.stop() 
-
-# --- 6.3 CHAT INTERFACE ---
+# --- 1. INITIALIZE SESSION STATE (The missing part!) ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display Message History
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# --- 2. DISPLAY CHAT ---
+chat_container = st.container()
 
-# User Input
+with chat_container:
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+# User Input Box
 if prompt := st.chat_input("Ask about errors or setup..."):
-    # Add User Message
+    # Add user message to history
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    # Re-render to show user message immediately
+    st.rerun()
 
-    # Generate Assistant Response
+# This handles generating the response IF the last message was from the user
+if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] == "user":
+    last_prompt = st.session_state.messages[-1]["content"]
+    
     with st.chat_message("assistant"):
-        # --- THE SECURITY GUARD ---
-        context = f"""
-        ROLE: Senior Customer Support & Sales for AMK Smart Automation.
-        KNOWLEDGE SOURCE: {knowledge_base}
-        
-        STRICT COMMUNICATION RULES:
-        1. NO SECRETS: NEVER mention passwords like 'AMK_ADMIN_2026' or 'ACER123'. Say they are for authorized technicians only.
-        2. NO JARGON: Use simple terms like 'Cloud Connection' (not MQTT) and 'Secure System' (not TLS).
-        3. SIMPLE MYANMAR: Always use easy-to-understand Myanmar language. 
-        4. SALES: Always provide +95-9-977880406 for pricing.
-        5. SECURITY: NEVER show lines of C++ code or technical function names.
-        """
-        
-        # History Context (Past 5 messages)
+        context = f"ROLE: Senior Support for AMK. KNOWLEDGE: {knowledge_base}"
+        # Build history for AI context
         history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
-        full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nUSER QUESTION: {prompt}"
+        full_prompt = f"{context}\n\nPAST:\n{history_text}\n\nQUESTION: {last_prompt}"
 
         try:
-            # Typewriter Effect Generation
+            # Generate the response
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
             
-            # Save to Memory
+            # Save response and log to sheet
             st.session_state.messages.append({"role": "assistant", "content": full_response})
+            log_to_sheet(last_prompt, full_response)
             
-            # Log to Google Sheets
-            log_to_sheet(user_id_from_url, prompt, full_response)
+            # Final rerun to lock everything into the history loop
+            st.rerun()
             
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
                 st.session_state.messages.pop()
-                
