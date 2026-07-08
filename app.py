@@ -86,19 +86,6 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 4. SIDEBAR CONTROLS
-# ---------------------------------------------------------
-with st.sidebar:
-    st.markdown("## 💧 AMK AI Support")
-    st.divider()
-    if st.button("🗑️ Clear Chat History", use_container_width=True):
-        st.session_state.messages = []
-        st.rerun()
-    st.divider()
-    st.write("Phone: +95-9-977880406")
-    st.write("Ask about installation, error codes, pricing, and solving technical issues.")
-
-# ---------------------------------------------------------
 # 5. ANALYTICS FUNCTION (Google Sheets)
 # ---------------------------------------------------------
 def log_to_sheet(user_id, question, answer):
