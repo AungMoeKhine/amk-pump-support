@@ -152,9 +152,12 @@ if prompt := st.chat_input("Ask about errors or setup..."):
             
             # Log to Google Sheets
             log_to_sheet(user_id_from_url, prompt, full_response)
+
+            # --- THE GHOST-TEXT & STATUS FIX ---
+            # Adding this here clears the technical GSheets message and streaming lines
+            st.rerun()
             
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
                 st.session_state.messages.pop()
-                
