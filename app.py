@@ -18,31 +18,16 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. ULTIMATE DARK THEME & LAYOUT (Icons Removed)
+# 2. CLEAN DARK THEME & UI
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* 1. Hide the entire top header (Deploy button, Menu, etc.) */
-        [data-testid="stHeader"] {
-            display: none !important;
-        }
-
-        /* 2. Hide the footer and the colorful top decoration bar */
+        /* 1. Keep the app professional by hiding the red line and footer */
         footer, [data-testid="stDecoration"] {
             display: none !important;
         }
 
-        /* 3. Hide action icons on chat messages (Copy, Thumbs up/down) */
-        [data-testid="stElementActionGroup"] {
-            display: none !important;
-        }
-
-        /* 4. Hide the Main Menu (Hamburger) specifically */
-        #MainMenu {
-            visibility: hidden;
-        }
-
-        /* Existing Theme Logic */
+        /* 2. Theme Colors */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #121212 !important;
             color: #FFFFFF !important;
@@ -68,7 +53,7 @@ st.markdown("""
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
+    <div class="sub-caption">Stable Support Engine • Gemini 1.5 Flash</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
