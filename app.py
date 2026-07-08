@@ -20,28 +20,27 @@ model = genai.GenerativeModel('gemini-3.1-flash-lite')
 # ---------------------------------------------------------
 # 2. IDENTITY SYNC (Sticky Memory Fix)
 # ---------------------------------------------------------
-# Initialize variables in session memory if they don't exist
 if "user_id" not in st.session_state:
     st.session_state.user_id = "Unknown_User"
 if "is_expired" not in st.session_state:
     st.session_state.is_expired = "False"
 
-# Capture from URL (Sent by Dashboard)
+# Capture ID and Expiry from the Dashboard URL
 url_id = st.query_params.get("id")
 url_expired = st.query_params.get("expired")
 
-# If an ID is found in the URL, save it to memory forever for this session
+# Save to browser session so it "Sticks" even if the URL changes
 if url_id:
     st.session_state.user_id = url_id
 if url_expired:
     st.session_state.is_expired = url_expired
 
-# Use these remembered values for the rest of the code
+# Variables used throughout the app
 user_id_from_url = st.session_state.user_id
 is_expired_status = st.session_state.is_expired
 
 # ---------------------------------------------------------
-# 3. DARK THEME & UI (Native Button Restored)
+# 3. ULTIMATE DARK THEME & UI
 # ---------------------------------------------------------
 st.markdown("""
     <style>
@@ -49,10 +48,8 @@ st.markdown("""
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
-        /* Only hide the GitHub icon toolbar, but KEEP the bottom footer for Fullscreen button */
-        [data-testid="stToolbar"] {
-            display: none !important;
-        }
+        /* Hide Github toolbar but keep footer for Fullscreen button */
+        [data-testid="stToolbar"] { display: none !important; }
         
         header, [data-testid="stHeader"] { background-color: transparent !important; }
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
@@ -70,7 +67,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. KNOWLEDGE LOADING
+# 4. KNOWLEDGE LOADING (Cached)
 # ---------------------------------------------------------
 @st.cache_data
 def load_knowledge_data():
@@ -90,17 +87,15 @@ with st.sidebar:
     st.markdown("## 💧 AMK AI Support")
     st.caption(f"Connected ID: {user_id_from_url}") 
     st.divider()
-    
     if st.button("🗑️ Clear Chat History", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
-    
     st.divider()
     st.write("Phone: +95-9-977880406")
-    st.write("Ask about installation, error codes, pricing, and solving technical issues.")
+    st.write("Ask about installation, error codes, pricing, and technical issues.")
 
 # ---------------------------------------------------------
-# 6. ANALYTICS & CHAT LOGIC
+# 6. ANALYTICS FUNCTION
 # ---------------------------------------------------------
 def log_to_sheet(user_id, question, answer):
     try:
@@ -118,11 +113,17 @@ def log_to_sheet(user_id, question, answer):
     except Exception as e:
         print(f"Log failure: {e}")
 
-# LICENSE LOCK
+# ---------------------------------------------------------
+# 7. CHAT LOGIC
+# ---------------------------------------------------------
+
+# License Expiry Check
 if is_expired_status == "True":
+    st.markdown("<br>", unsafe_allow_html=True)
     st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
     st.stop() 
 
+# Initialize Messages
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -159,14 +160,13 @@ if prompt := st.chat_input("Ask about errors or setup..."):
             
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
-            # --- LOGGING TO GOOGLE SHEET ---
+            # Save to Google Sheet Analytics
             log_to_sheet(user_id_from_url, prompt, full_response)
             
-            # THE GHOST-TEXT FIX (RERUN)
+            # Rerun to clean UI and lock in the identity
             st.rerun()
             
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
                 st.session_state.messages.pop()
-                
