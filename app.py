@@ -26,6 +26,13 @@ st.markdown("""
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
+
+        /* THE FIX FOR THE GITHUB ICON BACKDOOR */
+        [data-testid="stToolbar"] {
+            display: none !important;
+            visibility: hidden !important;
+        }
+        
         header, [data-testid="stHeader"] { background-color: transparent !important; }
         footer, [data-testid="stDecoration"] { display: none !important; }
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
@@ -45,6 +52,7 @@ st.markdown("""
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
     <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
+
 
 # ---------------------------------------------------------
 # 3. KNOWLEDGE LOADING (Cached for Speed)
