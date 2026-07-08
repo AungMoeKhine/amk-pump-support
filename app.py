@@ -73,6 +73,8 @@ knowledge_base = load_knowledge_data()
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## 💧 AMK AI Support")
+    # --- ADD THIS LINE ---
+    st.caption(f"Sync ID: {user_id_from_url}") 
     st.divider()
     if st.button("🗑️ Clear Chat History", use_container_width=True):
         st.session_state.messages = []
