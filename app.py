@@ -18,57 +18,57 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. BRUTE FORCE SECURITY MASK
+# 2. ULTIMATE DARK THEME & LAYOUT (Icons Removed)
 # ---------------------------------------------------------
-
-# 1. Create a physical "Mask" element at the very start of the app
-st.markdown('<div class="shield-overlay"></div>', unsafe_allow_html=True)
-
 st.markdown("""
     <style>
-        /* THE SHIELD: A physical black box that sits on top of the Fullscreen bar */
-        .shield-overlay {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 45px; /* Height of the white Streamlit bar */
-            background-color: #121212; /* Matches your background */
-            z-index: 9999999; /* Higher than everything else */
-            pointer-events: auto; /* It catches the mouse so you can't click through it */
-        }
-
-        /* Standard Cleanup */
-        header, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] {
+        /* 1. Hide the entire top header (Deploy button, Menu, etc.) */
+        [data-testid="stHeader"] {
             display: none !important;
         }
 
-        /* Move the chat input up so the shield doesn't hide it */
-        [data-testid="stBottom"] {
-            padding-bottom: 50px !important;
-            background-color: #121212 !important;
+        /* 2. Hide the footer and the colorful top decoration bar */
+        footer, [data-testid="stDecoration"] {
+            display: none !important;
         }
 
-        .stApp { background-color: #121212 !important; }
-        .main-title { font-size: 1.25rem; font-weight: 800; text-align: center; color: #fff; }
-        .sub-caption { font-size: 0.72rem; color: #888; text-align: center; }
+        /* 3. Hide action icons on chat messages (Copy, Thumbs up/down) */
+        [data-testid="stElementActionGroup"] {
+            display: none !important;
+        }
+
+        /* 4. Hide the Main Menu (Hamburger) specifically */
+        #MainMenu {
+            visibility: hidden;
+        }
+
+        /* Existing Theme Logic */
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
+            background-color: #121212 !important;
+            color: #FFFFFF !important;
+        }
+        
+        [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
+        
+        [data-testid="stChatMessage"] {
+            background-color: rgba(30, 30, 30, 0.7) !important;
+            backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+        }
+        
+        [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
+        
+        [data-testid="stBottom"] > div { background-color: transparent !important; padding-bottom: 25px !important; }
+        [data-testid="stChatInput"] { background-color: #262626 !important; border-radius: 10px !important; }
+        
+        .block-container { padding-top: 2rem !important; padding-bottom: 6rem !important; }
+        
+        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; margin-top: 10px;}
+        .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
     </style>
-
-    <script>
-        // REACHING OUT: Try to hide the parent container of the badge
-        const hideParentBadge = () => {
-            const badges = window.parent.document.querySelectorAll('div[class*="viewerBadge"]');
-            badges.forEach(b => {
-                b.style.display = 'none';
-                b.style.visibility = 'hidden';
-            });
-        };
-        // Run repeatedly to catch it if Streamlit re-renders it
-        setInterval(hideParentBadge, 200);
-    </script>
-
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Secure System</div>
+    <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
