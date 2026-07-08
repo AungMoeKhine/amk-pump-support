@@ -157,4 +157,9 @@ if prompt := st.chat_input("Ask about errors or setup..."):
             st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
                 st.session_state.messages.pop()
-                st.rerun()
+                
+    # --- THE FIX: LOGGING HAPPENS OUTSIDE THE BUBBLE ---
+    if full_response:
+        log_to_sheet(prompt, full_response)
+        # --- THE FIX: RERUN CLEARS THE TECHNICAL STATUS MESSAGE ---
+        st.rerun()
