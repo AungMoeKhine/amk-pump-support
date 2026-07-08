@@ -18,28 +18,31 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. ULTIMATE DARK THEME & LAYOUT (Icons Removed)
+# 2. ULTIMATE DARK THEME & LAYOUT (Fixed Sidebar Access)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* 1. Hide the entire top header (Deploy button, Menu, etc.) */
-        [data-testid="stHeader"] {
+        /* Hide the Deploy button and the Menu button, but NOT the whole header */
+        .stDeployButton {
             display: none !important;
         }
-
-        /* 2. Hide the footer and the colorful top decoration bar */
-        footer, [data-testid="stDecoration"] {
-            display: none !important;
-        }
-
-        /* 3. Hide action icons on chat messages (Copy, Thumbs up/down) */
-        [data-testid="stElementActionGroup"] {
-            display: none !important;
-        }
-
-        /* 4. Hide the Main Menu (Hamburger) specifically */
         #MainMenu {
             visibility: hidden;
+        }
+        
+        /* Hide the decoration bar at the top */
+        [data-testid="stDecoration"] {
+            display: none !important;
+        }
+
+        /* Hide footer */
+        footer {
+            display: none !important;
+        }
+
+        /* Hide action icons on chat messages (Copy, Thumbs up/down) */
+        [data-testid="stElementActionGroup"] {
+            display: none !important;
         }
 
         /* Existing Theme Logic */
