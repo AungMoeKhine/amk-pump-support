@@ -18,36 +18,18 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. DARK THEME & RESTORED UI (Original Icons Shown)
+# 2. DARK THEME (Original UI Restored)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* 1. Ensure all Streamlit built-in elements are visible */
-        [data-testid="stHeader"], 
-        footer, 
-        [data-testid="stDecoration"], 
-        [data-testid="stElementActionGroup"], 
-        #MainMenu, 
-        [data-testid="stToolbar"],
-        .viewerBadge_container__1QSob {
-            display: flex !important;
-            visibility: visible !important;
-        }
-
-        /* 2. Theme Logic (Keep the dark look) */
+        /* Keep only the background colors */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
-        
-        /* Set header background to transparent so it blends with dark theme */
-        header, [data-testid="stHeader"] {
-            background-color: transparent !important;
-        }
 
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
         
-        /* Chat Message Styling */
         [data-testid="stChatMessage"] {
             background-color: rgba(30, 30, 30, 0.7) !important;
             backdrop-filter: blur(12px) !important;
@@ -57,12 +39,10 @@ st.markdown("""
         
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
         
-        /* Input Box Styling */
         [data-testid="stBottom"] > div { background-color: transparent !important; padding-bottom: 25px !important; }
         [data-testid="stChatInput"] { background-color: #262626 !important; border-radius: 10px !important; }
         
-        /* Spacing */
-        .block-container { padding-top: 2rem !important; padding-bottom: 6rem !important; }
+        .block-container { padding-top: 4rem !important; padding-bottom: 6rem !important; }
         
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; margin-top: 10px;}
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
