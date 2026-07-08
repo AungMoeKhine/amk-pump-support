@@ -17,32 +17,7 @@ api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
-# ---------------------------------------------------------
-# 2. ULTIMATE DARK THEME & LAYOUT
-# ---------------------------------------------------------
-st.markdown("""
-    <style>
-        /* 1. Target the specific GitHub link in the header */
-        header a[href*="github.com"] {
-            display: none !important;
-        }
 
-        /* 2. Target the 'Edit in GitHub' pencil icon */
-        header button[title*="GitHub"], header a[title*="GitHub"] {
-            display: none !important;
-        }
-
-        /* 3. Hide the 'Star' and 'Pencil' icons often grouped with it */
-        [data-testid="stHeader"] [data-testid="stToolbar"] {
-            display: none !important;
-        }
-
-        /* 4. Ensure the header doesn't create empty space where the icons were */
-        header {
-            background-color: transparent !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 3. KNOWLEDGE LOADING (Cached for Speed)
