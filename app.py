@@ -22,29 +22,27 @@ model = genai.GenerativeModel('gemini-3.1-flash-lite')
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
-            background-color: #121212 !important;
-            color: #FFFFFF !important;
+        /* 1. Target the specific GitHub link in the header */
+        header a[href*="github.com"] {
+            display: none !important;
         }
-        header, [data-testid="stHeader"] { background-color: transparent !important; }
-        footer, [data-testid="stDecoration"] { display: none !important; }
-        [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
-        [data-testid="stChatMessage"] {
-            background-color: rgba(30, 30, 30, 0.7) !important;
-            backdrop-filter: blur(12px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 12px !important;
+
+        /* 2. Target the 'Edit in GitHub' pencil icon */
+        header button[title*="GitHub"], header a[title*="GitHub"] {
+            display: none !important;
         }
-        [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
-        [data-testid="stBottom"] > div { background-color: transparent !important; padding-bottom: 25px !important; }
-        [data-testid="stChatInput"] { background-color: #262626 !important; border-radius: 10px !important; }
-        .block-container { padding-top: 4rem !important; padding-bottom: 6rem !important; }
-        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; }
-        .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
+
+        /* 3. Hide the 'Star' and 'Pencil' icons often grouped with it */
+        [data-testid="stHeader"] [data-testid="stToolbar"] {
+            display: none !important;
+        }
+
+        /* 4. Ensure the header doesn't create empty space where the icons were */
+        header {
+            background-color: transparent !important;
+        }
     </style>
-    <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 3. KNOWLEDGE LOADING (Cached for Speed)
