@@ -34,8 +34,12 @@ st.markdown("""
             color: #FFFFFF !important;
         }
         
-        /* THIS CODE REMOVES THE FULLSCREEN BUTTON AND GITHUB ICON */
-        [data-testid="stToolbar"], [data-testid="stStreamlitFooter"], footer {
+        * THE FIX TO HIDE THE REMAINING WHITE FULLSCREEN BAR */
+        [data-testid="stToolbar"], 
+        [data-testid="stStreamlitFooter"], 
+        footer, 
+        .viewerBadge_container__1QSob, 
+        [data-testid="stStatusWidget"] {
             display: none !important;
             visibility: hidden !important;
         }
