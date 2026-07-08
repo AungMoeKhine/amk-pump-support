@@ -18,38 +18,54 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. THEME SETUP (Hiding Rules Removed)
+# 2. ULTIMATE DARK THEME & UI CLEANUP (Transparent & No Arrow)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* All 'display: none' rules have been removed to show the UI again */
+        /* 1. Hide the entire top header and decoration bar */
+        [data-testid="stHeader"], [data-testid="stDecoration"] {
+            display: none !important;
+        }
 
-        /* Keep your custom dark theme colors if you like them */
-        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
-            background-color: #121212 !important;
-            color: #FFFFFF !important;
+        /* 2. Hide the Sidebar AND the Arrow (collapsedControl) */
+        [data-testid="stSidebar"], [data-testid="collapsedControl"] {
+            display: none !important;
+        }
+
+        /* 3. Make the App background transparent so it doesn't cover your website header */
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"] {
+            background-color: transparent !important;
         }
         
-        [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
-        
+        /* 4. Ensure the main content container is also transparent */
+        .main {
+            background-color: transparent !important;
+        }
+
+        /* 5. Style the chat messages so they are still visible against the transparency */
         [data-testid="stChatMessage"] {
-            background-color: rgba(30, 30, 30, 0.7) !important;
+            background-color: rgba(30, 30, 30, 0.9) !important; /* Slightly more solid for readability */
             backdrop-filter: blur(12px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 12px !important;
         }
         
-        [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
-        
-        /* Layout spacing */
-        .block-container { padding-top: 2rem !important; padding-bottom: 6rem !important; }
-        
-        /* Your Custom Branding */
-        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; margin-top: 10px;}
+        /* 6. Fix the padding at the top so the title doesn't hit the very edge */
+        .block-container { 
+            padding-top: 0rem !important; 
+            padding-bottom: 5rem !important; 
+        }
+
+        /* 7. Hide Action Icons (Copy/Thumbs) */
+        [data-testid="stElementActionGroup"] {
+            display: none !important;
+        }
+
+        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; margin-top: 0px;}
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
+    <div class="sub-caption">Stable Support Engine • Authorized Access Only</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
