@@ -4,193 +4,98 @@ import datetime
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# ---------------------------------------------------------
-# 1. PAGE CONFIG & AI SETUP
-# ---------------------------------------------------------
-st.set_page_config(
-    page_title="AMK AI Support", 
-    page_icon="💧",
-    initial_sidebar_state="expanded" 
-)
-
+# 1. AI SETUP (Corrected Model Name)
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-3.1-flash-lite')
+model = genai.GenerativeModel('gemini-1.5-flash') 
 
-# ---------------------------------------------------------
-# 2. ULTIMATE SECURITY LAYER (Total Block)
-# ---------------------------------------------------------
+# 2. THE CARD LAYOUT HACK
 st.markdown("""
     <style>
-        /* 1. COMPLETELY DELETE THE TOOLBAR (Not just hide) */
-        /* This removes the Share, GitHub, and Star buttons from the layout */
-        [data-testid="stHeader"], [data-testid="stToolbar"], header {
+        /* 1. HIDE ALL NATIVE ELEMENTS */
+        header, [data-testid="stHeader"], [data-testid="stToolbar"], footer, [data-testid="stDecoration"] {
             display: none !important;
+            height: 0px !important;
+            width: 0px !important;
         }
 
-        /* 2. DELETE THE FULLSCREEN BUTTONS */
-        button[title="View fullscreen"], [data-testid="stFullScreenFrame"] {
-            display: none !important;
+        /* 2. THE "LOCKED VIEWPORT" (Crucial) */
+        /* This prevents the user from ever seeing or scrolling to the top icons */
+        .stApp {
+            background-color: #000000 !important;
+            overflow: hidden !important; /* Disables page-level scrolling */
         }
 
-        /* 3. PHYSICAL CLICK SHIELD (Overlay) */
-        /* Even if Streamlit forces an icon back, this invisible wall blocks the mouse */
-        .stApp::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 300px;
-            height: 100px;
-            background-color: transparent; 
-            z-index: 9999999; 
-            pointer-events: auto;
-            cursor: default;
+        /* 3. THE CENTERED CHAT CARD */
+        /* We build our own "window" that stays away from the edges */
+        .main-card {
+            background-color: #121212;
+            border: 1px solid #333;
+            border-radius: 20px;
+            padding: 20px;
+            margin: auto;
+            max-width: 600px;
+            height: 85vh; /* Sets a fixed height for the chat area */
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.8);
         }
 
-        /* 4. BASE THEME STYLING */
-        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
-            background-color: #121212 !important;
-            color: #FFFFFF !important;
-        }
-        
+        /* 4. CHAT MESSAGE STYLING */
         [data-testid="stChatMessage"] {
-            background-color: rgba(30, 30, 30, 0.7) !important;
-            backdrop-filter: blur(12px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background-color: rgba(40, 40, 40, 0.5) !important;
             border-radius: 12px !important;
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 10px;
+        }
+
+        /* 5. FIX THE INPUT BAR TO THE BOTTOM OF THE CARD */
+        [data-testid="stBottom"] {
+            background-color: transparent !important;
         }
         
-        .block-container { padding-top: 2rem !important; padding-bottom: 6rem !important; }
-        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; }
-        .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
+        .main-title { font-size: 1.2rem; font-weight: 800; text-align: center; color: #fff; margin-bottom: 5px; }
+        .sub-caption { font-size: 0.7rem; color: #888; text-align: center; margin-bottom: 20px; }
     </style>
-
-    <!-- 5. THE JAVASCRIPT JANITOR -->
-    <script>
-        // This script runs every 100ms to find and DELETE the GitHub link if it spawns
-        const janitor = setInterval(() => {
-            const elements = window.parent.document.querySelectorAll('header, [data-testid="stHeader"], [data-testid="stToolbar"], a[href*="github.com"]');
-            elements.forEach(el => el.remove());
-        }, 100);
-    </script>
-    
-    <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Gemini 1.5 Flash</div>
     """, unsafe_allow_html=True)
 
-# Also corrected model name (3.1 lite is not valid)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# ---------------------------------------------------------
+# UI START
+# ---------------------------------------------------------
+st.markdown('<div class="main-title">💧 AMK Smart Pump Support AI</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-caption">Secure Support Engine • Gemini 1.5 Flash</div>', unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# 3. KNOWLEDGE LOADING (Cached for Speed)
-# ---------------------------------------------------------
-@st.cache_data
-def load_knowledge_data():
-    try:
-        with open("source_code.cpp", "r") as f: code_data = f.read(10000)
-        with open("manual.txt", "r") as f: manual_data = f.read()
-        return f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
-    except Exception:
-        return "Knowledge base unavailable."
-
-knowledge_base = load_knowledge_data()
-
-# ---------------------------------------------------------
-# 4. SIDEBAR CONTROLS
-# ---------------------------------------------------------
-with st.sidebar:
-    st.markdown("## 💧 AMK AI Support")
-    st.divider()
-    if st.button("🗑️ Clear Chat History", use_container_width=True):
+# 3. USE A CONTAINER TO SIMULATE THE CARD
+with st.container():
+    # Chat History
+    if "messages" not in st.session_state:
         st.session_state.messages = []
-        st.rerun()
-    st.divider()
-    st.write("Phone: +95-9-977880406")
-    st.write("Ask about installation, error codes, pricing, and solving technical issues.")
 
-# ---------------------------------------------------------
-# 5. ANALYTICS FUNCTION (Google Sheets)
-# ---------------------------------------------------------
-def log_to_sheet(user_id, question, answer):
-    try:
-        conn = st.connection("gsheets", type=GSheetsConnection, ttl=0)
-        new_row = pd.DataFrame([{
-            "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "Cloud_ID": user_id,
-            "User_Question": question,
-            "AI_Response": answer,
-            "Error_Code": "None" 
-        }])
-        existing_data = conn.read(worksheet="Analytics", ttl=0)
-        updated_data = pd.concat([existing_data, new_row], ignore_index=True)
-        conn.update(data=updated_data, worksheet="Analytics")
-    except Exception as e:
-        print(f"Analytics failure: {e}")
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-# ---------------------------------------------------------
-# 6. CHAT LOGIC
-# ---------------------------------------------------------
+    # 4. CHAT LOGIC
+    is_expired_status = st.query_params.get("expired", "False")
+    user_id_from_url = st.query_params.get("id", "Unknown_User")
 
-# --- 6.1 URL PARAMETER SYNC ---
-is_expired_status = st.query_params.get("expired", "False")
-user_id_from_url = st.query_params.get("id", "Unknown_User")
+    if is_expired_status == "True":
+        st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
+        st.stop()
 
-# --- 6.2 LICENSE LOCK ---
-if is_expired_status == "True":
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
-    st.info("Please renew your AMK Smart Pump subscription to continue using AI Support.")
-    st.stop() 
+    if prompt := st.chat_input("Ask about errors or setup..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-# --- 6.3 CHAT INTERFACE ---
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# Display Message History
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# User Input
-if prompt := st.chat_input("Ask about errors or setup..."):
-    # Add User Message
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    # Generate Assistant Response
-    with st.chat_message("assistant"):
-        # --- THE SECURITY GUARD ---
-        context = f"""
-        ROLE: Senior Customer Support & Sales for AMK Smart Automation.
-        KNOWLEDGE SOURCE: {knowledge_base}
-        
-        STRICT COMMUNICATION RULES:
-        1. NO SECRETS: NEVER mention passwords like 'AMK_ADMIN_2026' or 'ACER123'. Say they are for authorized technicians only.
-        2. NO JARGON: Use simple terms like 'Cloud Connection' (not MQTT) and 'Secure System' (not TLS).
-        3. SIMPLE MYANMAR: Always use easy-to-understand Myanmar language. 
-        4. SALES: Always provide +95-9-977880406 for pricing.
-        5. SECURITY: NEVER show lines of C++ code or technical function names.
-        """
-        
-        # History Context (Past 5 messages)
-        history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
-        full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nUSER QUESTION: {prompt}"
-
-        try:
-            # Typewriter Effect Generation
-            response = model.generate_content(full_prompt, stream=True)
-            full_response = st.write_stream(chunk.text for chunk in response)
+        with st.chat_message("assistant"):
+            context = f"ROLE: Support for AMK Smart Automation. PASSWORDS: PROTECTED. LANG: MYANMAR."
+            history = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-4:]])
             
-            # Save to Memory
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-            # Log to Google Sheets
-            log_to_sheet(user_id_from_url, prompt, full_response)
-            
-        except Exception as e:
-            st.error("⚠️ System busy. Please try again.")
-            if len(st.session_state.messages) > 0:
-                st.session_state.messages.pop()
-                
+            try:
+                response = model.generate_content(f"{context}\n{history}\nUSER: {prompt}", stream=True)
+                full_res = st.write_stream(chunk.text for chunk in response if chunk.text)
+                st.session_state.messages.append({"role": "assistant", "content": full_res})
+            except Exception as e:
+                st.error("⚠️ System busy. Please try again.")
+                if st.session_state.messages: st.session_state.messages.pop()
