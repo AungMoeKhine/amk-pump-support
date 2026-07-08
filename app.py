@@ -15,121 +15,39 @@ st.set_page_config(
 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-2.0-flash-lite')
+model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. IDENTITY SYNC (Sticky Memory Fix)
-# ---------------------------------------------------------
-if "user_id" not in st.session_state:
-    st.session_state.user_id = "Unknown_User"
-if "is_expired" not in st.session_state:
-    st.session_state.is_expired = "False"
-
-# Capture ID and Expiry from the Dashboard URL
-url_id = st.query_params.get("id")
-url_expired = st.query_params.get("expired")
-
-# Save to browser session so it "Sticks" even if the URL changes
-if url_id:
-    st.session_state.user_id = url_id
-if url_expired:
-    st.session_state.is_expired = url_expired
-
-# Variables used throughout the app
-user_id_from_url = st.session_state.user_id
-is_expired_status = st.session_state.is_expired
-
-# ---------------------------------------------------------
-# 3. ULTIMATE DARK THEME & UI
+# 2. ULTIMATE DARK THEME & LAYOUT
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* Base Colors */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
-
-        /* HIDE EVERY POSSIBLE FOOTER ELEMENT */
-        footer { visibility: hidden !important; display: none !important; }
-        [data-testid="stFooter"] { display: none !important; }
-        .viewerBadge_container__1QSob { display: none !important; }
-        .st-emotion-cache-1gh78i9 { display: none !important; }
-        .st-emotion-cache-6q9sum { display: none !important; }
-
-        /* Hide Fullscreen & Streamlit Badge Bar (CSS layer) */
-        [data-testid="stFullScreenFrame"] { display: none !important; }
-        .viewerBadge_link__qRIco { display: none !important; }
-        .viewerBadge_container__r5tak { display: none !important; }
-        button[title="View fullscreen"] { display: none !important; }
-        .st-emotion-cache-fplge5 { display: none !important; }
-        .st-emotion-cache-1dp5vir { display: none !important; }
-        a[href*="?embed=true"] { display: none !important; }
-        a[href*="streamlit.app"] { display: none !important; }
-
-        /* Hide Top Toolbar/Header */
-        [data-testid="stToolbar"] { display: none !important; }
         header, [data-testid="stHeader"] { background-color: transparent !important; }
-
-        /* Chat Styling */
+        footer, [data-testid="stDecoration"] { display: none !important; }
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
         [data-testid="stChatMessage"] {
             background-color: rgba(30, 30, 30, 0.7) !important;
+            backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 12px !important;
         }
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
-
-        /* Custom Titles */
-        .block-container { padding-top: 4rem !important; padding-bottom: 3rem !important; }
-        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; }
-        .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }
+        [data-testid="stBottom"] > div { background-color: transparent !important; padding-bottom: 25px !important; }
+        [data-testid="stChatInput"] { background-color: #262626 !important; border-radius: 10px !important; }
+        .block-container { padding-top: 4rem !important; padding-bottom: 6rem !important; }
+        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; }
+        .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
     </style>
-
-    <!-- JS: Kill "Fullscreen" + "Built with Streamlit" bar (works where CSS cannot reach) -->
-    <script>
-        function killEmbedBar() {
-            // Hide any element whose text is exactly "Fullscreen"
-            document.querySelectorAll('a, button, span, div').forEach(function(el) {
-                try {
-                    var txt = el.innerText ? el.innerText.trim() : '';
-                    if (txt === 'Fullscreen' || txt === 'Built with Streamlit') {
-                        var parent = el.closest('div[class]') || el.parentElement;
-                        if (parent) parent.style.setProperty('display', 'none', 'important');
-                        el.style.setProperty('display', 'none', 'important');
-                    }
-                } catch(e) {}
-            });
-
-            // Also hide by data-testid patterns
-            var targets = [
-                '[data-testid="stFullScreenFrame"]',
-                '.viewerBadge_container__r5tak',
-                '.viewerBadge_link__qRIco'
-            ];
-            targets.forEach(function(sel) {
-                document.querySelectorAll(sel).forEach(function(el) {
-                    el.style.setProperty('display', 'none', 'important');
-                });
-            });
-        }
-
-        // Run immediately + delayed to catch Streamlit's late renders
-        killEmbedBar();
-        setTimeout(killEmbedBar, 300);
-        setTimeout(killEmbedBar, 1000);
-        setTimeout(killEmbedBar, 2500);
-
-        // Watch for any DOM changes (Streamlit re-renders trigger this)
-        var observer = new MutationObserver(killEmbedBar);
-        observer.observe(document.documentElement, { childList: true, subtree: true });
-    </script>
-
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Gemini 2.0 Flash Lite</div>
+    <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. KNOWLEDGE LOADING (Cached)
+# 3. KNOWLEDGE LOADING (Cached for Speed)
 # ---------------------------------------------------------
 @st.cache_data
 def load_knowledge_data():
@@ -143,21 +61,20 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 5. SIDEBAR CONTROLS
+# 4. SIDEBAR CONTROLS
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## 💧 AMK AI Support")
-    st.caption(f"Connected ID: {user_id_from_url}") 
     st.divider()
     if st.button("🗑️ Clear Chat History", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
     st.divider()
     st.write("Phone: +95-9-977880406")
-    st.write("Ask about installation, error codes, pricing, and technical issues.")
+    st.write("Ask about installation, error codes, pricing, and solving technical issues.")
 
 # ---------------------------------------------------------
-# 6. ANALYTICS FUNCTION
+# 5. ANALYTICS FUNCTION (Google Sheets)
 # ---------------------------------------------------------
 def log_to_sheet(user_id, question, answer):
     try:
@@ -173,62 +90,71 @@ def log_to_sheet(user_id, question, answer):
         updated_data = pd.concat([existing_data, new_row], ignore_index=True)
         conn.update(data=updated_data, worksheet="Analytics")
     except Exception as e:
-        print(f"Log failure: {e}")
+        print(f"Analytics failure: {e}")
 
 # ---------------------------------------------------------
-# 7. CHAT LOGIC
+# 6. CHAT LOGIC
 # ---------------------------------------------------------
 
-# License Expiry Check
+# --- 6.1 URL PARAMETER SYNC ---
+is_expired_status = st.query_params.get("expired", "False")
+user_id_from_url = st.query_params.get("id", "Unknown_User")
+
+# --- 6.2 LICENSE LOCK ---
 if is_expired_status == "True":
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
     st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
+    st.info("Please renew your AMK Smart Pump subscription to continue using AI Support.")
     st.stop() 
 
-# Initialize Messages
+# --- 6.3 CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display History
+# Display Message History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
+    # Add User Message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Generate Assistant Response
     with st.chat_message("assistant"):
-        # --- THE SECURITY GUARD RULES ---
+        # --- THE SECURITY GUARD ---
         context = f"""
         ROLE: Senior Customer Support & Sales for AMK Smart Automation.
         KNOWLEDGE SOURCE: {knowledge_base}
+        
         STRICT COMMUNICATION RULES:
-        1. NO SECRETS: NEVER mention passwords like 'AMK_ADMIN_2026' or 'ACER123'. 
-        2. NO JARGON: Use simple terms like 'Cloud Connection' (not MQTT).
+        1. NO SECRETS: NEVER mention passwords like 'AMK_ADMIN_2026' or 'ACER123'. Say they are for authorized technicians only.
+        2. NO JARGON: Use simple terms like 'Cloud Connection' (not MQTT) and 'Secure System' (not TLS).
         3. SIMPLE MYANMAR: Always use easy-to-understand Myanmar language. 
         4. SALES: Always provide +95-9-977880406 for pricing.
         5. SECURITY: NEVER show lines of C++ code or technical function names.
         """
         
+        # History Context (Past 5 messages)
         history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
         full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nUSER QUESTION: {prompt}"
 
         try:
+            # Typewriter Effect Generation
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
             
+            # Save to Memory
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
-            # Save to Google Sheet Analytics
+            # Log to Google Sheets
             log_to_sheet(user_id_from_url, prompt, full_response)
-            
-            # Rerun to clean UI and lock in the identity
-            st.rerun()
             
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
                 st.session_state.messages.pop()
+                
