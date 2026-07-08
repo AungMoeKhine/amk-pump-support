@@ -18,57 +18,43 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. UI STYLING & FULLSCREEN ASSASSIN
+# 2. ULTIMATE SECURITY MASK (The "Black Tape" Fix)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* 1. HIDE THE ENTIRE FOOTER AREA */
-        footer { visibility: hidden !important; height: 0 !important; }
-        [data-testid="stFooter"] { display: none !important; }
-        
-        /* 2. HIDE THE STREAMLIT BADGE CONTAINER */
-        /* This targets the 'Built with Streamlit' and 'Fullscreen' bar */
-        .viewerBadge_container__1QSob, .viewerBadge_container__r5tak {
+        /* 1. THE PHYSICAL MASK */
+        /* This creates a black rectangle that sits EXACTLY on top of the white bar */
+        .stApp::after {
+            content: "";
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 42px; /* Height of the Streamlit badge bar */
+            background-color: #121212; /* Matches your app's background color */
+            z-index: 9999999; /* Forces it to stay on top of everything */
+            pointer-events: auto; /* CAPTURES THE CLICK so 'Fullscreen' cannot be hit */
+        }
+
+        /* 2. PUSH THE CHAT INPUT UP */
+        /* This ensures your text input isn't covered by the black mask */
+        [data-testid="stBottom"] {
+            padding-bottom: 50px !important;
+            background-color: #121212 !important;
+        }
+
+        /* 3. STANDARD CLEANUP */
+        header, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] {
             display: none !important;
         }
-
-        /* 3. THEME STYLING (Ensures your title stays visible) */
-        .stApp { background-color: #121212 !important; color: #FFFFFF !important; }
-        header { background-color: transparent !important; }
-        [data-testid="stToolbar"] { display: none !important; }
         
-        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; }
-        .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
+        .stApp { background-color: #121212 !important; }
+        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #fff; }
+        .sub-caption { font-size: 0.72rem !important; color: #888; text-align: center; margin-bottom: 15px; }
     </style>
 
-    <script>
-        // THE ASSASSIN FUNCTION
-        // It searches the page for any element containing the word "Fullscreen" and DELETES it
-        function killFullscreen() {
-            const elements = window.parent.document.querySelectorAll('a, button, div, span');
-            elements.forEach(el => {
-                if (el.innerText && el.innerText.includes("Fullscreen")) {
-                    // Find the parent container (the whole white bar) and remove it
-                    const container = el.closest('div[class*="viewerBadge"]');
-                    if (container) {
-                        container.remove();
-                    } else {
-                        el.remove();
-                    }
-                }
-            });
-            
-            // Also target the 'Built with Streamlit' badge directly
-            const badges = window.parent.document.querySelectorAll('[class*="viewerBadge"]');
-            badges.forEach(b => b.remove());
-        }
-
-        // Run immediately and then every 500ms to catch it if it re-appears
-        setInterval(killFullscreen, 500);
-    </script>
-
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Gemini 1.5 Flash</div>
+    <div class="sub-caption">Stable Support Engine • Secure Environment</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
