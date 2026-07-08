@@ -10,7 +10,7 @@ import pandas as pd
 st.set_page_config(
     page_title="AMK AI Support", 
     page_icon="💧",
-    initial_sidebar_state="expanded" # This ensures sidebar starts open
+    initial_sidebar_state="expanded" 
 )
 
 api_key = st.secrets["GEMINI_API_KEY"]
@@ -18,13 +18,31 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. THEME SETUP (Hiding Rules Removed)
+# 2. ULTIMATE DARK THEME & LAYOUT (Icons Removed)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* All 'display: none' rules have been removed to show the UI again */
+        /* 1. Hide the entire top header (Deploy button, Menu, etc.) */
+        [data-testid="stHeader"] {
+            display: none !important;
+        }
 
-        /* Keep your custom dark theme colors if you like them */
+        /* 2. Hide the footer and the colorful top decoration bar */
+        footer, [data-testid="stDecoration"] {
+            display: none !important;
+        }
+
+        /* 3. Hide action icons on chat messages (Copy, Thumbs up/down) */
+        [data-testid="stElementActionGroup"] {
+            display: none !important;
+        }
+
+        /* 4. Hide the Main Menu (Hamburger) specifically */
+        #MainMenu {
+            visibility: hidden;
+        }
+
+        /* Existing Theme Logic */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
             background-color: #121212 !important;
             color: #FFFFFF !important;
@@ -41,10 +59,11 @@ st.markdown("""
         
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
         
-        /* Layout spacing */
+        [data-testid="stBottom"] > div { background-color: transparent !important; padding-bottom: 25px !important; }
+        [data-testid="stChatInput"] { background-color: #262626 !important; border-radius: 10px !important; }
+        
         .block-container { padding-top: 2rem !important; padding-bottom: 6rem !important; }
         
-        /* Your Custom Branding */
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; margin-top: 10px;}
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
     </style>
@@ -53,7 +72,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3. KNOWLEDGE LOADING
+# 3. KNOWLEDGE LOADING (Cached for Speed)
 # ---------------------------------------------------------
 @st.cache_data
 def load_knowledge_data():
@@ -67,7 +86,7 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 4. SIDEBAR CONTROLS (Now visible again)
+# 4. SIDEBAR CONTROLS
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## 💧 AMK AI Support")
@@ -80,7 +99,7 @@ with st.sidebar:
     st.write("Ask about installation, error codes, pricing, and solving technical issues.")
 
 # ---------------------------------------------------------
-# 5. ANALYTICS FUNCTION
+# 5. ANALYTICS FUNCTION (Google Sheets)
 # ---------------------------------------------------------
 def log_to_sheet(user_id, question, answer):
     try:
@@ -163,3 +182,4 @@ if prompt := st.chat_input("Ask about errors or setup..."):
             st.error("⚠️ System busy. Please try again.")
             if len(st.session_state.messages) > 0:
                 st.session_state.messages.pop()
+                
