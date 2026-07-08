@@ -86,6 +86,7 @@ def log_to_sheet(user_id, question, answer):
             "AI_Response": answer,
             "Error_Code": "None" 
         }])
+        # Append logic (Read existing and Update)
         existing_data = conn.read(worksheet="Analytics", ttl=0)
         updated_data = pd.concat([existing_data, new_row], ignore_index=True)
         conn.update(data=updated_data, worksheet="Analytics")
@@ -96,7 +97,7 @@ def log_to_sheet(user_id, question, answer):
 # 6. CHAT LOGIC
 # ---------------------------------------------------------
 
-# --- 6.1 URL PARAMETER SYNC ---
+# --- 6.1 SYNC FROM DASHBOARD ---
 is_expired_status = st.query_params.get("expired", "False")
 user_id_from_url = st.query_params.get("id", "Unknown_User")
 
@@ -104,54 +105,58 @@ user_id_from_url = st.query_params.get("id", "Unknown_User")
 if is_expired_status == "True":
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
-    st.info("Please renew your AMK Smart Pump subscription to continue using AI Support.")
+    st.info("Please renew your AMK Smart Pump subscription.")
     st.stop() 
 
-# --- 6.3 CHAT INTERFACE ---
+# --- 6.3 GHOST-PROOF CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display Message History
+# Display history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# User Input
+# Handle User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
-    # Add User Message
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    # 1. Show user message
     with st.chat_message("user"):
         st.markdown(prompt)
+    st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # Generate Assistant Response
+    # 2. Generate AI Response
     with st.chat_message("assistant"):
-        # --- THE SECURITY GUARD ---
+        # --- STRICT SECURITY RULES ---
         context = f"""
         ROLE: Senior Customer Support & Sales for AMK Smart Automation.
         KNOWLEDGE SOURCE: {knowledge_base}
         
         STRICT COMMUNICATION RULES:
-        1. NO SECRETS: NEVER mention passwords like 'AMK_ADMIN_2026' or 'ACER123'. Say they are for authorized technicians only.
-        2. NO JARGON: Use simple terms like 'Cloud Connection' (not MQTT) and 'Secure System' (not TLS).
+        1. NO SECRETS: NEVER mention passwords like 'AMK_ADMIN_2026' or 'ACER123'. 
+        2. NO JARGON: Use simple terms like 'Cloud Connection' (not MQTT).
         3. SIMPLE MYANMAR: Always use easy-to-understand Myanmar language. 
         4. SALES: Always provide +95-9-977880406 for pricing.
         5. SECURITY: NEVER show lines of C++ code or technical function names.
         """
         
-        # History Context (Past 5 messages)
+        # History Context
         history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
         full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nUSER QUESTION: {prompt}"
 
         try:
-            # Typewriter Effect Generation
+            # Typewriter Streaming
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
             
-            # Save to Memory
+            # 3. Save response to memory
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
-            # Log to Google Sheets
+            # 4. Log to Google Sheets
             log_to_sheet(user_id_from_url, prompt, full_response)
+            
+            # --- 5. THE GHOST-TEXT FIX (RERUN) ---
+            # This clears the stream and re-draws the history correctly
+            st.rerun()
             
         except Exception as e:
             st.error("⚠️ System busy. Please try again.")
