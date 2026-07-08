@@ -104,9 +104,26 @@ def log_to_sheet(user_id, question, answer):
 # 6. CHAT LOGIC
 # ---------------------------------------------------------
 
-# --- 6.1 URL PARAMETER SYNC ---
-is_expired_status = st.query_params.get("expired", "False")
-user_id_from_url = st.query_params.get("id", "Unknown_User")
+# --- 6.1 URL PARAMETER & IDENTITY SYNC ---
+# 1. Check the URL for a new ID
+url_id = st.query_params.get("id")
+url_expired = st.query_params.get("expired")
+
+# 2. Save to Session State so it's remembered during "Full Screen"
+if "user_id" not in st.session_state:
+    st.session_state.user_id = "Unknown_User"
+if "is_expired" not in st.session_state:
+    st.session_state.is_expired = "False"
+
+# 3. Update memory if the URL has data
+if url_id:
+    st.session_state.user_id = url_id
+if url_expired:
+    st.session_state.is_expired = url_expired
+
+# 4. Use the remembered values for the rest of the app
+user_id_from_url = st.session_state.user_id
+is_expired_status = st.session_state.is_expired
 
 # --- 6.2 LICENSE LOCK ---
 if is_expired_status == "True":
