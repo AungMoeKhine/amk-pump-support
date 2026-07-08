@@ -48,16 +48,22 @@ st.markdown("""
             background-color: #121212 !important;
             color: #FFFFFF !important;
         }
-        /* Hide Github toolbar but keep footer for Fullscreen button */
+        
+        /* HIDE FOOTER (Built with Streamlit & Fullscreen) */
+        footer {visibility: hidden;}
+        
+        /* Hide Github toolbar */
         [data-testid="stToolbar"] { display: none !important; }
         
         header, [data-testid="stHeader"] { background-color: transparent !important; }
         [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
+        
         [data-testid="stChatMessage"] {
             background-color: rgba(30, 30, 30, 0.7) !important;
             border-radius: 12px !important;
         }
         [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
+        
         .block-container { padding-top: 4rem !important; padding-bottom: 6rem !important; }
         .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; }
         .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }
