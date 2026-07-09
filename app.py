@@ -15,7 +15,7 @@ st.set_page_config(
 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-flash') # Recommended for better Myanmar support
+model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
 # 2. BILINGUAL UI DICTIONARY (Ensures button labels change)
