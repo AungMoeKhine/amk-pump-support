@@ -14,7 +14,7 @@ st.set_page_config(
 )
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-3.1-flash-lite')
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # ---------------------------------------------------------
 # 2. ULTIMATE TRANSPARENCY SETUP
