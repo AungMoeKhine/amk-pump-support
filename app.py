@@ -26,7 +26,7 @@ if "language" not in st.session_state:
 ui = {
     "English": {
         "title": "💧 AMK Smart Pump Support AI",
-        "caption": "Sales & Technical Expert • Authorized Access Only",
+        "caption": "Official Technical & Sales Support • Authorized Access",
         "sidebar_head": "💧 AMK AI Support",
         "clear_btn": "🗑️ Clear Chat History",
         "contact": "Contact",
@@ -37,7 +37,7 @@ ui = {
     },
     "Myanmar": {
         "title": "💧 AMK စမတ်ပန့် အကူအညီပေးရေး AI",
-        "caption": "အရောင်းနှင့် နည်းပညာကျွမ်းကျင်သူ • ခွင့်ပြုချက်ရှိသူများသာ",
+        "caption": "နည်းပညာနှင့် အရောင်းဆိုင်ရာ အကူအညီ (တရားဝင်အသုံးပြုသူများအတွက်)",
         "sidebar_head": "💧 AMK AI အကူအညီ",
         "clear_btn": "🗑️ ပြောဆိုမှုမှတ်တမ်းဖျက်ရန်",
         "contact": "ဆက်သွယ်ရန်",
