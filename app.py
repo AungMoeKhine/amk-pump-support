@@ -63,11 +63,6 @@ st.markdown("""
             display: none !important;
         }
 
-        /* --- ADD THE NEW LINE HERE --- */
-        .stApp a[href*="github.com"] {
-            display: none !important;
-        }
-
         /* Title and Caption Styles */
         .main-title { 
             font-size: 1.25rem !important; 
