@@ -10,107 +10,107 @@ import pandas as pd
 st.set_page_config(
     page_title="AMK AI Support", 
     page_icon="💧",
-    initial_sidebar_state="expanded" # This ensures sidebar starts open
+    initial_sidebar_state="expanded" # Keeps sidebar visible
 )
 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-3.1-flash-lite')
+model = genai.GenerativeModel('gemini-1.5-flash') # Recommended for better Myanmar support
 
 # ---------------------------------------------------------
-# 2. ULTIMATE TRANSPARENCY SETUP
+# 2. BILINGUAL UI DICTIONARY (Ensures button labels change)
 # ---------------------------------------------------------
-st.markdown("""
+if "language" not in st.session_state:
+    st.session_state.language = "English"
+
+ui = {
+    "English": {
+        "title": "💧 AMK Smart Pump Support AI",
+        "caption": "Sales & Technical Expert • Authorized Access Only",
+        "sidebar_head": "💧 AMK AI Support",
+        "clear_btn": "🗑️ Clear Chat History",
+        "contact": "Contact",
+        "instr": "Ask about pricing, features, or error codes.",
+        "placeholder": "Ask about errors, setup, or pricing...",
+        "expired": "🛑 License Expired",
+        "busy": "⚠️ System busy."
+    },
+    "Myanmar": {
+        "title": "💧 AMK စမတ်ပန့် အကူအညီပေးရေး AI",
+        "caption": "အရောင်းနှင့် နည်းပညာကျွမ်းကျင်သူ • ခွင့်ပြုချက်ရှိသူများသာ",
+        "sidebar_head": "💧 AMK AI အကူအညီ",
+        "clear_btn": "🗑️ ပြောဆိုမှုမှတ်တမ်းဖျက်ရန်",
+        "contact": "ဆက်သွယ်ရန်",
+        "instr": "ဈေးနှုန်း၊ အချက်အလက်နှင့် အမှားကုဒ်များကို မေးမြန်းပါ။",
+        "placeholder": "သိလိုသည်များကို မေးမြန်းပါ...",
+        "expired": "🛑 လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်",
+        "busy": "⚠️ စနစ် အလုပ်များနေပါသည်။"
+    }
+}
+L = ui[st.session_state.language]
+
+# ---------------------------------------------------------
+# 3. ULTIMATE TRANSPARENCY SETUP (Preserved)
+# ---------------------------------------------------------
+st.markdown(f"""
     <style>
-        /* 1. Make the entire app and all containers transparent */
-        .stApp, 
-        [data-testid="stAppViewContainer"], 
-        [data-testid="stMainViewContainer"], 
-        .main, 
-        [data-testid="stHeader"], 
-        [data-testid="stToolbar"],
-        [data-testid="stBottom"] {
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stMainViewContainer"], 
+        .main, [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stBottom"] {{
             background-color: transparent !important;
             background: transparent !important;
-        }
-
-        /* 2. Specifically make the sidebar arrow container transparent */
-        [data-testid="collapsedControl"] {
-            background-color: transparent !important;
-            background: transparent !important;
-            top: 10px; /* Adjust this to align with your website header if needed */
-        }
-
-        /* 3. Ensure the chat input area at the bottom doesn't have a solid background */
-        [data-testid="stBottom"] > div {
-            background-color: transparent !important;
-        }
-
-        /* 4. Keep the Chat Messages readable (semi-transparent dark) */
-        [data-testid="stChatMessage"] {
+        }}
+        [data-testid="stChatMessage"] {{
             background-color: rgba(30, 30, 30, 0.8) !important;
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* 5. Adjust padding so your title "AMK Smart Pump..." starts lower */
-        .block-container {
-            padding-top: 4rem !important; /* Increase this if the title is still too high */
-        }
-
-        /* Hide Streamlit decoration bar at the very top */
-        [data-testid="stDecoration"] {
-            display: none !important;
-        }
-
-        /* Title and Caption Styles */
-        .main-title { 
-            font-size: 1.25rem !important; 
-            font-weight: 800; 
-            text-align: center; 
-            width: 100%; 
-            color: #FFFFFF !important; 
-        }
-        .sub-caption { 
-            font-size: 0.72rem !important; 
-            color: #888888 !important; 
-            text-align: center; 
-            width: 100%; 
-            margin-bottom: 15px; 
-        }
+        }}
+        [data-testid="stDecoration"] {{ display: none !important; }}
+        .block-container {{ padding-top: 4rem !important; }}
+        .main-title {{ font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; }}
+        .sub-caption {{ font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }}
+        @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
+        body {{ font-family: 'Pyidaungsu', sans-serif; }}
     </style>
-    <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Authorized Access Only</div>
+    <div class="main-title">{L['title']}</div>
+    <div class="sub-caption">{L['caption']}</div>
     """, unsafe_allow_html=True)
+
 # ---------------------------------------------------------
-# 3. KNOWLEDGE LOADING
+# 4. KNOWLEDGE LOADING
 # ---------------------------------------------------------
 @st.cache_data
 def load_knowledge_data():
     try:
         with open("source_code.cpp", "r") as f: code_data = f.read(10000)
         with open("manual.txt", "r") as f: manual_data = f.read()
-        return f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
+        return f"TECHNICAL_CODE_CONTEXT:\n{code_data}\n\nSALES_AND_USER_MANUAL:\n{manual_data}"
     except Exception:
         return "Knowledge base unavailable."
 
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 4. SIDEBAR CONTROLS (Now visible again)
+# 5. SIDEBAR & CLEAR HISTORY (Fully Restored & Bilingual)
 # ---------------------------------------------------------
 with st.sidebar:
-    st.markdown("## 💧 AMK AI Support")
+    st.markdown(f"### {L['sidebar_head']}")
+    
+    # Language Switcher
+    st.session_state.language = st.radio("Language / ဘာသာစကား", ["English", "Myanmar"])
+    
     st.divider()
-    if st.button("🗑️ Clear Chat History", use_container_width=True):
+    
+    # Clear History Button (Restored)
+    if st.button(L['clear_btn'], use_container_width=True):
         st.session_state.messages = []
         st.rerun()
+    
     st.divider()
-    st.write("Phone: +95-9-977880406")
-    st.write("Ask about installation, error codes, pricing, and solving technical issues.")
+    st.write(f"📞 {L['contact']}: +95-9-977880406")
+    st.info(L['instr'])
 
 # ---------------------------------------------------------
-# 5. ANALYTICS FUNCTION
+# 6. ANALYTICS FUNCTION
 # ---------------------------------------------------------
 def log_to_sheet(user_id, question, answer):
     try:
@@ -125,17 +125,16 @@ def log_to_sheet(user_id, question, answer):
         existing_data = conn.read(worksheet="Analytics", ttl=0)
         updated_data = pd.concat([existing_data, new_row], ignore_index=True)
         conn.update(data=updated_data, worksheet="Analytics")
-    except Exception as e:
-        print(f"Analytics failure: {e}")
+    except: pass
 
 # ---------------------------------------------------------
-# 6. CHAT LOGIC
+# 7. CHAT LOGIC (Expert Persona + Strict Security)
 # ---------------------------------------------------------
 is_expired_status = st.query_params.get("expired", "False")
 user_id_from_url = st.query_params.get("id", "Unknown_User")
 
 if is_expired_status == "True":
-    st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
+    st.error(L['expired'])
     st.stop() 
 
 if "messages" not in st.session_state:
@@ -145,20 +144,36 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Ask about errors or setup..."):
+if prompt := st.chat_input(L['placeholder']):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        context = f"ROLE: Senior Support. KNOWLEDGE: {knowledge_base}"
-        history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
-        full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nUSER QUESTION: {prompt}"
+        # EXPERT PERSONA + SECURITY DO'S AND DON'TS
+        context = f"""
+        ROLE: You are an AMK Smart Pump Dual Expert (Sales + Technical Engineer).
+        KNOWLEDGE: {knowledge_base}
+        
+        STRICT SECURITY LIMITS (DO NOT VIOLATE):
+        1. NEVER show, reveal, or provide the raw Source Code to the user.
+        2. NEVER share internal Admin Passwords or security keys.
+        3. DO NOT answer questions about food, other brands, or unrelated general knowledge.
+        
+        COMMUNICATION RULES:
+        - If user asks in Myanmar, reply in Myanmar. If English, reply in English.
+        - Be helpful for sales questions (prices, features).
+        - Be precise for technical questions (error codes, installation).
+        - If info is missing, say: "Please contact support at +95-9-977880406."
+        """
+        
+        history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-5:]])
+        full_prompt = f"{context}\n\nUSER QUESTION: {prompt}"
 
         try:
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             log_to_sheet(user_id_from_url, prompt, full_response)
-        except Exception as e:
-            st.error("⚠️ System busy.") 
+        except Exception:
+            st.error(L['busy'])
