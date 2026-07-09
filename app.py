@@ -10,7 +10,7 @@ import pandas as pd
 st.set_page_config(
     page_title="AMK AI Support", 
     page_icon="💧",
-    initial_sidebar_state="expanded" # This ensures sidebar starts open
+    initial_sidebar_state="expanded" 
 )
 
 api_key = st.secrets["GEMINI_API_KEY"]
@@ -18,72 +18,41 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. ULTIMATE TRANSPARENCY SETUP
+# 2. DARK THEME (Original UI Restored)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-        /* 1. Make the entire app and all containers transparent */
-        .stApp, 
-        [data-testid="stAppViewContainer"], 
-        [data-testid="stMainViewContainer"], 
-        .main, 
-        [data-testid="stHeader"], 
-        [data-testid="stToolbar"],
-        [data-testid="stBottom"] {
-            background-color: transparent !important;
-            background: transparent !important;
+        /* Keep only the background colors */
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
+            background-color: #121212 !important;
+            color: #FFFFFF !important;
         }
 
-        /* 2. Specifically make the sidebar arrow container transparent */
-        [data-testid="collapsedControl"] {
-            background-color: transparent !important;
-            background: transparent !important;
-            top: 10px; /* Adjust this to align with your website header if needed */
-        }
-
-        /* 3. Ensure the chat input area at the bottom doesn't have a solid background */
-        [data-testid="stBottom"] > div {
-            background-color: transparent !important;
-        }
-
-        /* 4. Keep the Chat Messages readable (semi-transparent dark) */
+        [data-testid="stSidebar"] { background-color: #1a1a1a !important; }
+        
         [data-testid="stChatMessage"] {
-            background-color: rgba(30, 30, 30, 0.8) !important;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(30, 30, 30, 0.7) !important;
+            backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
         }
-
-        /* 5. Adjust padding so your title "AMK Smart Pump..." starts lower */
-        .block-container {
-            padding-top: 4rem !important; /* Increase this if the title is still too high */
-        }
-
-        /* Hide Streamlit decoration bar at the very top */
-        [data-testid="stDecoration"] {
-            display: none !important;
-        }
-
-        /* Title and Caption Styles */
-        .main-title { 
-            font-size: 1.25rem !important; 
-            font-weight: 800; 
-            text-align: center; 
-            width: 100%; 
-            color: #FFFFFF !important; 
-        }
-        .sub-caption { 
-            font-size: 0.72rem !important; 
-            color: #888888 !important; 
-            text-align: center; 
-            width: 100%; 
-            margin-bottom: 15px; 
-        }
+        
+        [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
+        
+        [data-testid="stBottom"] > div { background-color: transparent !important; padding-bottom: 25px !important; }
+        [data-testid="stChatInput"] { background-color: #262626 !important; border-radius: 10px !important; }
+        
+        .block-container { padding-top: 4rem !important; padding-bottom: 6rem !important; }
+        
+        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; margin-top: 10px;}
+        .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
     </style>
     <div class="main-title">💧 AMK Smart Pump Support AI</div>
-    <div class="sub-caption">Stable Support Engine • Authorized Access Only</div>
+    <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
+
 # ---------------------------------------------------------
-# 3. KNOWLEDGE LOADING
+# 3. KNOWLEDGE LOADING (Cached for Speed)
 # ---------------------------------------------------------
 @st.cache_data
 def load_knowledge_data():
@@ -97,7 +66,7 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 4. SIDEBAR CONTROLS (Now visible again)
+# 4. SIDEBAR CONTROLS
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## 💧 AMK AI Support")
@@ -110,7 +79,7 @@ with st.sidebar:
     st.write("Ask about installation, error codes, pricing, and solving technical issues.")
 
 # ---------------------------------------------------------
-# 5. ANALYTICS FUNCTION
+# 5. ANALYTICS FUNCTION (Google Sheets)
 # ---------------------------------------------------------
 def log_to_sheet(user_id, question, answer):
     try:
@@ -131,34 +100,66 @@ def log_to_sheet(user_id, question, answer):
 # ---------------------------------------------------------
 # 6. CHAT LOGIC
 # ---------------------------------------------------------
+
+# --- 6.1 URL PARAMETER SYNC ---
 is_expired_status = st.query_params.get("expired", "False")
 user_id_from_url = st.query_params.get("id", "Unknown_User")
 
+# --- 6.2 LICENSE LOCK ---
 if is_expired_status == "True":
+    st.markdown("<br><br>", unsafe_allow_html=True)
     st.error("🛑 License Expired / လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်")
+    st.info("Please renew your AMK Smart Pump subscription to continue using AI Support.")
     st.stop() 
 
+# --- 6.3 CHAT INTERFACE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display Message History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# User Input
 if prompt := st.chat_input("Ask about errors or setup..."):
+    # Add User Message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Generate Assistant Response
     with st.chat_message("assistant"):
-        context = f"ROLE: Senior Support. KNOWLEDGE: {knowledge_base}"
+        # --- THE SECURITY GUARD ---
+        context = f"""
+        ROLE: Senior Customer Support & Sales for AMK Smart Automation.
+        KNOWLEDGE SOURCE: {knowledge_base}
+        
+        STRICT COMMUNICATION RULES:
+        1. NO SECRETS: NEVER mention passwords like 'AMK_ADMIN_2026' or 'ACER123'. Say they are for authorized technicians only.
+        2. NO JARGON: Use simple terms like 'Cloud Connection' (not MQTT) and 'Secure System' (not TLS).
+        3. SIMPLE MYANMAR: Always use easy-to-understand Myanmar language. 
+        4. SALES: Always provide +95-9-977880406 for pricing.
+        5. SECURITY: NEVER show lines of C++ code or technical function names.
+        """
+        
+        # History Context (Past 5 messages)
         history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-6:-1]])
         full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nUSER QUESTION: {prompt}"
 
         try:
+            # Typewriter Effect Generation
             response = model.generate_content(full_prompt, stream=True)
             full_response = st.write_stream(chunk.text for chunk in response)
+            
+            # Save to Memory
             st.session_state.messages.append({"role": "assistant", "content": full_response})
+            
+            # Log to Google Sheets
             log_to_sheet(user_id_from_url, prompt, full_response)
+            
         except Exception as e:
-            st.error("⚠️ System busy.")
+            st.error("⚠️ System busy. Please try again.")
+            if len(st.session_state.messages) > 0:
+                st.session_state.messages.pop()
+                
