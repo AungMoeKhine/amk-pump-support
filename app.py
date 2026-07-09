@@ -153,3 +153,4 @@ with st.chat_message("assistant"):
         log_to_sheet(user_id_from_url, prompt, full_response)
     except Exception as e:
         st.error("⚠️ System busy.")
+
