@@ -1,177 +1,143 @@
 import streamlit as st
 import google.generativeai as genai
-import datetime
-from streamlit_gsheets import GSheetsConnection
-import pandas as pd
 
-# ---------------------------------------------------------
-# 1. PAGE CONFIG & AI SETUP
-# ---------------------------------------------------------
-st.set_page_config(
-    page_title="AMK AI Support", 
-    page_icon="💧",
-    initial_sidebar_state="expanded"
-)
+# 1. Page Config
+st.set_page_config(page_title="AMK AI Support", page_icon="💧")
 
-# API Security
+# 2. Setup AI 
 api_key = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-flash') # Best for MM/EN balance
 
-# ---------------------------------------------------------
-# 2. BILINGUAL UI DICTIONARY
-# ---------------------------------------------------------
-# This ensures the UI actually changes when the user switches language
-if "language" not in st.session_state:
-    st.session_state.language = "English"
+# 3. Model Selection (Gemini 3.1 Lite)
+model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
-ui_text = {
-    "English": {
-        "title": "💧 AMK Smart Pump Support AI",
-        "caption": "Stable Support Engine • Authorized Access Only",
-        "sidebar_head": "💧 AMK AI Support",
-        "clear_btn": "🗑️ Clear Chat History",
-        "contact_label": "Contact / Support:",
-        "instr_label": "Instructions:",
-        "instr_text": "Ask about installation, error codes, and pricing.",
-        "input_placeholder": "Ask about errors or setup...",
-        "expired_msg": "🛑 License Expired",
-        "busy_msg": "⚠️ System busy. Please try again."
-    },
-    "Myanmar": {
-        "title": "💧 AMK စမတ်ပန့် အကူအညီပေးရေး AI",
-        "caption": "တည်ငြိမ်သောစနစ် • ခွင့်ပြုချက်ရှိသူများသာ",
-        "sidebar_head": "💧 AMK AI အကူအညီ",
-        "clear_btn": "🗑️ ပြောဆိုမှုမှတ်တမ်းဖျက်ရန်",
-        "contact_label": "ဆက်သွယ်ရန်:",
-        "instr_label": "လမ်းညွှန်ချက်:",
-        "instr_text": "တပ်ဆင်ခြင်း၊ အမှားကုဒ်များနှင့် ဈေးနှုန်းများကို မေးမြန်းနိုင်ပါသည်။",
-        "input_placeholder": "သိလိုသည်များကို မေးမြန်းပါ...",
-        "expired_msg": "🛑 လိုင်စင်သက်တမ်းကုန်ဆုံးနေပါသည်",
-        "busy_msg": "⚠️ စနစ် အလုပ်များနေပါသည်။ ခဏနေမှ ပြန်ကြိုးစားပါ။"
-    }
-}
-
-# Shortcut variable for the selected language
-L = ui_text[st.session_state.language]
-
-# ---------------------------------------------------------
-# 3. CUSTOM STYLES (Transparency Maintained)
-# ---------------------------------------------------------
-st.markdown(f"""
+# 4. ULTIMATE DARK THEME & LAYOUT FIX
+st.markdown("""
     <style>
-        .stApp, [data-testid="stAppViewContainer"], [data-testid="stMainViewContainer"], 
-        .main, [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stBottom"] {{
+        /* Force Deep Grey background */
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stBottom"], .main {
+            background-color: #121212 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* Hide Clutter */
+        footer, header, [data-testid="stHeader"], [data-testid="stDecoration"] {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        /* Fix Message Bubbles */
+        [data-testid="stChatMessage"] {
+            background-color: rgba(30, 30, 30, 0.7) !important;
+            backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+        }
+        [data-testid="stChatMessage"] * { color: #FFFFFF !important; }
+
+        /* FIX INPUT BOX ALIGNMENT (Prevents button from jumping to next line) */
+        [data-testid="stBottom"] > div {
             background-color: transparent !important;
-        }}
-        [data-testid="stChatMessage"] {{
-            background-color: rgba(30, 30, 30, 0.8) !important;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }}
-        .main-title {{ font-size: 1.4rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; }}
-        .sub-caption {{ font-size: 0.85rem !important; color: #BBBBBB !important; text-align: center; margin-bottom: 15px; }}
-        @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
-        body {{ font-family: 'Pyidaungsu', sans-serif; }}
+            padding: 10px 0px 25px 0px !important;
+        }
+
+        [data-testid="stChatInput"] {
+            background-color: #262626 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 10px !important;
+            display: flex !important;
+            flex-direction: row !important; 
+            flex-wrap: nowrap !important; /* <--- THIS FORCES THE BUTTON TO STAY RIGHT */
+            align-items: center !important;
+        }
+
+        [data-testid="stChatInput"] textarea {
+            background-color: transparent !important;
+            color: #FFFFFF !important;
+            font-size: 0.95rem !important;
+        }
+
+        /* Header Spacing */
+        .block-container { padding-top: 1.5rem !important; padding-bottom: 6rem !important; }
+        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; width: 100%; color: #FFFFFF !important; }
+        .sub-caption { font-size: 0.72rem !important; color: #888888 !important; text-align: center; width: 100%; margin-bottom: 15px; }
+        #root > div:last-child, .stApp ~ div, [data-testid="stStreamlitFooter"] { display: none !important; }
     </style>
-    <div class="main-title">{L['title']}</div>
-    <div class="sub-caption">{L['caption']}</div>
+    <div class="main-title">💧 AMK Smart Pump Support AI</div>
+    <div class="sub-caption">Stable Support Engine • Gemini 3.1 Lite</div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 4. KNOWLEDGE LOADING
+# 5. KNOWLEDGE LOADING (Clean & Matched Labels)
 # ---------------------------------------------------------
-@st.cache_data
-def load_knowledge_data():
-    try:
-        # Load your technical files
-        with open("source_code.cpp", "r") as f: code_data = f.read(10000)
-        with open("manual.txt", "r") as f: manual_data = f.read()
-        return f"TECHNICAL_CODE:\n{code_data}\n\nMANUAL_TEXT:\n{manual_data}"
-    except Exception:
-        return "No local knowledge found. Refer to general AMK protocols."
-
-knowledge_base = load_knowledge_data()
+try:
+    with open("source_code.cpp", "r") as f:
+        code_data = f.read(10000)
+    with open("manual.txt", "r") as f:
+        manual_data = f.read()
+    # These labels MUST match the Instructions in Part 6
+    knowledge_base = f"TECHNICAL_SPECS:\n{code_data}\n\nTROUBLESHOOTING_MANUAL:\n{manual_data}"
+except Exception:
+    knowledge_base = "Knowledge base currently unavailable."
 
 # ---------------------------------------------------------
-# 5. SIDEBAR CONTROLS
+# 6. CHAT LOGIC (Complete Optimized Block)
 # ---------------------------------------------------------
-with st.sidebar:
-    st.markdown(f"### {L['sidebar_head']}")
-    
-    # LANGUAGE TOGGLE (This solves your "not changing to MM" issue)
-    st.session_state.language = st.radio("Language / ဘာသာစကား", ["English", "Myanmar"])
-    
-    st.divider()
-    if st.button(L['clear_btn'], use_container_width=True):
-        st.session_state.messages = []
-        st.rerun()
-    
-    st.divider()
-    st.markdown(f"**{L['contact_label']}**\n- 📞 +95-9-977880406")
-    st.markdown(f"**{L['instr_label']}**\n- {L['instr_text']}")
-
-# ---------------------------------------------------------
-# 6. ANALYTICS
-# ---------------------------------------------------------
-def log_to_sheet(user_id, question, answer):
-    try:
-        conn = st.connection("gsheets", type=GSheetsConnection, ttl=0)
-        new_row = pd.DataFrame([{
-            "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "Cloud_ID": user_id,
-            "User_Question": question,
-            "AI_Response": answer,
-            "Error_Code": "None" 
-        }])
-        existing_data = conn.read(worksheet="Analytics", ttl=0)
-        updated_data = pd.concat([existing_data, new_row], ignore_index=True)
-        conn.update(data=updated_data, worksheet="Analytics")
-    except: pass # Silent fail to keep UX smooth
-
-# ---------------------------------------------------------
-# 7. CHAT LOGIC (With Security DOs and DON'Ts)
-# ---------------------------------------------------------
-is_expired_status = st.query_params.get("expired", "False")
-user_id_from_url = st.query_params.get("id", "Unknown_User")
-
-if is_expired_status == "True":
-    st.error(L['expired_msg'])
-    st.stop() 
-
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display chat history on the screen
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input(L['input_placeholder']):
+# User Input Box
+if prompt := st.chat_input("Ask about errors or setup..."):
+    # 1. Add user message to history and show it
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # 2. Generate Assistant Response
     with st.chat_message("assistant"):
-        # STRICT SECURITY PROMPT (DO's and DON'Ts)
+        # Define the AI's instructions
         context = f"""
-        ROLE: AMK Smart Pump Senior Support.
-        UI_LANGUAGE: {st.session_state.language}
-        KNOWLEDGE: {knowledge_base}
-
+        ROLE: Senior Customer Support & Sales for AMK Smart Automation.
+        KNOWLEDGE SOURCE: {knowledge_base}
         STRICT RULES:
-        1. DO NOT answer questions unrelated to AMK Smart Pumps or technical support.
-        2. DO NOT hallucinate. If info isn't in KNOWLEDGE, say you don't know and provide +95-9-977880406.
-        3. If the user asks in Myanmar, respond in Myanmar. If English, respond in English.
-        4. Maintain a professional engineer persona.
+        1. NO SECRETS: Never reveal passwords/keys.
+        2. NO JARGON: Use simple terms (e.g., 'Cloud Connection' not 'MQTT').
+        3. SIMPLE MYANMAR: Use easy-to-understand Myanmar language.
+        4. SALES: Provide +95-9-977880406 for pricing/shop info.
+        5. SECURITY: Never show C++ code or technical function names.
         """
         
-        history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-5:]])
-        full_prompt = f"{context}\n\nHISTORY:\n{history_text}\nUSER: {prompt}"
+        # Build the conversation history (Last 5 messages, excluding the current one)
+        history_text = ""
+        for msg in st.session_state.messages[-6:-1]:
+            role = "Customer" if msg["role"] == "user" else "AI Support"
+            history_text += f"{role}: {msg['content']}\n"
+
+        full_prompt = f"{context}\n\nPAST CONVERSATION:\n{history_text}\n\nNEW QUESTION: {prompt}"
 
         try:
+            # Generate response with Streaming (Typewriter effect)
             response = model.generate_content(full_prompt, stream=True)
+            
+            # Display text as it arrives
             full_response = st.write_stream(chunk.text for chunk in response)
+            
+            # Save the final full response to memory
             st.session_state.messages.append({"role": "assistant", "content": full_response})
-            log_to_sheet(user_id_from_url, prompt, full_response)
-        except Exception:
-            st.error(L['busy_msg'])
+            
+        except Exception as e:
+            error_str = str(e)
+            if "429" in error_str or "quota" in error_str.lower():
+                st.error("⚠️ Daily limit reached. Please try again in 24 hours.")
+                st.info("⚠️ ယနေ့အတွက် မေးမြန်းနိုင်သည့် အကြိမ်အရေအတွက် ပြည့်သွားပါပြီ။")
+            else:
+                st.error("⚠️ System busy. Please refresh the page.")
+            
+            # Remove the last user message if AI failed to answer
+            if len(st.session_state.messages) > 0:
+                st.session_state.messages.pop()
