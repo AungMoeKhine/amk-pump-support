@@ -24,7 +24,7 @@ model = genai.GenerativeModel('gemini-3.1-flash-lite')
 ui = {
     "English": {
         "title": "💧 AMK Smart Pump Support AI",
-        "caption": "Official Technical & Sales Support",
+        "caption": "Official Technical & Sales Support • Authorized Access",
         "sidebar_head": "💧 AMK AI Support",
         "clear_btn": "🗑️ Clear Chat History",
         "contact": "Contact",
@@ -35,7 +35,7 @@ ui = {
     },
     "Myanmar": {
         "title": "💧 AMK စမတ်ပန့် အကူအညီပေးရေး AI",
-        "caption": "နည်းပညာနှင့် အရောင်းဆိုင်ရာ အကူအညီ",
+        "caption": "နည်းပညာနှင့် အရောင်းဆိုင်ရာ အကူအညီ (တရားဝင်အသုံးပြုသူများအတွက်)",
         "sidebar_head": "💧 AMK AI အကူအညီ",
         "clear_btn": "🗑️ ပြောဆိုမှုမှတ်တမ်းဖျက်ရန်",
         "contact": "ဆက်သွယ်ရန်",
@@ -69,7 +69,7 @@ st.markdown(f"""
         }}
         [data-testid="stDecoration"] {{ display: none !important; }}
         .block-container {{ padding-top: 4rem !important; }}
-        .main-title { font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; }
+        .main-title {{ font-size: 1.25rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; }}
         .sub-caption {{ font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }}
         @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
         body {{ font-family: 'Pyidaungsu', sans-serif; }}
