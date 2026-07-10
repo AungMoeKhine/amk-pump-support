@@ -1,10 +1,8 @@
-
  * ============================================================================================
  * SYSTEM: AMK Smart Pump & Compressor Control System (Dual-Core V2.1 Premium)
  * HARDWARE: ESP32-S3 | Logic & Architecture Map for AI Technical Support
  * ============================================================================================
  
-
 --- 1. HARDWARE ARCHITECTURE (FreeRTOS) ---
 CORE 1: Safety & Control Loop (Real-time). High priority, zero-latency.
 CORE 0: Network Loop (WiFi, MQTT TLS 8883, Web Server, OTA). 
@@ -55,7 +53,6 @@ struct MasterSlaveConfig {
   int settlingMinutes = 10;         - Post-pump water rest (0 to 30 min)
 };
 
-
  * ============================================================================
  * 3. CORE ALGORITHMS & RUNNING SCENARIOS
  * ============================================================================
@@ -96,7 +93,6 @@ struct MasterSlaveConfig {
  * - LICENSING: Token verified via MD5(MAC+Expiry). Disables Pin 8 if expired.
  * - DND MODE: NTP-based schedule prevents night auto-starts.
    
-
 စမတ်ရေမော်တာနှင့် ကွန်ပရက်ဆာ ထိန်းချုပ်မှုစနစ် v2.1 သည် ESP32-S3 Chip ကို အခြေခံထားပြီး Dual-Core Architecture ဖြင့် တည်ဆောက်ထားသည့် အဆင့်မြင့်စနစ်တစ်ခုဖြစ်သည်
 ဤစနစ်သည် ရေမော်တာများသာမက လေကွန်ပရက်ဆာများကိုပါ ဘေးကင်းလုံခြုံစွာ ထိန်းချုပ်နိုင်ရန် ဒီဇိုင်းထုတ်ထားသည်
 
