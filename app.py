@@ -31,7 +31,7 @@ ui = {
         "clear_btn": "🗑️ Clear Chat History",
         "contact": "Contact",
         "instr": "Ask about pricing, features, or error codes.",
-        "placeholder": "Ask about errors, setup, or pricing...",
+        "placeholder": "Type your query or request...",
         "expired": "🛑 License Expired",
         "busy": "⚠️ System busy."
     },
