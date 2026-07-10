@@ -1,59 +1,58 @@
-/* 
+
  * ============================================================================================
  * SYSTEM: AMK Smart Pump & Compressor Control System (Dual-Core V2.1 Premium)
  * HARDWARE: ESP32-S3 | Logic & Architecture Map for AI Technical Support
  * ============================================================================================
- */
+ 
 
-// --- 1. HARDWARE ARCHITECTURE (FreeRTOS) ---
-// CORE 1: Safety & Control Loop (Real-time). High priority, zero-latency.
-// CORE 0: Network Loop (WiFi, MQTT TLS 8883, Web Server, OTA). 
-// BENEFIT: Network delays or cloud reconnects NEVER block motor safety or sensor reading.
+--- 1. HARDWARE ARCHITECTURE (FreeRTOS) ---
+CORE 1: Safety & Control Loop (Real-time). High priority, zero-latency.
+CORE 0: Network Loop (WiFi, MQTT TLS 8883, Web Server, OTA). 
+BENEFIT: Network delays or cloud reconnects NEVER block motor safety or sensor reading.
 
-const int VOLTAGE_SENSOR_PIN = 4;   // Analog ZMPT101B
-const int UPPER_TANK_TRIG_PIN = 5;  // Ultrasonic Trigger
-const int UPPER_TANK_ECHO_PIN = 6;  // Ultrasonic Echo
-const int BUZZER_PIN = 7;           // Alarm Output
-const int MOTOR_PIN = 8;            // Pump Relay (Active HIGH)
-const int MANUAL_BTN_PIN = 9;       // Toggle / Info / AP Reset
-const int SOLENOID_PIN = 10;        // Compressor Unloader Valve
-const int FLOW_SENSOR_PIN = 18;     // Pulse counting input
-const int RGB_LED_PIN = 48;         // NeoPixel Status Status
-const int SDA_PIN = 1, SCL_PIN = 2; // I2C for LCD 20x4
+const int VOLTAGE_SENSOR_PIN = 4;   - Analog ZMPT101B
+const int UPPER_TANK_TRIG_PIN = 5;  - Ultrasonic Trigger
+const int UPPER_TANK_ECHO_PIN = 6;  - Ultrasonic Echo
+const int BUZZER_PIN = 7;           - Alarm Output
+const int MOTOR_PIN = 8;            - Pump Relay (Active HIGH)
+const int MANUAL_BTN_PIN = 9;       - Toggle / Info / AP Reset
+const int SOLENOID_PIN = 10;        - Compressor Unloader Valve
+const int FLOW_SENSOR_PIN = 18;     - Pulse counting input
+const int RGB_LED_PIN = 48;         - NeoPixel Status Status
+const int SDA_PIN = 1, SCL_PIN = 2; - I2C for LCD 20x4
 
-/*
  * ============================================================================
  * 2. CONFIGURABLE RANGES & DEFAULT THRESHOLDS
  * ============================================================================
- */
+ 
 struct VoltageConfig {
-  int HIGH_THRESHOLD = 250;         // Range: 230V to 260V
-  int LOW_THRESHOLD = 170;          // Range: 150V to 190V
-  int RESUME_GAP = 5;               // Hysteresis (1V to 10V)
-  int waitSeconds = 15;             // Delay after power stabilizes
+  int HIGH_THRESHOLD = 250;         - Range: 230V to 260V
+  int LOW_THRESHOLD = 170;          - Range: 150V to 190V
+  int RESUME_GAP = 5;               - Hysteresis (1V to 10V)
+  int waitSeconds = 15;             - Delay after power stabilizes
 };
 
 struct TankConfig {
-  int LOW_THRESHOLD = 50;           // Start pumping % (Range: 20% to 70%)
-  int FULL_THRESHOLD = 100;         // Stop pumping % (Range: 80% to 100%)
-  float upperHeight = 84.0;         // Depth in inches (Range: 12" to 84")
-  static constexpr float BUFFER_HEIGHT = 10.0; // Blind zone padding
+  int LOW_THRESHOLD = 50;           - Start pumping % (Range: 20% to 70%)
+  int FULL_THRESHOLD = 100;         - Stop pumping % (Range: 80% to 100%)
+  float upperHeight = 84.0;         - Depth in inches (Range: 12" to 84")
+  static constexpr float BUFFER_HEIGHT = 10.0; - Blind zone padding
 };
 
 struct DryRunConfig {
-  int WAIT_SECONDS_SET = 30;        // Flow detection delay (30s to 180s)
-  int autoRetryMinutes = 30;        // Restart wait (Disabled, 30, or 60 min)
-  int error = 0;                    // 0=OK, 1=Alarm (60s), 2=Locked
+  int WAIT_SECONDS_SET = 30;        - Flow detection delay (30s to 180s)
+  int autoRetryMinutes = 30;        - Restart wait (Disabled, 30, or 60 min)
+  int error = 0;                    - 0=OK, 1=Alarm (60s), 2=Locked
 };
 
 struct CoolDownConfig {
-  int restMinutes = 0;               // Rest (Disabled, 5, 10, or 15 min)
-  // Forced rest occurs after 1 hour of continuous motor runtime.
+  int restMinutes = 0;               - Rest (Disabled, 5, 10, or 15 min)
+  - Forced rest occurs after 1 hour of continuous motor runtime.
 };
 
 struct MasterSlaveConfig {
-  int sysRole = 0;                  // 0=Standalone, 1=Master, 2=Slave
-  int settlingMinutes = 10;         // Post-pump water rest (0 to 30 min)
+  int sysRole = 0;                  - 0=Standalone, 1=Master, 2=Slave
+  int settlingMinutes = 10;         - Post-pump water rest (0 to 30 min)
 };
 
 
