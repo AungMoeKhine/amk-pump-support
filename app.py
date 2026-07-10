@@ -70,13 +70,7 @@ st.markdown(f"""
         [data-testid="stDecoration"] {{ display: none !important; }}
         .block-container {{ padding-top: 4rem !important; }}
         .main-title { 
-    font-size: 1.05rem !important; /* Reduced from 1.25rem */
-    font-weight: 800; 
-    text-align: center; 
-    color: #FFFFFF !important;
-    white-space: nowrap; /* Forces text to stay on one line */
-    letter-spacing: -0.5px; /* Slightly tightens characters to fit better */
-}
+    font-size: 1.05rem !important; font-weight: 800; text-align: center; color: #FFFFFF !important; white-space: nowrap; letter-spacing: -0.5px; }
         .sub-caption {{ font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }}
         @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
         body {{ font-family: 'Pyidaungsu', sans-serif; }}
