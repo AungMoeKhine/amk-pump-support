@@ -5,7 +5,7 @@
 
 ## SECTION 1 — SYSTEM OVERVIEW & ARCHITECTURE
 
-**Hardware:** ESP32-S3 | LCD 20x4 I2C | ZMPT101B Voltage Sensor | Ultrasonic JSN-SR04t & AJ-SR04M | Flow Sensor XKC Y25 T12V | NeoPixel RGB LED
+**Hardware:** ESP32-S3 | LCD 20x4 I2C | ZMPT101B Voltage Sensor | Ultrasonic JSN-SR04t & AJ-SR04M (water proof type) | Flow Sensor XKC Y25 T12V (non contact liquid detect sensor) | NeoPixel RGB LED
 
 **Dual-Core FreeRTOS Architecture:**
 - **Core 1 (Control Loop):** Runs `loop()`. Handles all safety logic — sensor reading, pump control, dry-run, voltage protection, LCD, LED, button. Zero-latency, never blocked.
