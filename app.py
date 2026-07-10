@@ -227,7 +227,7 @@ if prompt := st.chat_input(L['placeholder']):
         """
         
         history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-5:]])
-        full_prompt = f"{context}\n\nUSER QUESTION: {prompt}"
+        full_prompt = f"{context}\n\nCONVERSATION HISTORY:\n{history_text}\nUSER QUESTION: {prompt}"
 
         try:
             response = model.generate_content(full_prompt, stream=True)
