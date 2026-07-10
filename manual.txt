@@ -291,9 +291,10 @@ All commands require correct device PIN in JSON payload unless stated otherwise.
 
 - Install date saved on first successful NTP time sync.
 - Validity = installDate + (validDays x 86400 seconds). Checked hourly and on boot.
-- Disabled: Remote Cloud Toggle (MQTT) and Streamlit AI Support Chatbot are disabled.
-- Active: The device remains fully functional via the Physical Manual Button and the Local Web Dashboard (192.168.4.1 or local IP).
-- Notification: Local Web Dashboard shows a "License Expired" banner, but control buttons remain clickable.
+- Expired State (Limited Service):
+  Disabled: Remote Cloud Toggle (MQTT) and Streamlit AI Support Chatbot are disabled.
+  Active: The device remains fully functional via the Physical Manual Button and the Local Web Dashboard (192.168.4.1 or local IP).
+  Notification: Local Web Dashboard shows a "License Expired" banner, but control buttons remain clickable.
 - Token format (Base64 encoded): timestamp|days|MD5(timestamp|days|ACER123|deviceID)
 - Apply token via: Web Settings > License Management > Paste text OR upload file OR MQTT {"lic":"TOKEN"}
 - Single-use: timestamp must be newer than last used token.
