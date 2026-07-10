@@ -26,7 +26,7 @@
 | UPPER_TANK_TRIG | 5 | Ultrasonic Trigger | — |
 | UPPER_TANK_ECHO | 6 | Ultrasonic Echo | — |
 | BUZZER | 7 | Active Buzzer | Alarm output |
-| MOTOR | 8 | Pump Relay | Active HIGH, disabled when license expired |
+| MOTOR | 8 | Pump Relay | Active HIGH (Cloud-control restricted on expiry; Manual/Local control remains active)|
 | MANUAL_BTN | 9 | Push Button | INPUT_PULLUP, active LOW |
 | SOLENOID | 10 | Unloader Valve | Active HIGH (compressor pre/post vent) |
 | FLOW_SENSOR | 18 | Flow Pulse Input | INPUT_PULLUP, LOW = flow detected |
@@ -291,7 +291,9 @@ All commands require correct device PIN in JSON payload unless stated otherwise.
 
 - Install date saved on first successful NTP time sync.
 - Validity = installDate + (validDays x 86400 seconds). Checked hourly and on boot.
-- Expired: Cloud toggle disabled. Web dashboard shows expiry banner. Streamlit app shows error and stops.
+- Disabled: Remote Cloud Toggle (MQTT) and Streamlit AI Support Chatbot are disabled.
+- Active: The device remains fully functional via the Physical Manual Button and the Local Web Dashboard (192.168.4.1 or local IP).
+- Notification: Local Web Dashboard shows a "License Expired" banner, but control buttons remain clickable.
 - Token format (Base64 encoded): timestamp|days|MD5(timestamp|days|ACER123|deviceID)
 - Apply token via: Web Settings > License Management > Paste text OR upload file OR MQTT {"lic":"TOKEN"}
 - Single-use: timestamp must be newer than last used token.
@@ -447,3 +449,6 @@ Advanced Features (premium differentiation):
 - Full remote control from anywhere via MQTT cloud — start, stop, configure, update.
 - OTA firmware update over the air — no technician visit needed for updates.
 - Android app for quick mobile access to cloud control.
+
+Fair-Use Policy: 
+- Unlike other smart systems, AMK does not "brick" your hardware. If a license expires, you lose remote internet control and AI assistance, but your pump remains a fully      working smart controller via the physical button and local home WiFi.
