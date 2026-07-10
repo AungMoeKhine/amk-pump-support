@@ -1,3 +1,4 @@
+import streamlit.components.v1 as components
 import streamlit as st
 import google.generativeai as genai
 import datetime
@@ -52,7 +53,7 @@ if "language" not in st.session_state:
 L = ui[st.session_state.language]
 
 # ---------------------------------------------------------
-# 3. UI STYLING & HAPTIC FEEDBACK SCRIPT
+# 3. UI STYLING & ROBUST HAPTIC FEEDBACK
 # ---------------------------------------------------------
 st.markdown(f"""
     <style>
@@ -73,27 +74,38 @@ st.markdown(f"""
         @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
         body {{ font-family: 'Pyidaungsu', sans-serif; }}
     </style>
-
     <div class="main-title">{L['title']}</div>
     <div class="sub-caption">{L['caption']}</div>
-
-    <script>
-        // Haptic Feedback Logic
-        const triggerHaptic = () => {{
-            if (window.navigator && window.navigator.vibrate) {{
-                window.navigator.vibrate(40); // 40ms quick pulse
-            }}
-        }};
-
-        // Listen for all button clicks in the app
-        document.addEventListener('click', function(e) {{
-            const target = e.target.closest('button');
-            if (target) {{
-                triggerHaptic();
-            }}
-        }}, true);
-    </script>
     """, unsafe_allow_html=True)
+
+# This component injects JavaScript into the parent window to catch all clicks
+components.html(
+    """
+    <script>
+    const executeHaptic = () => {
+        if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(60); // 60ms vibration
+        }
+    };
+
+    // Use window.parent to catch clicks outside the iframe (Streamlit's main UI)
+    const doc = window.parent.document;
+    
+    doc.addEventListener('click', (e) => {
+        // Target anything that looks like a button (radio buttons, chat send, clear history)
+        const isButton = e.target.tagName === 'BUTTON' || 
+                         e.target.closest('button') || 
+                         e.target.closest('[role="radiogroup"]');
+        
+        if (isButton) {
+            executeHaptic();
+        }
+    }, true);
+    </script>
+    """,
+    height=0,
+    width=0,
+)
 
 # ---------------------------------------------------------
 # 4. KNOWLEDGE LOADING
