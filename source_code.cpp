@@ -90,5 +90,5 @@ struct MasterSlaveConfig {
  * ============================================================================
  * - BUTTON: 1-click (Toggle/Reset), 2-click (Analytic LCD Mode), 3s-hold (WiFi Reset).
  * - LOGGING: Rolling 8000-byte /events.txt file (Last 200 entries).
- * - LICENSING: Token verified via MD5(MAC+Expiry). Disables Pin 8 if expired.
+ * - LICENSING: Token verified via MD5(MAC+Expiry). Disables cloud control parts only if expired, and still able to use directly from device or via local web control page.
  * - DND MODE: NTP-based schedule prevents night auto-starts.
