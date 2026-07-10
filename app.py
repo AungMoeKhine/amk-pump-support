@@ -18,11 +18,8 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
 # ---------------------------------------------------------
-# 2. BILINGUAL UI DICTIONARY (Ensures button labels change)
+# 2. BILINGUAL UI & LANGUAGE LOGIC
 # ---------------------------------------------------------
-if "language" not in st.session_state:
-    st.session_state.language = "English"
-
 ui = {
     "English": {
         "title": "💧 AMK Smart Pump Support AI",
@@ -47,10 +44,15 @@ ui = {
         "busy": "⚠️ စနစ် အလုပ်များနေပါသည်။"
     }
 }
+
+# Accessing language from session state immediately
+if "language" not in st.session_state:
+    st.session_state.language = "English"
+
 L = ui[st.session_state.language]
 
 # ---------------------------------------------------------
-# 3. ULTIMATE TRANSPARENCY SETUP (Preserved)
+# 3. UI STYLING & HAPTIC FEEDBACK SCRIPT
 # ---------------------------------------------------------
 st.markdown(f"""
     <style>
@@ -71,8 +73,26 @@ st.markdown(f"""
         @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
         body {{ font-family: 'Pyidaungsu', sans-serif; }}
     </style>
+
     <div class="main-title">{L['title']}</div>
     <div class="sub-caption">{L['caption']}</div>
+
+    <script>
+        // Haptic Feedback Logic
+        const triggerHaptic = () => {{
+            if (window.navigator && window.navigator.vibrate) {{
+                window.navigator.vibrate(40); // 40ms quick pulse
+            }}
+        }};
+
+        // Listen for all button clicks in the app
+        document.addEventListener('click', function(e) {{
+            const target = e.target.closest('button');
+            if (target) {{
+                triggerHaptic();
+            }}
+        }}, true);
+    </script>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
@@ -90,17 +110,29 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 5. SIDEBAR & CLEAR HISTORY (Fully Restored & Bilingual)
+# 5. SIDEBAR & CLEAR HISTORY
 # ---------------------------------------------------------
+def change_language():
+    # This empty function triggers a rerun with the new session_state.language
+    pass
+
 with st.sidebar:
     st.markdown(f"### {L['sidebar_head']}")
     
-    # Language Switcher
-    st.session_state.language = st.radio("Language / ဘာသာစကား", ["English", "Myanmar"])
+    # Language Switcher with Instant Update
+    st.radio(
+        "Language / ဘာသာစကား", 
+        ["English", "Myanmar"], 
+        key="language", 
+        on_change=change_language
+    )
+    
+    # Refresh 'L' immediately after the radio button so sidebar buttons update too
+    L = ui[st.session_state.language]
     
     st.divider()
     
-    # Clear History Button (Restored)
+    # Clear History Button
     if st.button(L['clear_btn'], use_container_width=True):
         st.session_state.messages = []
         st.rerun()
