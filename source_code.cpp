@@ -1,449 +1,94 @@
-# AMK Smart Pump & Compressor Control System — Complete AI Training Manual
-## Version 2.1 (Premium) | ESP32-S3 | Cross-referenced from source code
-
----
-
-## SECTION 1 — SYSTEM OVERVIEW & ARCHITECTURE
-
-**Hardware:** ESP32-S3 | LCD 20x4 I2C | ZMPT101B Voltage Sensor | Ultrasonic HC-SR04 | Flow Sensor | NeoPixel RGB LED
-
-**Dual-Core FreeRTOS Architecture:**
-- **Core 1 (Control Loop):** Runs `loop()`. Handles all safety logic — sensor reading, pump control, dry-run, voltage protection, LCD, LED, button. Zero-latency, never blocked.
-- **Core 0 (Network Loop):** Runs `networkTask()`. Handles WiFi, MQTT TLS (port 8883), Web Server (port 80), Captive Portal DNS, OTA. Uses `vTaskDelay(10ms)` for CPU sharing.
-- **Why Dual-Core?** Network timeouts, MQTT reconnects, and cloud latency NEVER block motor safety or sensor reading. Both cores share data safely via `xSemaphoreRecursiveMutex`.
-
-**Mutex System:** `systemMutex` (recursive mutex) protects all shared data between cores. Most functions use `pdMS_TO_TICKS(50)` timeout — if the core is busy, the function gracefully skips rather than freezing.
-
----
-
-## SECTION 2 — COMPLETE PIN REFERENCE
-
-| Pin | GPIO | Component | Notes |
-|-----|------|-----------|-------|
-| SDA | 1 | I2C LCD 20x4 | Address 0x27 |
-| SCL | 2 | I2C LCD 20x4 | — |
-| VOLTAGE_SENSOR | 4 | ZMPT101B | ADC_11db, 12-bit, 50Hz AC |
-| UPPER_TANK_TRIG | 5 | Ultrasonic Trigger | — |
-| UPPER_TANK_ECHO | 6 | Ultrasonic Echo | — |
-| BUZZER | 7 | Active Buzzer | Alarm output |
-| MOTOR | 8 | Pump Relay | Active HIGH, disabled when license expired |
-| MANUAL_BTN | 9 | Push Button | INPUT_PULLUP, active LOW |
-| SOLENOID | 10 | Unloader Valve | Active HIGH (compressor pre/post vent) |
-| FLOW_SENSOR | 18 | Flow Pulse Input | INPUT_PULLUP, LOW = flow detected |
-| RGB_LED | 48 | NeoPixel WS2812 | Brightness=30, 1 pixel |
-
----
-
-## SECTION 3 — ALL CONFIGURABLE SETTINGS (with ranges & defaults)
-
-### Tank Settings
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| Tank Height (upperHeight) | 12 inches | 12"–84" (1ft–7ft) | Physical depth of tank in inches |
-| Low Start Level | 50% | 20%–70% | Pump starts when water drops to this level |
-| Full Stop Level | 100% | 80%–100% | Pump stops when water reaches this level |
-| Buffer/Blind Zone | 10" (fixed) | Not configurable | Dead zone at sensor head |
-
-### Voltage Guard
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| High Voltage Cutoff | 250V | 230V–260V | Motor stops above this |
-| Low Voltage Cutoff | 170V | 150V–190V | Motor stops below this |
-| Resume Gap (Hysteresis) | 5V | 1V–10V | Motor resumes only when voltage returns within this gap |
-| Stabilization Wait | 15 seconds | Fixed | Delay after voltage normalizes before motor restarts |
-
-### Dry-Run Protection
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| Dry-Run Delay | 30 seconds | 30s–180s | How long no-flow is tolerated before alarm |
-| Auto-Retry | 30 minutes | Disabled / 30 / 60 min | Automatic restart after dry-run lock |
-
-### Cool-Down (Motor Thermal Protection)
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| Rest Minutes | 0 (Disabled) | Disabled / 5 / 10 / 15 min | Mandatory rest after 1 hour continuous runtime |
-
-### Master/Slave Pairing
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| System Role | 0 (Standalone) | 0=Standalone, 1=Master, 2=Slave | Device pairing role |
-| Linked Master ID | "" (empty) | Device Cloud ID | Slave links to this Master's Cloud ID |
-| Settling Time | 10 minutes | 0–30 minutes | Master waits this long after stopping before Slave can start |
-
-### Compressor Mode
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| Operating Mode | 0 (Water Pump) | 0=Water Pump, 1=Air Compressor | Changes solenoid behavior entirely |
-| Valve Delay | 5 seconds | 5–15 seconds | Pre-vent and post-vent solenoid timing |
-
-### Smart Scheduling (DND)
-| Setting | Default | Description |
-|---------|---------|-------------|
-| DND Enabled | Off | Prevents auto-start during set hours |
-| DND Start Hour | 22:00 | Start of silent window |
-| DND End Hour | 06:00 | End of silent window |
-| Timezone Offset | +6.5 (MMT) | GMT offset for NTP time (supports half-hours) |
-
-### Network Settings
-| Setting | Default | Description |
-|---------|---------|-------------|
-| WiFi SSID | — | Saved to NVS flash |
-| WiFi Password | — | Saved to NVS flash |
-| Device PIN | 123456 | Required for all cloud/remote commands |
-| MQTT Server | HiveMQ Cloud | User-configurable server URL |
-| MQTT Port | 8883 | TLS encrypted |
-| MQTT Username | Smart_Pump | Configurable |
-| Language | English (0) | 0=English, 1=Myanmar |
-
----
-
-## SECTION 4 — STATE MACHINE (All 11 States)
-
-The system runs a strict state machine. Only ONE state is active at a time.
-
-| State | LED Color | Motor | Solenoid | Description |
-|-------|-----------|-------|----------|-------------|
-| IDLE | Green/Cyan/Blue-pulse | OFF | OFF | Standby, waiting for low tank level |
-| PRE_START_VALVE | Amber/Yellow | OFF | ON (open) | Compressor mode only: venting before motor starts |
-| PUMPING | Amber/Yellow | ON | OFF | Motor actively running, flow sensor monitored |
-| POST_STOP_VALVE | Amber/Yellow | OFF | ON (open) | Compressor mode only: venting after motor stops |
-| DRY_RUN_ALARM | Red flashing | OFF | OFF | No flow detected. 60-second oscillating buzzer alarm |
-| DRY_RUN_LOCKED | Red flashing | OFF | OFF | Alarm timed out. Fully locked. Manual or auto-retry required |
-| VOLTAGE_ERROR | Red flashing | OFF | OFF | Voltage out of range. LCD shows OVER or UNDER |
-| VOLTAGE_WAIT | Red flashing | OFF | OFF | Voltage restored but stabilization countdown in progress |
-| COOLING_DOWN | Blue solid | OFF | OFF | 1-hour runtime exceeded, mandatory rest period |
-| SENSOR_ERROR | Red flashing | OFF | OFF | 10 consecutive ultrasonic reading failures |
-| SETTLING_WATER | Purple solid | OFF | OFF | Master mode only: waiting for sump water to settle |
-
----
-
-## SECTION 5 — BUTTON CONTROLS (Physical Button, GPIO 9)
-
-| Action | How | Result |
-|--------|-----|--------|
-| Single Click | Press and release within 600ms, wait 850ms decision window | Toggle pump ON/OFF. If blocked: buzzer beeps + LED flashes red |
-| Double Click | Two clicks within 850ms window (triggers on 2nd press downstroke) | Shows System Info on LCD for 10 seconds (IP, Device ID, License days left). Two-beep confirmation |
-| 3-Second Hold | Hold button for 3+ seconds | Activates WiFi AP Mode. 1-second buzzer. SSID: "Auto-Pump-Config", Password: "12345678" |
-
-**Smart Blocking on Single Click:**
-- Water level LOW while running: "Water level is LOW. Pump will continue until Tank is Full."
-- During compressor venting: "Venting pressure... Please wait."
-- Sensor alarm active: First click silences buzzer only, does NOT toggle pump.
-
----
-
-## SECTION 6 — VOLTAGE FILTERING (5-Stage Anti-Spike Algorithm)
-
-1. **Validity Gate:** Accepts only 40V–320V. Three repeated invalid readings drop voltage to 0V.
-2. **5-Sample Median Buffer:** Collects 5 raw readings, takes median to reject single noise spikes.
-3. **Outlier Hold:** Jumps greater than 18V must repeat 3 consecutive times to be accepted (ignores transient interference).
-4. **Slew Rate Limit:** Maximum change of 3V per 500ms. Prevents relay chatter from rapid voltage swings.
-5. **EMA Smoothing:** 25% new value + 75% previous value. Produces a slow, stable output.
-
----
-
-## SECTION 7 — ULTRASONIC SENSOR ALGORITHM
-
-- **Cycle:** 20 samples at 60ms intervals (non-blocking). Median of valid samples used.
-- **Valid range:** 0" to 84" (MAX_DISTANCE constant).
-- **Distance smoothing:** 90% new + 10% old (fast settling EMA).
-- **Error threshold:** 10 consecutive failed readings triggers SENSOR_ERROR state.
-- **LCD shows:** "SNR ERR". Button press silences alarm (errorAck flag).
-- **Percentage formula:** waterDepth = (tankHeight + bufferHeight) - sensorDistance. Percentage = waterDepth / tankHeight * 100, constrained 0–100%.
-
----
-
-## SECTION 8 — FLOW DETECTION (Dry-Run Persistence Logic)
-
-Flow sensor on GPIO 18 uses three-layer persistence to prevent false dry-run alarms:
-
-1. **Initial Grace Period:** First 60 seconds after motor starts, no-flow is completely ignored (suction/priming time).
-2. **Slug Flow Window:** If flow was detected within the last 60 seconds, system considers it "still flowing" (handles air bubbles and intermittent flow).
-3. **Physical Flow:** Real-time LOW signal on GPIO 18.
-
-Only when ALL THREE are false AND motor has run longer than Dry-Run Delay does the alarm trigger.
-
----
-
-## SECTION 9 — DRY-RUN RECOVERY SEQUENCE (Step by Step)
-
-1. Motor running, no flow detected → countdown timer decrements every second
-2. Countdown reaches 0 → DRY_RUN_ALARM (error=1): Oscillating buzzer for 60 seconds
-3. 60 seconds alarm with no reset → DRY_RUN_LOCKED (error=2): Silent lock
-4. Manual Reset: Physical button OR dashboard "Reset Alarm" → clears error, returns to IDLE
-5. Auto-Retry (if configured): Countdown (30 or 60 min) expires → automatically restarts → PUMPING
-
----
-
-## SECTION 10 — MASTER/SLAVE MQTT PAIRING
-
-**Setup:**
-- Both devices connect to same MQTT server.
-- Master Cloud ID entered into Slave "Linked ID" field.
-- MQTT topic format: smartpump/DEVICE_ID/status
-
-**Master (Sump Tank — Role 1):**
-- Publishes full status JSON on every state change.
-- Enters SETTLING_WATER state after pump stops (purple LED).
-- Settling time (0–30 min) lets sump water stabilize before Slave can start.
-
-**Slave (Roof Tank — Role 2):**
-- Subscribes to Master's status topic.
-- BLOCKED from starting if:
-  1. Master pump is ON
-  2. Master is in unsafe state (not STANDBY, FLOW_DETECTED, or FLOW_CHECKING)
-  3. Master is in SETTLING_WATER state
-  4. No MQTT update from Master for more than 5 minutes AND no initial sync received yet
-- LCD shows "WAIT SUMP" when blocked.
-
-**Fallback:** If Slave received at least one sync and Master goes offline for 5+ minutes, Slave runs independently.
-
----
-
-## SECTION 11 — RGB LED STATUS GUIDE
-
-| Color | Pattern | Meaning |
-|-------|---------|---------|
-| Green solid | — | WiFi connected + MQTT cloud online |
-| Cyan solid | — | WiFi connected, MQTT offline |
-| Blue breathing | Slow brightness pulse | No WiFi connection |
-| Amber/Yellow solid | — | Motor is actively running (pumping) |
-| Blue solid | — | Cool-down rest in progress |
-| Purple solid | — | Master mode: settling water after pump stop |
-| Red fast flash | 500ms toggle | Any error: Dry-Run, Lock, Voltage Error, Sensor Error |
-
----
-
-## SECTION 12 — LCD 20x4 DISPLAY LAYOUT
-
-Left side (columns 0–9): Big 3-digit numbers (custom 3-wide x 2-tall characters) showing Tank % on rows 0–1, Voltage V on rows 2–3.
-
-Right side (columns 10–19): 10-character status labels:
-- Row 0: PUMP ON / PUMP OFF / PUMP REST
-- Row 1: FLOW OK / FLOW CHK / DRY ALRM / SNR ERR / WAIT XXM / VENTING / SETTL XXM / WAIT SUMP / STANDBY / LOCKED
-- Row 2: NO WIFI / WAITING / ONLINE
-- Row 3: OVER / UNDER / DELAY / NORMAL (blinking dot at position 19 when AP mode is active)
-
-Double-Click Info Screen (10 seconds): "--- SYSTEM INFO ---" / License days left / IP address / Device ID
-
----
-
-## SECTION 13 — WEB DASHBOARD (LOCAL ACCESS)
-
-**Access URLs:**
-- AP mode: http://192.168.4.1
-- Station mode: http://DEVICE-IP-ADDRESS
-- mDNS: http://smartpump.local
-
-**Home Tab features:**
-- Animated tank fill graphic with wave animation (CSS SVG waves)
-- Yellow LOW marker line and green FULL marker line on tank graphic
-- Voltage badge: NORMAL (green) / OVER (red) / UNDER (red) / DELAY (yellow)
-- Pump badge: ON (green) / OFF (grey) / DRY ALRM (red) / LOCKED (red)
-- System Info badge with countdown timers (dry-run, cooling, settling, retry)
-- OTA update hub (appears automatically when new firmware detected)
-- Start/Stop Pump button (green/red, context-aware)
-- Reset Alarm button (only visible during error states)
-- DND Active badge (purple moon icon)
-- Master/Slave role badge in header
-- Cloud ID and Device IP at footer
-
-**Settings Tab features:**
-- WiFi scanner (shows SSID + signal strength dBm) + manual SSID entry
-- All thresholds as validated dropdowns (ranges enforced)
-- System Role (Standalone / Master / Slave) with dynamic pairing sub-fields
-- Operating Mode (Water Pump / Air Compressor)
-- DND schedule + timezone
-- License Management (token file upload OR paste token text)
-- Firmware: local .bin upload + GitHub OTA check
-- Factory Mode (hidden, press button and enter "AMK_ADMIN_2026")
-- Language: English / Myanmar
-
-Dashboard auto-polls /status every 1 second.
-
----
-
-## SECTION 14 — MQTT CLOUD CONTROL (All Remote Commands)
-
-All commands require correct device PIN in JSON payload unless stated otherwise.
-
-| Command JSON Key | Action |
-|---|---|
-| toggle | Toggle pump ON or OFF |
-| reset | Reset dry-run alarm |
-| get | Request immediate status publish |
-| save (with settings object) | Save settings remotely (reboots device) |
-| otaCheck | Check for GitHub firmware update |
-| otaStart | Start OTA firmware update |
-| lic (token string, no PIN needed) | Apply license renewal token |
-| promo (with message) | Broadcast notification to dashboard display |
-| clearLog | Clear the event history log file |
-
-**MQTT Topics:**
-- Receive commands: smartpump/DEVICE_ID/set
-- Send status: smartpump/DEVICE_ID/status
-- Online presence: smartpump/DEVICE_ID/online (last-will value = "0")
-- Broadcast to all devices: smartpump/all/set (use ADMIN_MASTER_KEY instead of device PIN)
-
----
-
-## SECTION 15 — LICENSING SYSTEM
-
-- Install date saved on first successful NTP time sync.
-- Validity = installDate + (validDays x 86400 seconds). Checked hourly and on boot.
-- Expired: Cloud toggle disabled. Web dashboard shows expiry banner. Streamlit app shows error and stops.
-- Token format (Base64 encoded): timestamp|days|MD5(timestamp|days|ACER123|deviceID)
-- Apply token via: Web Settings > License Management > Paste text OR upload file OR MQTT {"lic":"TOKEN"}
-- Single-use: timestamp must be newer than last used token.
-- Token expires if unused for more than 7 days.
-- Double-click button on device shows license days remaining on LCD info screen.
-
----
-
-## SECTION 16 — DATA PERSISTENCE (NVS Flash)
-
-All settings survive power cuts using ESP32 NVS (Preferences library, namespace "pump-control").
-
-Saved: WiFi credentials, all thresholds, system role, linked ID, motor status, manual override state, install date, license token timestamp, DND settings, language preference, MQTT server details.
-
-Write protection: saveMotorStatus() uses static RAM variables — only writes to flash when values actually change, preventing unnecessary flash wear cycles.
-
----
-
-## SECTION 17 — OTA FIRMWARE UPDATE (Two Methods)
-
-1. Local Upload: Settings > Firmware Update > Upload .bin file via browser. Device reboots on success.
-2. GitHub OTA: Settings > Check for Updates. Compares FIRMWARE_VERSION constant to remote version.txt. If newer: "Update Now" button appears. Also triggered via MQTT otaCheck/otaStart commands.
-
-GitHub base URL: https://raw.githubusercontent.com/AungMoeKhine/smart_water_pump-control/main/
-
----
-
-## SECTION 18 — EVENT LOGGING SYSTEM
-
-- Storage: LittleFS flash filesystem, file /events.txt, rolling 8000-byte buffer (~200 entries).
-- Events logged: Power On, Auto Start Low, Auto Stop Full, Manual Start, Manual Stop, Voltage High/Low, Dry-Run Alarm, Cool-down, Dry-Run Retry, Slave Stop, History Reset, Resume after Volt OK, Resume after Cool.
-- Viewed: Web dashboard shows last 2000 characters from log in status JSON.
-- Cleared: MQTT clearLog command.
-
----
-
-## SECTION 19 — WIFI & NETWORK BEHAVIOR
-
-First boot (no SSID): AP+STA mode. SSID: Auto-Pump-Config, Password: 12345678. Captive DNS redirects phone to 192.168.4.1 for setup. AP auto-closes after 5 minutes of no clients.
-
-Normal boot (SSID saved): Strict STA-only mode. 5-second connection attempt. If failed, boots offline and retries in background every 30 seconds — pump control continues normally offline.
-
-Manual AP trigger: 3-second button hold activates AP mode for reconfiguration.
-
-mDNS: Device reachable at http://smartpump.local on same network.
-
-Watchdog: 30-second hardware watchdog. Both Core 0 and Core 1 must feed it or device reboots.
-
----
-
-## SECTION 20 — COMPRESSOR MODE SPECIFIC BEHAVIOR
-
-When Operating Mode = Air Compressor (opMode = 1), the solenoid valve (GPIO 10) acts as an unloader valve.
-
-Start sequence:
-1. Solenoid OPENS (pre-vent) for valveDelay seconds — State: PRE_START_VALVE
-2. Solenoid CLOSES, Motor STARTS — State: PUMPING
-3. Flow sensor monitors output pressure.
-
-Stop sequence:
-1. Motor STOPS, Solenoid OPENS (post-vent) for valveDelay seconds — State: POST_STOP_VALVE
-2. Solenoid CLOSES — State: IDLE (or SETTLING_WATER if Master role)
-
-Manual toggle is BLOCKED during venting with message: "Venting pressure... Please wait."
-Auto-resume (after voltage error or cool-down) bypasses this lock by queuing motorStatus.
-
----
-
-## SECTION 21 — TROUBLESHOOTING GUIDE & ERROR CODES
-
-| Error / LCD Text | Cause | Solution |
-|---|---|---|
-| DRY_RUN_ALARM | No flow within delay period | Check pipe, water source, flow sensor wiring (GPIO 18). Press button or use dashboard Reset. |
-| PUMP_LOCKED | Dry-run alarm ran 60s without reset | Manual reset via button or dashboard. Configure auto-retry to avoid in future. |
-| WAITING_RETRY (WAIT XXM) | Auto-retry countdown in progress | Wait (30 or 60 min). Or reset manually anytime. |
-| SNR ERR / SENSOR_ERROR | 10+ consecutive ultrasonic failures | Check GPIO 5 (Trig) and GPIO 6 (Echo) wiring and power. Press button to silence. |
-| OVER / OVER_VOLTAGE | Voltage above high threshold | Check power supply/generator. Auto-resumes after voltage normalizes + 15s delay. |
-| UNDER / UNDER_VOLTAGE | Voltage below low threshold | Check power supply. Same auto-resume logic. |
-| VOLT_DELAY (Xs) | Voltage just normalized, waiting | Normal behavior. System stabilizing. Not an error. |
-| COOLING_DOWN | Motor ran 1 full hour | Mandatory rest. Motor auto-resumes when rest time completes. |
-| VENTING | Compressor solenoid venting | Normal operation. Wait a few seconds for sequence to complete. |
-| SETTL XXM / SETTLING | Master settling after pump stop | Normal Master/Slave behavior. Slave waits for safe window. |
-| NO WIFI | WiFi disconnected | Background reconnect in progress. Check router. 3-sec hold to reconfigure. |
-| WAITING (MQTT offline) | NTP sync or MQTT reconnect in progress | Usually resolves within 30 seconds automatically. |
-
----
-
-## SECTION 22 — PERFORMANCE CHARACTERISTICS
-
-| Metric | Value |
-|--------|-------|
-| Control loop cadence | ~1 second |
-| Ultrasonic measurement interval | 4 seconds |
-| Ultrasonic sample count | 20 samples per cycle |
-| Voltage sampling interval | 500ms |
-| MQTT publish minimum throttle | 500ms between publishes |
-| MQTT reconnect backoff | 10 seconds |
-| MQTT keepalive | 60 seconds |
-| Master link timeout | 5 minutes |
-| AP mode auto-close | 5 minutes (no client) |
-| WiFi reconnect attempt | Every 30 seconds |
-| Watchdog timeout | 30 seconds |
-| Event log capacity | ~200 entries (8000 bytes rolling) |
-| Dashboard status poll rate | 1 second |
-| Heartbeat MQTT publish | Every 30 seconds |
-
----
-
-## SECTION 23 — LANGUAGE SUPPORT
-
-The system fully supports English and Myanmar (Burmese) language on:
-- Web Dashboard (all labels, badges, buttons, error messages translated)
-- Settings page (all fields, dropdowns, and placeholders translated)
-- Streamlit AI chatbot interface (bilingual radio selector)
-
-Set in: Settings > Interface Language. 0 = English, 1 = Myanmar.
-Myanmar text uses Unicode range U+1000–U+109F with Pyidaungsu font.
-
----
-
-## SECTION 24 — ANDROID APP
-
-Smart_Pump.apk available for direct mobile cloud control.
-Connects via MQTT to the configured cloud server.
-Requires device PIN for all pump control and settings operations.
-
----
-
-## SECTION 25 — SALES TALKING POINTS
-
-Cost Savings:
-- Dry-run protection prevents expensive motor burnout from running without water.
-- Voltage protection prevents motor winding damage from power fluctuations.
-- 1-hour cool-down extends motor service life significantly.
-- Subscription licensing model creates recurring revenue stream.
-
-Durability and Reliability:
-- Industrial-grade dual-core ESP32-S3 (same class as industrial PLCs).
-- All settings and state survive power cuts (NVS flash, no data loss).
-- TLS-encrypted cloud (bank-level security on port 8883).
-- Self-healing: auto-reconnects WiFi, MQTT, and retries after any error state.
-
-Ease of Use:
-- First-time setup via phone browser — no app download required.
-- Myanmar language support for local Myanmar customers.
-- Single physical button covers all primary operations.
-- Live animated water level tank on dashboard — instantly understandable.
-
-Advanced Features (premium differentiation):
-- Master/Slave pairing for dual-tank systems (sump pump + roof tank).
-- Air compressor mode with solenoid unloader valve sequencing.
-- Smart night scheduling (DND) prevents noise during sleep hours.
-- Full remote control from anywhere via MQTT cloud — start, stop, configure, update.
-- OTA firmware update over the air — no technician visit needed for updates.
-- Android app for quick mobile access to cloud control.
+ * ============================================================================================
+ * SYSTEM: AMK Smart Pump & Compressor Control System (Dual-Core V2.1 Premium)
+ * HARDWARE: ESP32-S3 | Logic & Architecture Map for AI Technical Support
+ * ============================================================================================
+ 
+--- 1. HARDWARE ARCHITECTURE (FreeRTOS) ---
+CORE 1: Safety & Control Loop (Real-time). High priority, zero-latency.
+CORE 0: Network Loop (WiFi, MQTT TLS 8883, Web Server, OTA). 
+BENEFIT: Network delays or cloud reconnects NEVER block motor safety or sensor reading.
+
+const int VOLTAGE_SENSOR_PIN = 4;   - Analog ZMPT101B
+const int UPPER_TANK_TRIG_PIN = 5;  - Ultrasonic Trigger
+const int UPPER_TANK_ECHO_PIN = 6;  - Ultrasonic Echo
+const int BUZZER_PIN = 7;           - Alarm Output
+const int MOTOR_PIN = 8;            - Pump Relay (Active HIGH)
+const int MANUAL_BTN_PIN = 9;       - Toggle / Info / AP Reset
+const int SOLENOID_PIN = 10;        - Compressor Unloader Valve
+const int FLOW_SENSOR_PIN = 18;     - Pulse counting input
+const int RGB_LED_PIN = 48;         - NeoPixel Status Status
+const int SDA_PIN = 1, SCL_PIN = 2; - I2C for LCD 20x4
+
+ * ============================================================================
+ * 2. CONFIGURABLE RANGES & DEFAULT THRESHOLDS
+ * ============================================================================
+ 
+struct VoltageConfig {
+  int HIGH_THRESHOLD = 250;         - Range: 230V to 260V
+  int LOW_THRESHOLD = 170;          - Range: 150V to 190V
+  int RESUME_GAP = 5;               - Hysteresis (1V to 10V)
+  int waitSeconds = 15;             - Delay after power stabilizes
+};
+
+struct TankConfig {
+  int LOW_THRESHOLD = 50;           - Start pumping % (Range: 20% to 70%)
+  int FULL_THRESHOLD = 100;         - Stop pumping % (Range: 80% to 100%)
+  float upperHeight = 84.0;         - Depth in inches (Range: 12" to 84")
+  static constexpr float BUFFER_HEIGHT = 10.0; - Blind zone padding
+};
+
+struct DryRunConfig {
+  int WAIT_SECONDS_SET = 30;        - Flow detection delay (30s to 180s)
+  int autoRetryMinutes = 30;        - Restart wait (Disabled, 30, or 60 min)
+  int error = 0;                    - 0=OK, 1=Alarm (60s), 2=Locked
+};
+
+struct CoolDownConfig {
+  int restMinutes = 0;               - Rest (Disabled, 5, 10, or 15 min)
+  - Forced rest occurs after 1 hour of continuous motor runtime.
+};
+
+struct MasterSlaveConfig {
+  int sysRole = 0;                  - 0=Standalone, 1=Master, 2=Slave
+  int settlingMinutes = 10;         - Post-pump water rest (0 to 30 min)
+};
+
+ * ============================================================================
+ * 3. CORE ALGORITHMS & RUNNING SCENARIOS
+ * ============================================================================
+ * 
+ * --- VOLTAGE FILTERING (Anti-Spike Logic) ---
+ * - Uses a 5-sample Median Buffer to reject noise spikes.
+ * - Outlier Rejection: Large jumps (>18V) must repeat 3 times to be accepted.
+ * - Slew Rate Limit: Change is capped at 3V per 500ms to protect relay.
+ * - Final Smoothing: 25% EMA (Exponential Moving Average) filter.
+ *
+ * --- FLOW PERSISTENCE (Slug Logic) ---
+ * - Initial Grace: 60s at start where no flow is ignored (suction time).
+ * - Slug Window: 60s memory of previous flow pulses to prevent air-bubble alarms.
+ *
+ * --- MASTER-SLAVE HANDSHAKE ---
+ * - Master (Sump) publishes status via MQTT.
+ * - Slave (Roof) is BLOCKED from starting if Master is:
+ *   1. Pumping (No power for two motors).
+ *   2. Settling (Waiting for sump water to calm).
+ *   3. Unsafe (Voltage error at the Master).
+ * - Timeout: If Slave has no MQTT link for 5 mins, it enters Fallback behavior.
+ *
+ * --- STATE MACHINE (PumpState) ---
+ * - IDLE: Motor OFF. Waiting for low level or manual command.
+ * - PRE_START_VALVE: Solenoid (Pin 10) vents compressor for head-pressure.
+ * - PUMPING: Motor active. Pin 18 pulse counting for Dry-Run safety.
+ * - DRY_RUN_ALARM: 60s oscillating buzzer. Manual button silences it.
+ * - DRY_RUN_LOCKED: System locked. Requires Manual Reset or Auto-Retry cooldown.
+ * - VOLTAGE_ERROR: Safety shutdown. LCD shows OVER or UNDER.
+ * - COOLING_DOWN: Blue LED. Automatic rest to protect motor life.
+ * - SENSOR_ERROR: 10 failed Ultrasonic readings. LCD shows SNR ERR.
+ *
+ * ============================================================================
+ * 4. SYSTEM UTILITIES & SECURITY
+ * ============================================================================
+ * - BUTTON: 1-click (Toggle/Reset), 2-click (Analytic LCD Mode), 3s-hold (WiFi Reset).
+ * - LOGGING: Rolling 8000-byte /events.txt file (Last 200 entries).
+ * - LICENSING: Token verified via MD5(MAC+Expiry). Disables Pin 8 if expired.
+ * - DND MODE: NTP-based schedule prevents night auto-starts.
