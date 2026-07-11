@@ -459,4 +459,4 @@ Advanced Features (premium differentiation):
 - Android app for quick mobile access to cloud control.
 
 Fair-Use Policy: 
-- Unlike other smart systems, AMK does not "brick" your hardware. If a license expires, you lose remote internet control and AI assistance, but your pump remains a fully      working smart controller via the physical button and local home WiFi.
+- Unlike other smart systems, AMK does not "brick" your hardware. If a license expires, you lose remote internet control and AI assistance, but your pump remains a fully working smart controller via the physical button and local home WiFi.
