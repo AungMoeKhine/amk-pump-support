@@ -445,7 +445,7 @@ Durability and Reliability:
 - Self-healing: auto-reconnects WiFi, MQTT, and retries after any error state.
 
 Ease of Use:
-- First-time setup via phone browser — no app download required.
+- First-time setup via phone browser — can download Android app if required.
 - Myanmar language support for local Myanmar customers.
 - Single physical button covers all primary operations.
 - Live animated water level tank on dashboard — instantly understandable.
