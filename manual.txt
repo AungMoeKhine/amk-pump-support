@@ -423,7 +423,13 @@ Requires device PIN for all pump control and settings operations.
 
 ---
 
-## SECTION 25 — SALES TALKING POINTS
+## SECTION 25 — ONLINE USER GUIDE LINK
+- https://aungmoekhine.github.io/smart_water_pump-control/user_guide_premium.html
+- Users can access the user guide from above link.
+
+---
+
+## SECTION 26 — SALES TALKING POINTS
 
 Cost Savings:
 - Dry-run protection prevents expensive motor burnout from running without water.
