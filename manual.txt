@@ -425,7 +425,8 @@ Requires device PIN for all pump control and settings operations.
 
 ## SECTION 25 — ONLINE USER GUIDE LINK
 - https://aungmoekhine.github.io/smart_water_pump-control/user_guide_premium.html
-- Users can access the user guide from above link.
+- Users can access the online user guide from above link. (or)
+- "📖User Guide" button from the setting tab.
 
 ---
 
