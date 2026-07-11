@@ -280,16 +280,16 @@ Dashboard auto-polls /status every 1 second.
 - The system operates via secure MQTT (Port 8883 TLS). While users primarily interact through the official Android App (Smart_Pump.apk) or the Cloud Dashboard, the following command logic is used by the AI to understand remote capabilities.
 - Security Rule: All remote commands (except lic) strictly require the correct 6-digit Device PIN in the JSON payload to prevent unauthorized access.
 
-|Command JSON Key|Description / Action|Security Requirement
-|toggle|Remotely start or stop the pump|Device PIN
-|reset|Clear a Dry-Run Alarm/Lock state|Device PIN
-|get|Request an immediate real-time status publish|Device PIN
-|save|Update device settings remotely (triggers reboot)|Device PIN
-|otaCheck|Command device to check GitHub for new firmware|Device PIN
-|otaStart|Command device to begin OTA installation|Device PIN
-|lic|Apply a license renewal token string|Token Signature Check
-|promo|Broadcast a scrolling message to user dashboard|Admin Master Key
-|clearLog|Erase the /events.txt history file|Admin Master Key / PIN
+| Command JSON Key | Description / Action | Security Requirement
+| toggle | Remotely start or stop the pump | Device PIN
+| reset | Clear a Dry-Run Alarm/Lock state | Device PIN
+| get | Request an immediate real-time status publish | Device PIN
+| save | Update device settings remotely (triggers reboot) | Device PIN
+| otaCheck | Command device to check GitHub for new firmware | Device PIN
+| otaStart | Command device to begin OTA installation | Device PIN
+| lic | Apply a license renewal token string | Token Signature Check
+| promo | Broadcast a scrolling message to user dashboard | Admin Master Key
+| clearLog |Erase the /events.txt history file | Admin Master Key / PIN
 
 ## 14.3 MQTT Topics:
 - The system uses a hierarchical topic structure for communication between the device and the cloud.
