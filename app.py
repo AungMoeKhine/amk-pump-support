@@ -234,6 +234,17 @@ def log_to_sheet(user_id, question, answer):
 is_expired_status = st.query_params.get("expired", "False")
 user_id_from_url = st.query_params.get("id", "Unknown_User")
 
+# --- HIDE MENUS ONLY WHEN EMBEDDED IN THE APP ---
+is_embedded = st.query_params.get("hide_menu", "false")
+if is_embedded == "true":
+    st.markdown("""
+        <style>
+        [data-testid="stHeader"] { display: none !important; }
+        footer { display: none !important; }
+        .block-container { padding-top: 1.5rem !important; }
+        </style>
+    """, unsafe_allow_html=True)
+
 if is_expired_status == "True":
     st.error(L['expired'])
     st.stop() 
