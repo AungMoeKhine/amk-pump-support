@@ -1,5 +1,5 @@
  * ============================================================================================
- * SYSTEM: AMK Smart Pump & Compressor Control System (Dual-Core V2.1 Premium)
+ * SYSTEM: AMK Smart Pump & Compressor Control System (Dual-Core V-1 Premium)
  * HARDWARE: ESP32-S3 | Logic & Architecture Map for AI Technical Support
  * ============================================================================================
  
