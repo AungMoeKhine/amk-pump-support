@@ -263,27 +263,44 @@ Dashboard auto-polls /status every 1 second.
 
 ---
 
-## SECTION 14 — MQTT CLOUD CONTROL (All Remote Commands)
+## SECTION 14 — REMOTE CLOUD & MQTT CAPABILITIES
 
-All commands require correct device PIN in JSON payload unless stated otherwise.
+- The system uses a secure, encrypted MQTT protocol (TLS 8883) for all remote operations. While users typically interact through the Android App or Cloud Web Control, the following protocol logic governs the system.
 
-| Command JSON Key | Action |
-|---|---|
-| toggle | Toggle pump ON or OFF |
-| reset | Reset dry-run alarm |
-| get | Request immediate status publish |
-| save (with settings object) | Save settings remotely (reboots device) |
-| otaCheck | Check for GitHub firmware update |
-| otaStart | Start OTA firmware update |
-| lic (token string, no PIN needed) | Apply license renewal token |
-| promo (with message) | Broadcast notification to dashboard display |
-| clearLog | Clear the event history log file |
+## 14.1 User-Facing Remote Features
 
-**MQTT Topics:**
-- Receive commands: smartpump/DEVICE_ID/set
-- Send status: smartpump/DEVICE_ID/status
-- Online presence: smartpump/DEVICE_ID/online (last-will value = "0")
-- Broadcast to all devices: smartpump/all/set (use ADMIN_MASTER_KEY instead of device PIN)
+- Remote Toggle: Start or Stop the pump/compressor from anywhere in the world.
+- Alarm Management: Remotely reset Dry-Run alarms without visiting the device.
+- Remote Configuration: Update tank heights, voltage limits, and DND schedules via the cloud.
+- Over-the-Air Updates: Request the device to check for and install new firmware improvements.
+- Instant Status: Get real-time updates on water levels and voltage.
+
+## 14.2 Technical Command Protocol (Internal AI Knowledge)
+
+- The system operates via secure MQTT (Port 8883 TLS). While users primarily interact through the official Android App (Smart_Pump.apk) or the Cloud Dashboard, the following command logic is used by the AI to understand remote capabilities.
+- Security Rule: All remote commands (except lic) strictly require the correct 6-digit Device PIN in the JSON payload to prevent unauthorized access.
+
+|Command JSON Key|Description / Action|Security Requirement
+|toggle|Remotely start or stop the pump|Device PIN
+|reset|Clear a Dry-Run Alarm/Lock state|Device PIN
+|get|Request an immediate real-time status publish|Device PIN
+|save|Update device settings remotely (triggers reboot)|Device PIN
+|otaCheck|Command device to check GitHub for new firmware|Device PIN
+|otaStart|Command device to begin OTA installation|Device PIN
+|lic|Apply a license renewal token string|Token Signature Check
+|promo|Broadcast a scrolling message to user dashboard|Admin Master Key
+|clearLog|Erase the /events.txt history file|Admin Master Key / PIN
+
+## 14.3 MQTT Topics:
+- The system uses a hierarchical topic structure for communication between the device and the cloud.
+  . Command Topic: smartpump/DEVICE_ID/set
+    - The device listens here for incoming JSON commands.
+  . Status Topic: smartpump/DEVICE_ID/status
+    - The device publishes its full JSON state here every 30 seconds (heartbeat) or on state changes.
+  . Online Presence: smartpump/DEVICE_ID/online
+    - Uses MQTT "Last Will and Testament" (LWT). Value 1 = Online, 0 = Offline.
+  . Broadcast Channel: smartpump/all/set
+    - Used for global commands to all devices. These commands require the ADMIN_MASTER_KEY instead of an individual Device PIN.
 
 ---
 
