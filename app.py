@@ -65,6 +65,20 @@ st.markdown(f"""
             background-color: transparent !important;
             background: transparent !important;
         }}
+        
+        /* 1. HIDE THE TOP HEADER (DEPLOY BUTTON & MENU) */
+        [data-testid="stHeader"] {{
+            display: none !important;
+        }}
+        #MainMenu {{
+            display: none !important;
+        }}
+        
+        /* 2. HIDE THE BOTTOM "BUILT WITH STREAMLIT" FOOTER */
+        footer {{
+            display: none !important;
+        }}
+
         [data-testid="stChatMessage"] {{
             background-color: rgba(30, 30, 30, 0.8) !important;
             backdrop-filter: blur(8px);
@@ -77,7 +91,12 @@ st.markdown(f"""
             line-height: 1.6 !important;
         }}
         [data-testid="stDecoration"] {{ display: none !important; }}
-        .block-container {{ padding-top: 4rem !important; }}
+        
+        /* 3. PULL THE CHAT UP NOW THAT THE HEADER IS GONE */
+        .block-container {{ 
+            padding-top: 1.5rem !important; 
+            padding-bottom: 5rem !important; 
+        }}
         
         .header-container {{
             display: flex;
