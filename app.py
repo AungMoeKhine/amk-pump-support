@@ -65,37 +65,14 @@ st.markdown(f"""
             background-color: transparent !important;
             background: transparent !important;
         }}
-        
-        /* FIX 1: Ensure invisible iframes (like the JS component) don't block mobile taps */
-        iframe {{
-            pointer-events: none !important;
-        }}
-
         [data-testid="stChatMessage"] {{
             background-color: rgba(30, 30, 30, 0.8) !important;
-            
-            /* FIX 2: Add webkit prefix for iOS Safari and force hardware acceleration */
-            -webkit-backdrop-filter: blur(8px);
             backdrop-filter: blur(8px);
-            transform: translateZ(0); 
-            
-            /* FIX 3: Bring chat messages to the front so they can be clicked */
-            position: relative;
-            z-index: 99;
-            
             border: 1px solid rgba(255, 255, 255, 0.1);
             overflow-wrap: break-word !important;
             word-wrap: break-word !important;
             word-break: break-word !important;
         }}
-        
-        /* Ensure links inside chat messages remain clickable */
-        [data-testid="stChatMessage"] a {{
-            position: relative;
-            z-index: 100;
-            pointer-events: auto !important;
-        }}
-
         [data-testid="stChatMessageContent"] {{
             line-height: 1.6 !important;
         }}
@@ -129,7 +106,6 @@ st.markdown(f"""
         @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
         body {{ font-family: 'Pyidaungsu', sans-serif; }}
     </style>
-    
     <div class="header-container">
         <img src="{LOGO_URL}" class="main-logo">
         <div class="main-title">{L['title']}</div>
@@ -137,56 +113,29 @@ st.markdown(f"""
     <div class="sub-caption">{L['caption']}</div>
     """, unsafe_allow_html=True)
 
+# This component injects JavaScript into the parent window to catch all clicks
 components.html(
     """
     <script>
-    const doc = window.parent.document;
-    
-    // --- 1. Haptic Feedback ---
     const executeHaptic = () => {
         if (window.navigator && window.navigator.vibrate) {
-            window.navigator.vibrate(60); 
+            window.navigator.vibrate(60); // 60ms vibration
         }
     };
 
+    // Use window.parent to catch clicks outside the iframe (Streamlit's main UI)
+    const doc = window.parent.document;
+    
     doc.addEventListener('click', (e) => {
+        // Target anything that looks like a button (radio buttons, chat send, clear history)
         const isButton = e.target.tagName === 'BUTTON' || 
                          e.target.closest('button') || 
                          e.target.closest('[role="radiogroup"]');
+        
         if (isButton) {
             executeHaptic();
         }
     }, true);
-
-    // --- 2. Force External Browser via Android Intent ---
-    const fixLinks = () => {
-        const links = doc.querySelectorAll('a');
-        links.forEach(a => {
-            let url = a.getAttribute('href');
-            
-            // If it's a normal web link and hasn't been modified yet
-            if (url && url.startsWith('http') && !url.includes('intent://')) {
-                a.setAttribute('target', '_self'); // Prevent silent block
-                
-                // Strip the http:// or https://
-                const isHttps = url.startsWith('https://');
-                const scheme = isHttps ? 'https' : 'http';
-                const urlWithoutScheme = url.replace(/^https?:\\/\\//, '');
-                
-                // Convert to an Android Intent URL to force Chrome/System Browser to open
-                const intentUrl = `intent://${urlWithoutScheme}#Intent;scheme=${scheme};action=android.intent.action.VIEW;end;`;
-                a.setAttribute('href', intentUrl);
-            }
-        });
-    };
-
-    fixLinks(); // Run once
-
-    // Watch for new AI chat messages streaming in
-    const observer = new MutationObserver(() => {
-        fixLinks();
-    });
-    observer.observe(doc.body, { childList: true, subtree: true });
     </script>
     """,
     height=0,
