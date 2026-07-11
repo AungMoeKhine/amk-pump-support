@@ -102,7 +102,7 @@ st.markdown(f"""
             line-height: 1.2;
         }}
         
-        .sub-caption {{ font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; margin-left: 20px; }}
+        .sub-caption {{ font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; margin-left: 25px; }}
         @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
         body {{ font-family: 'Pyidaungsu', sans-serif; }}
     </style>
