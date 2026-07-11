@@ -325,8 +325,6 @@ Write protection: saveMotorStatus() uses static RAM variables — only writes to
 3. Remote MQTT Cloud:
   . Triggered remotely via otaCheck (to verify version) or otaStart (to begin update) commands through the MQTT cloud dashboard.
 
-GitHub Base URL (Raw): https://raw.githubusercontent.com/AungMoeKhine/smart_water_pump-control/main/
-
 ---
 
 ## SECTION 18 — EVENT LOGGING SYSTEM
