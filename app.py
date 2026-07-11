@@ -8,6 +8,9 @@ import pandas as pd
 # ---------------------------------------------------------
 # 1. PAGE CONFIG & AI SETUP
 # ---------------------------------------------------------
+
+LOGO_URL = "https://raw.githubusercontent.com/AungMoeKhine/Wifi-Smart-Switch_Control/main/logo.png"
+
 st.set_page_config(
     page_title="AMK AI Support", 
     page_icon="💧",
@@ -71,20 +74,36 @@ st.markdown(f"""
         .block-container {{ padding-top: 4rem !important; }}
         
         /* FIXED LINE BELOW: Added double curly braces */
+        .header-container {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding-bottom: 5px;
+        }}
+        .main-logo {{
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 210, 255, 0.3);
+        }}
         .main-title {{ 
             font-size: 1.05rem !important; 
             font-weight: 800; 
-            text-align: center; 
             color: #FFFFFF !important; 
             white-space: nowrap; 
             letter-spacing: -0.5px;
+            margin: 0;
         }}
         
         .sub-caption {{ font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }}
         @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
         body {{ font-family: 'Pyidaungsu', sans-serif; }}
     </style>
-    <div class="main-title">{L['title']}</div>
+    <div class="header-container">
+        <img src="{LOGO_URL}" class="main-logo">
+        <div class="main-title">{L['title']}</div>
+    </div>
     <div class="sub-caption">{L['caption']}</div>
     """, unsafe_allow_html=True)
 
@@ -139,6 +158,9 @@ def change_language():
     pass
 
 with st.sidebar:
+
+    st.image(LOGO_URL, width=80)
+
     st.markdown(f"### {L['sidebar_head']}")
     
     # Language Switcher with Instant Update
@@ -203,7 +225,7 @@ if prompt := st.chat_input(L['placeholder']):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar=LOGO_URL):
         # EXPERT PERSONA + SECURITY DO'S AND DON'TS
         context = f"""
         ROLE: You are an AMK Smart Pump Dual Expert (Sales + Technical Engineer).
