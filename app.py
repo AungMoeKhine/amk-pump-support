@@ -27,7 +27,7 @@ model = genai.GenerativeModel('gemini-3.1-flash-lite')
 ui = {
     "English": {
         "title": "💧 AMK Smart Pump Support AI",
-        # "caption": "Official Technical & Sales Support",
+        "caption": "Official Technical & Sales Support",
         "sidebar_head": "💧 AMK AI Support",
         "clear_btn": "🗑️ Clear Chat History",
         "contact": "Contact",
@@ -38,7 +38,7 @@ ui = {
     },
     "Myanmar": {
         "title": "💧 AMK စမတ်ပန့် အကူအညီပေးရေး AI",
-        # "caption": "နည်းပညာနှင့် အရောင်းဆိုင်ရာ အကူအညီ",
+        "caption": "နည်းပညာနှင့် အရောင်းဆိုင်ရာ အကူအညီ",
         "sidebar_head": "💧 AMK AI အကူအညီ",
         "clear_btn": "🗑️ ပြောဆိုမှုမှတ်တမ်းဖျက်ရန်",
         "contact": "ဆက်သွယ်ရန်",
