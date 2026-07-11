@@ -66,7 +66,7 @@ st.markdown(f"""
             background: transparent !important;
         }}
 
-                /* Hide the Streamlit Viewer Badge (Github icon) */
+        /* Hide the Streamlit Viewer Badge (Github icon) */
         [class^="viewerBadge_container"] {{ display: none !important; }}
         
         /* Hide any other links pointing to Github */
