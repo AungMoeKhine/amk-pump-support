@@ -65,7 +65,7 @@ st.markdown(f"""
             background-color: transparent !important;
             background: transparent !important;
         }}
-       [data-testid="stToolbar"] a[href*="github.com"] { display: none !important; }        
+       [data-testid="stToolbar"] a[href*="github.com"] {{ display: none !important; }}        
         [data-testid="stChatMessage"] {{
             background-color: rgba(30, 30, 30, 0.8) !important;
             backdrop-filter: blur(8px);
