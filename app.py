@@ -9,7 +9,7 @@ import pandas as pd
 # 1. PAGE CONFIG & AI SETUP
 # ---------------------------------------------------------
 
-LOGO_URL = "https://github.com/AungMoeKhine/Wifi-Smart_Switch_Control/blob/main/logo.png"
+LOGO_URL = "https://github.com/AungMoeKhine/smart_water_pump-control/blob/main/logo.png"
 
 st.set_page_config(
     page_title="AMK AI Support", 
