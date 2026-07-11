@@ -65,14 +65,37 @@ st.markdown(f"""
             background-color: transparent !important;
             background: transparent !important;
         }}
+        
+        /* FIX 1: Ensure invisible iframes (like the JS component) don't block mobile taps */
+        iframe {{
+            pointer-events: none !important;
+        }}
+
         [data-testid="stChatMessage"] {{
             background-color: rgba(30, 30, 30, 0.8) !important;
+            
+            /* FIX 2: Add webkit prefix for iOS Safari and force hardware acceleration */
+            -webkit-backdrop-filter: blur(8px);
             backdrop-filter: blur(8px);
+            transform: translateZ(0); 
+            
+            /* FIX 3: Bring chat messages to the front so they can be clicked */
+            position: relative;
+            z-index: 99;
+            
             border: 1px solid rgba(255, 255, 255, 0.1);
             overflow-wrap: break-word !important;
             word-wrap: break-word !important;
             word-break: break-word !important;
         }}
+        
+        /* Ensure links inside chat messages remain clickable */
+        [data-testid="stChatMessage"] a {{
+            position: relative;
+            z-index: 100;
+            pointer-events: auto !important;
+        }}
+
         [data-testid="stChatMessageContent"] {{
             line-height: 1.6 !important;
         }}
@@ -106,6 +129,7 @@ st.markdown(f"""
         @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
         body {{ font-family: 'Pyidaungsu', sans-serif; }}
     </style>
+    
     <div class="header-container">
         <img src="{LOGO_URL}" class="main-logo">
         <div class="main-title">{L['title']}</div>
