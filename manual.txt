@@ -446,6 +446,7 @@ Durability and Reliability:
 
 Ease of Use:
 - First-time setup via phone browser — can download Android app if required at https://aungmoekhine.github.io/smart_water_pump-control/ via "DOWNLOAD ANDROID APP" button.
+- If wants to use control your device via web-browser from Phone or Computer - through https://aungmoekhine.github.io/smart_water_pump-control/ via "CLOUD DASHBOARD" button, and can install application to your phone or computer by support of Progressive Web Apps (PWAs) features.
 - Myanmar language support for local Myanmar customers.
 - Single physical button covers all primary operations.
 - Live animated water level tank on dashboard — instantly understandable.
