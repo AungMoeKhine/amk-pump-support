@@ -65,8 +65,7 @@ st.markdown(f"""
             background-color: transparent !important;
             background: transparent !important;
         }}
-        /* Hide ONLY the GitHub and Edit icons in the top right */
-        [data-testid="stToolbar"] a[href*="github.com"] { display: none !important; }        
+       [data-testid="stToolbar"] a[href*="github.com"] { display: none !important; }        
         [data-testid="stChatMessage"] {{
             background-color: rgba(30, 30, 30, 0.8) !important;
             backdrop-filter: blur(8px);
