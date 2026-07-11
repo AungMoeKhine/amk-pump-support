@@ -102,7 +102,7 @@ st.markdown(f"""
             line-height: 1.2;
         }}
         
-        .sub-caption {{ font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; margin-left: 22px; }}
+        .sub-caption {{ font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; margin-left: 20px; }}
         @import url('https://fonts.googleapis.com/css2?family=Pyidaungsu&display=swap');
         body {{ font-family: 'Pyidaungsu', sans-serif; }}
     </style>
@@ -214,22 +214,6 @@ def log_to_sheet(user_id, question, answer):
 # ---------------------------------------------------------
 is_expired_status = st.query_params.get("expired", "False")
 user_id_from_url = st.query_params.get("id", "Unknown_User")
-
-# --- HIDE TOOLBAR AND FOOTER ONLY WHEN EMBEDDED ---
-is_embedded = st.query_params.get("hide_menu", "false")
-if is_embedded == "true":
-    st.markdown("""
-        <style>
-        /* Hide ONLY the right-side menu (Github/Edit), but keep the left sidebar button! */
-        [data-testid="stToolbar"] { display: none !important; }
-        
-        /* Hide the "Built with Streamlit" footer */
-        footer { display: none !important; }
-        
-        /* Give a little space at the top so the sidebar button doesn't overlap the chat */
-        .block-container { padding-top: 3rem !important; }
-        </style>
-    """, unsafe_allow_html=True)
 
 if is_expired_status == "True":
     st.error(L['expired'])
