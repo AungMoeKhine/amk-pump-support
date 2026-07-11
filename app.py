@@ -69,16 +69,21 @@ st.markdown(f"""
             background-color: rgba(30, 30, 30, 0.8) !important;
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-wrap: break-word !important;
+            word-wrap: break-word !important;
+            word-break: break-word !important;
+        }}
+        [data-testid="stChatMessageContent"] {{
+            line-height: 1.6 !important;
         }}
         [data-testid="stDecoration"] {{ display: none !important; }}
         .block-container {{ padding-top: 4rem !important; }}
         
-        /* FIXED LINE BELOW: Added double curly braces */
         .header-container {{
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 8px;
             padding-bottom: 5px;
         }}
         .main-logo {{
@@ -88,13 +93,13 @@ st.markdown(f"""
             border: 2px solid rgba(0, 210, 255, 0.3);
         }}
         .main-title {{ 
-            font-size: 0.92rem !important; /* Reduced from 1.05rem */
+            font-size: 0.88rem !important; 
             font-weight: 800; 
             color: #FFFFFF !important; 
             white-space: nowrap; 
-            letter-spacing: -0.8px; /* Tighter spacing to fit more text */
+            letter-spacing: -1px; 
             margin: 0;
-            line-height: 1.2; /* Helps prevent clipping at top/bottom */
+            line-height: 1.2;
         }}
         
         .sub-caption {{ font-size: 0.72rem !important; color: #888888 !important; text-align: center; margin-bottom: 15px; }}
