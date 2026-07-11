@@ -65,13 +65,6 @@ st.markdown(f"""
             background-color: transparent !important;
             background: transparent !important;
         }}
-        
-               /* Hide the Streamlit Viewer Badge (Github icon) */
-        [class^="viewerBadge_container"] {{ display: none !important; }}
-        
-        /* Hide any other links pointing to Github */
-        a[href*="github"] {{ display: none !important; }}
-       
         [data-testid="stChatMessage"] {{
             background-color: rgba(30, 30, 30, 0.8) !important;
             backdrop-filter: blur(8px);
