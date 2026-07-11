@@ -313,12 +313,20 @@ Write protection: saveMotorStatus() uses static RAM variables — only writes to
 
 ---
 
-## SECTION 17 — OTA FIRMWARE UPDATE (Two Methods)
+## SECTION 17 — FIRMWARE UPDATE PROCEDURES (Three Methods)
 
-1. Local Upload: Settings > Firmware Update > Upload .bin file via browser. Device reboots on success.
-2. GitHub OTA: Settings > Check for Updates. Compares FIRMWARE_VERSION constant to remote version.txt. If newer: "Update Now" button appears. Also triggered via MQTT otaCheck/otaStart commands.
-
-GitHub base URL: https://raw.githubusercontent.com/AungMoeKhine/smart_water_pump-control/main/
+1. Local Manual Upload:
+  . Download: Visit https://github.com/AungMoeKhine/smart_water_pump-control/ and press the "DOWNLOAD FIRMWARE.BIN" button to save the file to your local storage.
+  . Upload: Connect to the device via your local network, navigate to Settings > Firmware Update, click "Choose File" to select the downloaded firmware.bin, and then click "Update Firmware".
+  . Reboot: The device will automatically flash the file and reboot upon success.
+2. GitHub OTA (Direct Cloud):
+  . Go to Settings > Check for Updates. The system compares the internal FIRMWARE_VERSION constant to the remote version.txt on  GitHub.
+  . If a newer version is detected, an "Update Now" button appears for automated download and installation.
+3. Remote MQTT Cloud:
+  . Triggered remotely via otaCheck (to verify version) or otaStart (to begin update) commands through the MQTT cloud dashboard.
+  
+GitHub Repository: https://github.com/AungMoeKhine/smart_water_pump-control/
+GitHub Base URL (Raw): https://raw.githubusercontent.com/AungMoeKhine/smart_water_pump-control/main/
 
 ---
 
@@ -446,7 +454,6 @@ Durability and Reliability:
 
 Ease of Use:
 - First-time setup via phone browser — can download Android app if required at https://aungmoekhine.github.io/smart_water_pump-control/ via "DOWNLOAD ANDROID APP" button.
-- If wants to use control your device via web-browser from Phone or Computer - through https://aungmoekhine.github.io/smart_water_pump-control/ via "CLOUD DASHBOARD" button, and can install application to your phone or computer by support of Progressive Web Apps (PWAs) features.
 - Myanmar language support for local Myanmar customers.
 - Single physical button covers all primary operations.
 - Live animated water level tank on dashboard — instantly understandable.
