@@ -1,5 +1,5 @@
 # AMK Smart Pump & Compressor Control System — Complete AI Training Manual
-## Version 2.1 (Premium) | ESP32-S3 | Cross-referenced from source code
+## Version 1 (Premium) | ESP32-S3 | Cross-referenced from source code
 
 ---
 
