@@ -493,10 +493,10 @@ Fair-Use Policy:
 - The AMK Web Dashboard supports PWA standards, enabling users to run the controller interface as a standalone virtual application on various operating systems.
 
 ## 27.1 Installation Methods by Platform
-- Platform	Recommended Browser	Installation Steps
-- Android Mobile	Google Chrome / Edge	1. Access the local IP or cloud URL.<br>2. Tap the three-dot menu icon.<br>3. Select "Install App" or "Add to Home Screen".<br>4. Confirm the prompt.
-- iOS (iPhone/iPad)	Apple Safari	1. Navigate to the dashboard URL in Safari.<br>2. Tap the "Share" button (square with up arrow).<br>3. Scroll down and tap "Add to Home Screen".<br>4. Confirm the name and tap "Add".
-- Windows / macOS	Google Chrome / Edge	1. Open the dashboard URL.<br>2. Look for the Install Icon (monitor with down arrow) in the browser search bar.<br>3. Click "Install" to create a desktop shortcut and standalone window.
+| Platform	| Recommended Browser	| Installation Steps
+|  Android Mobile	| Google Chrome / Edge	|1. Access the local IP or cloud URL.<br>2. Tap the three-dot menu icon.<br>3. Select "Install App" or "Add to Home Screen".<br>4. Confirm the prompt. |
+| iOS (iPhone/iPad)	| Apple Safari	| 1. Navigate to the dashboard URL in Safari.<br>2. Tap the "Share" button (square with up arrow).<br>3. Scroll down and tap "Add to Home Screen".<br>4. Confirm the name and tap "Add". |
+| Windows / macOS	| Google Chrome / Edge	| 1. Open the dashboard URL.<br>2. Look for the Install Icon (monitor with down arrow) in the browser search bar.<br>3. Click "Install" to create a desktop shortcut and standalone window. |
 
 ## 27.2 Operational Characteristics of the PWA
 - Security Constraints: Browsers typically require a secure context (HTTPS) to prompt for installation when accessing remote cloud dashboards. For local direct connections (http://192.168.4.1), chromium-based browsers generally bypass this requirement to assist offline setup.
