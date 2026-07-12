@@ -261,6 +261,11 @@ Double-Click Info Screen (10 seconds): "--- SYSTEM INFO ---" / License days left
 
 Dashboard auto-polls /status every 1 second.
 
+## 13.1 Progressive Web App (PWA) Capabilities
+- Virtual App Installation: The local and cloud-hosted web dashboards are built with a Web App Manifest (manifest.json) and Service Worker. This allows the dashboard to be installed directly onto smartphones, tablets, or computers without going through an app store.
+- Standalone Mode: Once installed, the dashboard launches in a dedicated, full-screen window with the browser navigation bar hidden, mimicking a native utility application.
+- Asset Caching: Basic static assets (icons, CSS, and structural HTML) are cached locally on the device, reducing load times during subsequent connections.
+
 ---
 
 ## SECTION 14 — REMOTE CLOUD & MQTT CAPABILITIES
@@ -437,11 +442,11 @@ Myanmar text uses Unicode range U+1000–U+109F with Pyidaungsu font.
 
 ---
 
-## SECTION 24 — ANDROID APP
+## SECTION 24 — MOBILE UTILITIES & APP OPTIONS
 
-Smart_Pump.apk available for direct mobile cloud control.
-Connects via MQTT to the configured cloud server.
-Requires device PIN for all pump control and settings operations.
+- Native Android App (Smart_Pump.apk): Available for direct cloud control over MQTT. Requires manual installation and is optimized for Android-specific background services.
+- PWA Virtual App (Multi-Platform Alternative): For iOS users, desktop users, or those preferring a zero-install footprint, the Web Dashboard can be added directly to the home screen. It behaves like a native application and accesses either the local network (http://192.168.4.1 / local IP) or the cloud URL.
+- Requires device PIN for all pump control and settings operations.
 
 ---
 
@@ -471,6 +476,7 @@ Ease of Use:
 - Myanmar language support for local Myanmar customers.
 - Single physical button covers all primary operations.
 - Live animated water level tank on dashboard — instantly understandable.
+- Zero-Store App Installation (PWA): Users do not need a Google Play or Apple App Store account to get a full-screen app experience. They can install the controller interface directly from their web browser onto their phone, tablet, or PC home screen in seconds, saving device storage space.
 
 Advanced Features (premium differentiation):
 - Master/Slave pairing for dual-tank systems (sump pump + roof tank).
@@ -482,3 +488,17 @@ Advanced Features (premium differentiation):
 
 Fair-Use Policy: 
 - Unlike other smart systems, AMK does not "brick" your hardware. If a license expires, you lose remote internet control and AI assistance, but your pump remains a fully working smart controller via the physical button and local home WiFi.
+
+## SECTION 27 — PROGRESSIVE WEB APP (PWA) INSTALLATION GUIDE
+- The AMK Web Dashboard supports PWA standards, enabling users to run the controller interface as a standalone virtual application on various operating systems.
+
+## 27.1 Installation Methods by Platform
+- Platform	Recommended Browser	Installation Steps
+- Android Mobile	Google Chrome / Edge	1. Access the local IP or cloud URL.<br>2. Tap the three-dot menu icon.<br>3. Select "Install App" or "Add to Home Screen".<br>4. Confirm the prompt.
+- iOS (iPhone/iPad)	Apple Safari	1. Navigate to the dashboard URL in Safari.<br>2. Tap the "Share" button (square with up arrow).<br>3. Scroll down and tap "Add to Home Screen".<br>4. Confirm the name and tap "Add".
+- Windows / macOS	Google Chrome / Edge	1. Open the dashboard URL.<br>2. Look for the Install Icon (monitor with down arrow) in the browser search bar.<br>3. Click "Install" to create a desktop shortcut and standalone window.
+
+## 27.2 Operational Characteristics of the PWA
+- Security Constraints: Browsers typically require a secure context (HTTPS) to prompt for installation when accessing remote cloud dashboards. For local direct connections (http://192.168.4.1), chromium-based browsers generally bypass this requirement to assist offline setup.
+- Storage Efficiency: The virtual app occupies minimal storage space (typically under 2MB), as it shares the browser’s underlying engine instead of bundling a separate runtime environment.
+- Auto-Update Behavior: Whenever the controller’s web resources are updated via firmware or web server adjustments, the PWA refreshes its cache on the next launch, ensuring the user always accesses the current version.
