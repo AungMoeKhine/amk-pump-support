@@ -502,3 +502,30 @@ Fair-Use Policy:
 - Security Constraints: Browsers typically require a secure context (HTTPS) to prompt for installation when accessing remote cloud dashboards. For local direct connections (http://192.168.4.1), chromium-based browsers generally bypass this requirement to assist offline setup.
 - Storage Efficiency: The virtual app occupies minimal storage space (typically under 2MB), as it shares the browser’s underlying engine instead of bundling a separate runtime environment.
 - Auto-Update Behavior: Whenever the controller’s web resources are updated via firmware or web server adjustments, the PWA refreshes its cache on the next launch, ensuring the user always accesses the current version.
+
+## Recap of Safety features
+
+1. Sensor Reliability & Failsafes
+- Ultrasonic Noise Filtering: Takes 20 samples per scan and calculates the median value. This filters out wild reflections or water ripples inside the tank.
+- Slew Rate Limiting: Restricts how fast the tank percentage can change per scan. This prevents sudden spikes or drops in the readings if an anomaly occurs.
+- Sensor Timeout Budget (MAX_PULSE_DURATION): Hard-coded to 25,000 µs to prevent the microcontroller from freezing indefinitely if the sensor misses an echo.
+- Hardware-Agnostic Timing: Specifically timed to work perfectly with both fast (JSN-SR04T) and slow (AJ-SR04M) sensor modules without needing code changes.
+- Auto-Reboot Watchdog (The Newest Fix): If the sensor board locks up entirely due to electrical noise, the system will track the errors and automatically reboot itself after 20 consecutive failures.
+Upper Invalid Count (MAX_INVALID_COUNT): If the sensor returns bad data for too long without locking up completely, the system throws a "Sensor Error!" to the UI and halts operations to prevent overflow.
+
+2. Motor & Pump Protection
+- Dry-Run Protection: Uses a flow sensor to detect if water is actually moving. If the pump turns on but no flow is detected within your customizable "Dry-Run Delay" (60-180 seconds), the pump shuts down to prevent the motor from burning out.
+- Dry-Run Auto-Retry: Instead of requiring manual intervention after a dry-run, the system enters a WAITING_RETRY! state and waits a user-defined time before attempting to prime the pump again.
+- Pump Cool-down Timer: If the pump runs continuously for 1 hour, the system forces it into a COOLING_DOWN! state. This prevents the motor coils from overheating during massive tank fills.
+- Compressor Valve Venting (VENTING_VALVE!): A smart delay feature that triggers an air compressor/valve before the main pump starts, relieving back pressure in the pipes so the pump motor doesn't stall on startup.
+
+3. Electrical Grid Protection
+- Over-Voltage & Under-Voltage Cutoff: Constantly monitors grid voltage. If it spikes too high or drops too low, it immediately stops the pump to protect the motor windings.
+- Voltage Resume Gap (Hysteresis): Prevents the pump from rapidly clicking ON and OFF if the grid voltage is hovering right on the edge of the safe limit.
+- State Memory (wasRunningBeforeVoltageError): If the pump is shut down by a voltage error, the ESP32 remembers that it was pumping. When the voltage normalizes, it automatically resumes pumping without user intervention.
+
+4. System & Network Resilience
+- Initial Hardware Safety Check: Runs a safety sequence on boot to ensure all relay pins are in a safe (OFF) state before any logic begins.
+- Master-Slave Link Timeout: When operating in paired mode (Sump Tank / Upper Tank), it constantly checks the heartbeat. If communication between the two tanks drops (MASTER_LINK_TIMEOUT), the system falls back to a safe state to prevent flooding.
+- Access Point (AP) Timeout: If the device cannot find Wi-Fi, it broadcasts its own setup network. However, it will automatically close this network after a timeout so it doesn't remain exposed indefinitely.
+- MQTT / Cloud Timeout Management: Specific socket and handshake timeouts (setHandshakeTimeout, setTimeout) are hardcoded to ensure the device doesn't hang if the cloud server responds slowly.
