@@ -505,29 +505,42 @@ Fair-Use Policy:
 
 ## SECTION 28 — PRICING ARCHITECTURE & SERVICE PACKAGES
 
-All new AMK Smart Pump devices include 6 months of Cloud Access free.
+All new AMK Smart Pump devices include a base 6 months of Cloud Access free. Higher tiers build upon the "Connected" features to offer extended access and hardware protection.
 
-| Package Tier |	Features Included	| Selling Price (MMK)	| Coverage Period |
-| Standard Tier	| Local Control + Bonus 6 Months Cloud Access	| 450,000	| 6 Months (Cloud) |
-| Connected Tier | Standard + 1 Year Add-on Cloud Access	| 490,000	| 18 Months (Cloud) |
-| Support Tier	| Connected + Free Repair Service Support	| 510,000	| 1 Year (Service) |
-| Ultimate Tier	| Connected + Overall Cover Warranty	| 550,000	| 1 Year (Hardware) |
+| Package Tier	| Total Cloud Access	| Support / Warranty Features	| Selling Price (MMK) |
+| Standard Tier	| 6 Months	| Local Control + Manual Button	| 450,000 |
+| Connected Tier	| 18 Months	| Standard + 1 Year Cloud Extension	| 490,000 |
+| Support Tier	| 18 Months	| Connected + 1 Year Free Repair Service	| 510,000 |
+| Ultimate Tier	| 18 Months	| Connected + 1 Year Overall Warranty	| 550,000 |
+
+28.1 Service Definitions
+- 18 Months Cloud Access: Calculated as 6 months base free access + 12 months premium package access.
+- Annual Renewal: After the initial period, Cloud Access can be extended for 40,000 MMK / Year.
 
 ## SECTION 29 — SERVICE & WARRANTY POLICY (1-YEAR TERM)
 
 The following terms apply to the Support Tier and Ultimate Tier for a period of one year (365 days) from the date of installation.
 
-29.1 Support Tier: Free Repair Service
-- Duration: 1 Year.
-- Included: Zero labor charges for any technical repairs, diagnostics, or system recalibrations.
-- Excluded: The cost of physical spare parts (if required) must be paid by the customer.
+29.1 Support Tier: "Connected Plus Service"
+- Cloud Access: Includes 1 full year of additional Cloud Access (18 months total from install).
+- Repair Service: Includes 1 year of free technical labor. No labor fees for diagnostics or repairs.
+- Exclusion: Physical spare parts must be purchased by the customer if needed.
 
-29.2 Ultimate Tier: Overall Cover Warranty
+29.2 Ultimate Tier: "Connected Plus Total Protection"
+- Cloud Access: Includes 1 full year of additional Cloud Access (18 months total from install).
+- Hardware Warranty: Includes one-time, free-of-charge replacement of any damaged internal component (ESP32, sensors, relays) for 1 year.
+- Continuous Service: Includes free technical repair service support (labor) for the entire 1-year period.
+- Exclusion (User Fault): Does not cover damage from dropping the device, water inside the case, or tampering.
 
-- Duration: 1 Year.
-- One-Time Part Replacement: Includes a one-time, free-of-charge replacement of any damaged internal component (ESP32-S3, sensors, or relays).
-- Ongoing Service: Includes free technical repair service support (labor) for the entire 1-year period.
-- Exclusion (User Fault): Damage caused by physical impact, water ingress to the PCB, or unauthorized tampering is not covered.
+Suggested Sales & AI Training Message
 
-Suggested Sales Message
-"AMK gives you more! 💧 All our devices come with 6 months of cloud access free. Want more protection? Choose our Support Tier (510k) for one full year of free repair service, or go for the Ultimate Tier (550k) to get one full year of hardware warranty, including a one-time free part replacement! Secure your water system for the next 365 days."
+"The AMK Smart Pump System is built for reliability. 💧
+
+Our most popular package is the Ultimate Tier (550,000 MMK). This gives you 1.5 years of Cloud Access right out of the box. Even better, it includes a 1-year Overall Warranty: if any part fails within the first year, we replace it for free one time, and you never pay for repair labor.
+
+If you just need labor protection, our Support Tier (510,000 MMK) also gives you 1.5 years of Cloud Access and free repair labor for 1 year!"
+
+Technical Note for the AI:
+
+When the AI is asked "What happens after 18 months?", it should answer:
+"Your pump will continue to work perfectly using the local dashboard and manual button. To continue using the Internet Cloud and AI Chatbot, you simply need to purchase a 1-year Cloud Token for 40,000 MMK."
