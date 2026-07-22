@@ -257,20 +257,32 @@ if prompt := st.chat_input(L['placeholder']):
         with st.spinner("Checking AMK Registry..."):
             reg_data = fetch_registry_data(device_id)
             if reg_data and reg_data != "error":
+                # We pull data strictly and label them clearly for the AI
+                w_date = reg_data.get('warrantyDate', 'N/A')
+                w_days = reg_data.get('warrantyDays', 'N/A')
+                c_date = reg_data.get('cloudDate', 'N/A')
+                c_days = reg_data.get('cloudDays', 'N/A')
+
                 registry_context = f"""
-                REGISTRY DATA FOUND:
+                CRITICAL REGISTRY DATA (TRUTH):
                 - Device ID: {device_id}
-                - Owner: {reg_data.get('name', 'N/A')}
-                - Tier: {reg_data.get('tier', 'N/A')}
-                - Warranty Date: {reg_data.get('warrantyDate') or reg_data.get('warranty', 'N/A')}
-                - Warranty Days Left: {reg_data.get('warrantyDays', 'N/A')}
-                - Cloud Access Date: {reg_data.get('cloudDate') or reg_data.get('expiry', 'N/A')}
-                - Cloud Access Days Left: {reg_data.get('cloudDays', 'N/A')}
+                - Owner Name: {reg_data.get('name', 'N/A')}
+                - Package Tier: {reg_data.get('tier', 'N/A')}
                 
-                DISPLAY INSTRUCTIONS: 
-                - Greet owner by name.
-                - Report status using format: [Date] ([Days Left]). 
-                - Example: 29-May-2027 (311 Days).
+                WARRANTY DATA:
+                - Expiry Date: {w_date}
+                - Days Remaining: {w_days}
+                
+                CLOUD ACCESS DATA:
+                - Expiry Date: {c_date}
+                - Days Remaining: {c_days}
+                
+                STRICT INSTRUCTIONS:
+                1. Use ONLY the data above. DO NOT calculate your own dates.
+                2. Greet the owner by name.
+                3. Format your reply exactly like this:
+                   - Warranty (အာမခံသက်တမ်း): [Warranty Expiry Date] ([Warranty Days Remaining])
+                   - Cloud Access (အဝေးထိန်းစနစ် သက်တမ်း): [Cloud Expiry Date] ([Cloud Days Remaining])
                 """
             elif reg_data == "error":
                 registry_context = "\nSYSTEM NOTE: Registry database is temporarily offline."
