@@ -258,13 +258,19 @@ if prompt := st.chat_input(L['placeholder']):
             reg_data = fetch_registry_data(device_id)
             if reg_data and reg_data != "error":
                 registry_context = f"""
-                REGISTRY DATA FOUND (USE THIS INFO):
+                REGISTRY DATA FOUND:
                 - Device ID: {device_id}
                 - Owner: {reg_data['name']}
                 - Tier: {reg_data['tier']}
-                - Warranty Expiry: {reg_data['warranty']}
-                - Cloud Access Expiry: {reg_data['expiry']}
-                INSTRUCTIONS: Greet {reg_data['name']} and confirm these details.
+                - Warranty Date: {reg_data['warrantyDate']}
+                - Warranty Days Left: {reg_data['warrantyDays']}
+                - Cloud Access Date: {reg_data['cloudDate']}
+                - Cloud Access Days Left: {reg_data['cloudDays']}
+                
+                DISPLAY INSTRUCTIONS: 
+                - Greet owner by name.
+                - Report status using format: [Date] ([Days Left]). 
+                - Example: 29-May-2027 (311 Days).
                 """
             elif reg_data == "error":
                 registry_context = "\nSYSTEM NOTE: Registry database is temporarily offline."
@@ -301,6 +307,8 @@ if prompt := st.chat_input(L['placeholder']):
         - FORMAT: Use bullet points for steps and bold text for key warnings or prices.
         
         COMMUNICATION:
+        - When reporting Expiry/Warranty, always show both Date and Days. 
+        - Format: 29-May-2027 (311 Days) or 29-May-2027 (၃၁၁ ရက်).
         - Reply in the language the user used (English/Myanmar).
         - If info is missing from knowledge base, say: "Please contact support at +95-9-977880406."
         """
