@@ -250,7 +250,7 @@ if prompt := st.chat_input(L['placeholder']):
 
     # --- NEW: DETECT DEVICE ID & FETCH DATA ---
     # Looks for any 8-character alphanumeric code in the user's message
-    found_id = re.search(r'\b[A-Z0-9]{8}\b', prompt.upper())
+    found_id = re.search(r'\b[A-Z0-9]{8,12}\b', prompt.upper())
     registry_context = ""
     if found_id:
         device_id = found_id.group()
