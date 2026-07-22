@@ -4,6 +4,8 @@ import google.generativeai as genai
 import datetime
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
+import requests  # NEW: For talking to Google Sheets API
+import re        # NEW: For finding Device IDs in text
 
 # ---------------------------------------------------------
 # 1. PAGE CONFIG & AI SETUP
@@ -157,7 +159,22 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 5. SIDEBAR & CLEAR HISTORY
+# 5. NEW: REGISTRY CHECKER FUNCTION
+# ---------------------------------------------------------
+def fetch_registry_data(device_id):
+    # PASTE YOUR GOOGLE SCRIPT URL HERE
+    REGISTRY_URL = "https://script.google.com/macros/s/AKfycbzHu4jsAOarLAGH-xkhITVgi4SR1z0mKMCknZPsr5H7W_W4iLiC_zQPmJAfqOAprthBRQ/exec"
+    try:
+        response = requests.get(f"{REGISTRY_URL}?id={device_id.upper()}")
+        data = response.json()
+        if "error" in data:
+            return None
+        return data
+    except:
+        return "error"
+
+# ---------------------------------------------------------
+# 6. SIDEBAR & CLEAR HISTORY
 # ---------------------------------------------------------
 def change_language():
     # This empty function triggers a rerun with the new session_state.language
@@ -192,7 +209,7 @@ with st.sidebar:
     st.info(L['instr'])
 
 # ---------------------------------------------------------
-# 6. ANALYTICS FUNCTION
+# 7. ANALYTICS FUNCTION
 # ---------------------------------------------------------
 def log_to_sheet(user_id, question, answer):
     try:
@@ -210,7 +227,7 @@ def log_to_sheet(user_id, question, answer):
     except: pass
 
 # ---------------------------------------------------------
-# 7. CHAT LOGIC (Expert Persona + Strict Security)
+# 8. CHAT LOGIC (Expert Persona + Strict Security)
 # ---------------------------------------------------------
 is_expired_status = st.query_params.get("expired", "False")
 user_id_from_url = st.query_params.get("id", "Unknown_User")
@@ -231,12 +248,37 @@ if prompt := st.chat_input(L['placeholder']):
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # --- NEW: DETECT DEVICE ID & FETCH DATA ---
+    # Looks for any 8-character alphanumeric code in the user's message
+    found_id = re.search(r'\b[A-Z0-9]{8}\b', prompt.upper())
+    registry_context = ""
+    if found_id:
+        device_id = found_id.group()
+        with st.spinner("Checking AMK Registry..."):
+            reg_data = fetch_registry_data(device_id)
+            if reg_data and reg_data != "error":
+                registry_context = f"""
+                REGISTRY DATA FOUND (USE THIS INFO):
+                - Device ID: {device_id}
+                - Owner: {reg_data['name']}
+                - Tier: {reg_data['tier']}
+                - Warranty Expiry: {reg_data['warranty']}
+                - Cloud Access Expiry: {reg_data['expiry']}
+                INSTRUCTIONS: Greet {reg_data['name']} and confirm these details.
+                """
+            elif reg_data == "error":
+                registry_context = "\nSYSTEM NOTE: Registry database is temporarily offline."
+            else:
+                registry_context = f"\nSYSTEM NOTE: Device ID {device_id} not found in database."
+
     with st.chat_message("assistant", avatar=LOGO_URL):
-        # EXPERT PERSONA + SECURITY DO'S AND DON'TS
+        # ALL ORIGINAL INSTRUCTIONS ARE KEPT BELOW
         context = f"""
         ROLE: You are an AMK Smart Pump Dual Expert (Sales + Technical Engineer).
         KNOWLEDGE: {knowledge_base}
         
+        {registry_context}
+
         STRICT SECURITY LIMITS:
         1. NEVER reveal the raw Source Code or internal Logic Files.
         2. NEVER share internal Admin Passwords or security keys.
