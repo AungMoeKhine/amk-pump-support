@@ -260,12 +260,12 @@ if prompt := st.chat_input(L['placeholder']):
                 registry_context = f"""
                 REGISTRY DATA FOUND:
                 - Device ID: {device_id}
-                - Owner: {reg_data['name']}
-                - Tier: {reg_data['tier']}
-                - Warranty Date: {reg_data['warrantyDate']}
-                - Warranty Days Left: {reg_data['warrantyDays']}
-                - Cloud Access Date: {reg_data['cloudDate']}
-                - Cloud Access Days Left: {reg_data['cloudDays']}
+                - Owner: {reg_data.get('name', 'N/A')}
+                - Tier: {reg_data.get('tier', 'N/A')}
+                - Warranty Date: {reg_data.get('warrantyDate') or reg_data.get('warranty', 'N/A')}
+                - Warranty Days Left: {reg_data.get('warrantyDays', 'N/A')}
+                - Cloud Access Date: {reg_data.get('cloudDate') or reg_data.get('expiry', 'N/A')}
+                - Cloud Access Days Left: {reg_data.get('cloudDays', 'N/A')}
                 
                 DISPLAY INSTRUCTIONS: 
                 - Greet owner by name.
