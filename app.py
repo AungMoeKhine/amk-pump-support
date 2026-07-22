@@ -163,7 +163,7 @@ knowledge_base = load_knowledge_data()
 # ---------------------------------------------------------
 def fetch_registry_data(device_id):
     # PASTE YOUR GOOGLE SCRIPT URL HERE
-    REGISTRY_URL = "https://script.google.com/macros/s/AKfycbzHu4jsAOarLAGH-xkhITVgi4SR1z0mKMCknZPsr5H7W_W4iLiC_zQPmJAfqOAprthBRQ/exec"
+    REGISTRY_URL = "https://script.google.com/macros/s/AKfycbzNMBACyZpgB6JTTC2UqqmSQ6zj84X24bAAFx0ZmHSOg4ZQFdJoldERj8YlodjYyg4h4w/exec"
     try:
         response = requests.get(f"{REGISTRY_URL}?id={device_id.upper()}")
         data = response.json()
