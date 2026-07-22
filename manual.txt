@@ -503,29 +503,31 @@ Fair-Use Policy:
 - Storage Efficiency: The virtual app occupies minimal storage space (typically under 2MB), as it shares the browser’s underlying engine instead of bundling a separate runtime environment.
 - Auto-Update Behavior: Whenever the controller’s web resources are updated via firmware or web server adjustments, the PWA refreshes its cache on the next launch, ensuring the user always accesses the current version.
 
-## Recap of Safety features
+## SECTION 28 — PRICING ARCHITECTURE & SERVICE PACKAGES
 
-1. Sensor Reliability & Failsafes
-- Ultrasonic Noise Filtering: Takes 20 samples per scan and calculates the median value. This filters out wild reflections or water ripples inside the tank.
-- Slew Rate Limiting: Restricts how fast the tank percentage can change per scan. This prevents sudden spikes or drops in the readings if an anomaly occurs.
-- Sensor Timeout Budget (MAX_PULSE_DURATION): Hard-coded to 25,000 µs to prevent the microcontroller from freezing indefinitely if the sensor misses an echo.
-- Hardware-Agnostic Timing: Specifically timed to work perfectly with both fast (JSN-SR04T) and slow (AJ-SR04M) sensor modules without needing code changes.
-- Auto-Reboot Watchdog (The Newest Fix): If the sensor board locks up entirely due to electrical noise, the system will track the errors and automatically reboot itself after 20 consecutive failures.
-Upper Invalid Count (MAX_INVALID_COUNT): If the sensor returns bad data for too long without locking up completely, the system throws a "Sensor Error!" to the UI and halts operations to prevent overflow.
+All new AMK Smart Pump devices include 6 months of Cloud Access free.
 
-2. Motor & Pump Protection
-- Dry-Run Protection: Uses a flow sensor to detect if water is actually moving. If the pump turns on but no flow is detected within your customizable "Dry-Run Delay" (60-180 seconds), the pump shuts down to prevent the motor from burning out.
-- Dry-Run Auto-Retry: Instead of requiring manual intervention after a dry-run, the system enters a WAITING_RETRY! state and waits a user-defined time before attempting to prime the pump again.
-- Pump Cool-down Timer: If the pump runs continuously for 1 hour, the system forces it into a COOLING_DOWN! state. This prevents the motor coils from overheating during massive tank fills.
-- Compressor Valve Venting (VENTING_VALVE!): A smart delay feature that triggers an air compressor/valve before the main pump starts, relieving back pressure in the pipes so the pump motor doesn't stall on startup.
+| Package Tier |	Features Included	| Selling Price (MMK)	| Coverage Period |
+| Standard Tier	| Local Control + Bonus 6 Months Cloud Access	| 450,000	| 6 Months (Cloud) |
+| Connected Tier | Standard + 1 Year Add-on Cloud Access	| 490,000	| 18 Months (Cloud) |
+| Support Tier	| Connected + Free Repair Service Support	| 510,000	| 1 Year (Service) |
+| Ultimate Tier	| Connected + Overall Cover Warranty	| 550,000	| 1 Year (Hardware) |
 
-3. Electrical Grid Protection
-- Over-Voltage & Under-Voltage Cutoff: Constantly monitors grid voltage. If it spikes too high or drops too low, it immediately stops the pump to protect the motor windings.
-- Voltage Resume Gap (Hysteresis): Prevents the pump from rapidly clicking ON and OFF if the grid voltage is hovering right on the edge of the safe limit.
-- State Memory (wasRunningBeforeVoltageError): If the pump is shut down by a voltage error, the ESP32 remembers that it was pumping. When the voltage normalizes, it automatically resumes pumping without user intervention.
+## SECTION 29 — SERVICE & WARRANTY POLICY (1-YEAR TERM)
 
-4. System & Network Resilience
-- Initial Hardware Safety Check: Runs a safety sequence on boot to ensure all relay pins are in a safe (OFF) state before any logic begins.
-- Master-Slave Link Timeout: When operating in paired mode (Sump Tank / Upper Tank), it constantly checks the heartbeat. If communication between the two tanks drops (MASTER_LINK_TIMEOUT), the system falls back to a safe state to prevent flooding.
-- Access Point (AP) Timeout: If the device cannot find Wi-Fi, it broadcasts its own setup network. However, it will automatically close this network after a timeout so it doesn't remain exposed indefinitely.
-- MQTT / Cloud Timeout Management: Specific socket and handshake timeouts (setHandshakeTimeout, setTimeout) are hardcoded to ensure the device doesn't hang if the cloud server responds slowly.
+The following terms apply to the Support Tier and Ultimate Tier for a period of one year (365 days) from the date of installation.
+
+29.1 Support Tier: Free Repair Service
+- Duration: 1 Year.
+- Included: Zero labor charges for any technical repairs, diagnostics, or system recalibrations.
+- Excluded: The cost of physical spare parts (if required) must be paid by the customer.
+
+29.2 Ultimate Tier: Overall Cover Warranty
+
+- Duration: 1 Year.
+- One-Time Part Replacement: Includes a one-time, free-of-charge replacement of any damaged internal component (ESP32-S3, sensors, or relays).
+- Ongoing Service: Includes free technical repair service support (labor) for the entire 1-year period.
+- Exclusion (User Fault): Damage caused by physical impact, water ingress to the PCB, or unauthorized tampering is not covered.
+
+Suggested Sales Message
+"AMK gives you more! 💧 All our devices come with 6 months of cloud access free. Want more protection? Choose our Support Tier (510k) for one full year of free repair service, or go for the Ultimate Tier (550k) to get one full year of hardware warranty, including a one-time free part replacement! Secure your water system for the next 365 days."
