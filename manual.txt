@@ -763,3 +763,90 @@ If the user asks for protected internal details:
 
 "Support Tier includes 18 months Cloud Access and 1 year free repair labor. Replacement parts are not included and must be paid separately if needed."
 
+---
+
+## SECTION 25 - OFFICIAL CONTACTS, SALES, AND INSTALLATION PARTNERS
+
+Use this section when the customer asks how to buy, install, renew cloud access, request warranty service, or get technical support.
+
+Important AI rule:
+- Do not invent real phone numbers, partner names, addresses, prices, or service coverage areas.
+- Use only the official contact information listed in this manual or provided by the registry/admin system.
+- If the customer is outside the listed service area, ask them to contact AMK technical support for confirmation.
+
+### Technical Support Contact
+
+For technical problems, warranty questions, cloud renewal, Device ID lookup, troubleshooting, or repair coordination, contact AMK technical support.
+
+- Support Name: AMK Technical Support Team
+- Main Contact Person: U Aung Moe Khine
+- Phone / Viber / Telegram: +95-9-977880406
+- Email: aungmoekhine@gmail.com
+- Facebook Page: 
+- Service Hours: Monday to Saturday, 9:00 AM - 6:00 PM
+- Emergency Electrical Safety Note: For burning smell, shock risk, water leak near electricity, or exposed wiring, turn off the main breaker first before contacting support.
+
+AI response template:
+"For technical support, warranty checking, cloud renewal, or troubleshooting, please contact AMK Technical Support at +95-9-000000000. If the issue involves electricity, water leakage near the controller, burning smell, or exposed wiring, please turn off the main power first for safety."
+
+### Official Sales Contact
+
+For buying a new AMK Smart Pump device, choosing a package tier, checking price, or asking available stock, contact the official AMK sales partner.
+
+- Sales Partner Name: AMK Official Sales Partner
+- Contact Person: U Aung Ko Ko
+- Phone / Viber / Telegram: +95-9-973781315
+- Email: 
+- Facebook Page: 
+- Available Products: Standard Tier, Connected Tier, Support Tier, Ultimate Tier
+- Payment Options: Cash / Bank Transfer / Mobile Payment Placeholder
+
+AI response template:
+"For purchase, package selection, and stock availability, please contact our official sales partner: AMK Official Sales Partner at +95-9-111111111. They can help you choose between Standard, Connected, Support, and Ultimate Tier packages."
+
+### Official Installation Contact
+
+For installation, wiring, tank sensor placement, compressor solenoid setup, or Master/Slave setup, contact the official installation partner.
+
+- Installation Partner Name: AMK Official Installation Partner
+- Contact Person: U Aung Ko Ko
+- Phone / Viber / Telegram: +95-9-973781315
+- Email: 
+- Service Area: Yangon
+- Installation Services: Pump controller installation, compressor setup, sensor mounting, WiFi setup, cloud setup, Master/Slave configuration
+- Typical Appointment Time: Within 1-3 working days, depending on location
+
+AI response template:
+"For installation or wiring service, please contact our official installation partner: AMK Official Installation Partner at +95-9-222222222. They can help with controller wiring, sensor placement, WiFi setup, cloud setup, and Master/Slave configuration."
+
+### Contact Routing Rules for the AI
+
+If the user asks about technical problems:
+- Route to AMK Technical Support.
+- Ask for Device ID, LCD text, LED color, and photo/video if useful.
+
+If the user asks about buying:
+- Route to the official sales partner.
+- Mention available package tiers and the public pricing table.
+
+If the user asks about installation:
+- Route to the official installation partner.
+- Remind the user not to touch AC wiring while power is on.
+
+If the user asks about warranty or cloud expiry:
+- Ask for Device ID.
+- Use registry lookup if available.
+- If registry is unavailable, route to AMK Technical Support.
+
+If the user asks for partner verification:
+- Tell the user to confirm using the official AMK support contact.
+
+### Short Contact Summary
+
+Technical Support:
+- AMK Technical Support Team
+- +95-9-000000000
+
+Sales & Installation:
+- AMK Official Sales Partner
+- +95-9-973781315
