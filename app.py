@@ -12,6 +12,11 @@ import re        # NEW: For finding Device IDs in text
 # ---------------------------------------------------------
 
 LOGO_URL = "https://raw.githubusercontent.com/AungMoeKhine/smart_water_pump-control/main/logo.png"
+REGISTRY_URL = "https://script.google.com/macros/s/AKfycbzNMBACyZpgB6JTTC2UqqmSQ6zj84X24bAAFx0ZmHSOg4ZQFdJoldERj8YlodjYyg4h4w/exec"
+MODEL_NAME = st.secrets.get("GEMINI_MODEL", "gemini-3.1-flash-lite")
+DEVICE_ID_PATTERN = re.compile(r"\b[A-Z0-9_-]{8,12}\b")
+MAX_PROMPT_CHARS = 1200
+MAX_LOG_CHARS = 2000
 
 st.set_page_config(
     page_title="AMK AI Support", 
@@ -19,9 +24,13 @@ st.set_page_config(
     initial_sidebar_state="expanded" # Keeps sidebar visible
 )
 
-api_key = st.secrets["GEMINI_API_KEY"]
+api_key = st.secrets.get("GEMINI_API_KEY", "")
+if not api_key:
+    st.error("GEMINI_API_KEY is missing from Streamlit secrets.")
+    st.stop()
+
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-3.1-flash-lite')
+model = genai.GenerativeModel(MODEL_NAME)
 
 # ---------------------------------------------------------
 # 2. BILINGUAL UI & LANGUAGE LOGIC
@@ -159,22 +168,59 @@ def load_knowledge_data():
 knowledge_base = load_knowledge_data()
 
 # ---------------------------------------------------------
-# 5. NEW: REGISTRY CHECKER FUNCTION
+# 5. INPUT SAFETY HELPERS
+# ---------------------------------------------------------
+def safe_text(value, fallback="N/A", max_len=300):
+    if value is None:
+        return fallback
+    text = str(value).strip()
+    if not text:
+        return fallback
+    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", text)
+    return text[:max_len]
+
+def normalize_device_id(value):
+    device_id = safe_text(value, fallback="", max_len=16).upper()
+    if not DEVICE_ID_PATTERN.fullmatch(device_id):
+        return None
+    return device_id
+
+def mask_owner_name(name):
+    parts = safe_text(name).split()
+    if not parts or parts[0] == "N/A":
+        return "N/A"
+    if len(parts) == 1:
+        return parts[0]
+    return f"{parts[0]} {parts[-1][0]}."
+
+def normalize_query_flag(value):
+    return safe_text(value, fallback="False", max_len=8).lower() == "true"
+
+def clip_for_log(value):
+    return safe_text(value, fallback="", max_len=MAX_LOG_CHARS)
+
+# ---------------------------------------------------------
+# 6. NEW: REGISTRY CHECKER FUNCTION
 # ---------------------------------------------------------
 def fetch_registry_data(device_id):
-    # PASTE YOUR GOOGLE SCRIPT URL HERE
-    REGISTRY_URL = "https://script.google.com/macros/s/AKfycbzNMBACyZpgB6JTTC2UqqmSQ6zj84X24bAAFx0ZmHSOg4ZQFdJoldERj8YlodjYyg4h4w/exec"
+    device_id = normalize_device_id(device_id)
+    if not device_id:
+        return None
+
     try:
-        response = requests.get(f"{REGISTRY_URL}?id={device_id.upper()}")
+        response = requests.get(REGISTRY_URL, params={"id": device_id}, timeout=8)
+        response.raise_for_status()
         data = response.json()
-        if "error" in data:
+        if not isinstance(data, dict) or "error" in data:
             return None
         return data
-    except:
+    except requests.RequestException:
+        return "error"
+    except ValueError:
         return "error"
 
 # ---------------------------------------------------------
-# 6. SIDEBAR & CLEAR HISTORY
+# 7. SIDEBAR & CLEAR HISTORY
 # ---------------------------------------------------------
 def change_language():
     # This empty function triggers a rerun with the new session_state.language
@@ -209,30 +255,31 @@ with st.sidebar:
     st.info(L['instr'])
 
 # ---------------------------------------------------------
-# 7. ANALYTICS FUNCTION
+# 8. ANALYTICS FUNCTION
 # ---------------------------------------------------------
 def log_to_sheet(user_id, question, answer):
     try:
         conn = st.connection("gsheets", type=GSheetsConnection, ttl=0)
         new_row = pd.DataFrame([{
             "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "Cloud_ID": user_id,
-            "User_Question": question,
-            "AI_Response": answer,
+            "Cloud_ID": safe_text(user_id, fallback="Unknown_User", max_len=32),
+            "User_Question": clip_for_log(question),
+            "AI_Response": clip_for_log(answer),
             "Error_Code": "None" 
         }])
         existing_data = conn.read(worksheet="Analytics", ttl=0)
         updated_data = pd.concat([existing_data, new_row], ignore_index=True)
         conn.update(data=updated_data, worksheet="Analytics")
-    except: pass
+    except Exception as exc:
+        print(f"Analytics logging failed: {exc}")
 
 # ---------------------------------------------------------
-# 8. CHAT LOGIC (Expert Persona + Strict Security)
+# 9. CHAT LOGIC (Expert Persona + Strict Security)
 # ---------------------------------------------------------
-is_expired_status = st.query_params.get("expired", "False")
-user_id_from_url = st.query_params.get("id", "Unknown_User")
+is_expired_status = normalize_query_flag(st.query_params.get("expired", "False"))
+user_id_from_url = safe_text(st.query_params.get("id", "Unknown_User"), fallback="Unknown_User", max_len=32)
 
-if is_expired_status == "True":
+if is_expired_status:
     st.error(L['expired'])
     st.stop() 
 
@@ -244,30 +291,37 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 if prompt := st.chat_input(L['placeholder']):
+    prompt = safe_text(prompt, fallback="", max_len=MAX_PROMPT_CHARS)
+    if not prompt:
+        st.warning("Please enter a valid message.")
+        st.stop()
+
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     # --- NEW: DETECT DEVICE ID & FETCH DATA ---
-    # Looks for any 8-character alphanumeric code in the user's message
-    found_id = re.search(r'\b[A-Z0-9]{8,12}\b', prompt.upper())
+    # Looks for a valid 8-12 character AMK Device ID in the user's message.
+    found_id = DEVICE_ID_PATTERN.search(prompt.upper())
     registry_context = ""
     if found_id:
-        device_id = found_id.group()
+        device_id = normalize_device_id(found_id.group())
         with st.spinner("Checking AMK Registry..."):
             reg_data = fetch_registry_data(device_id)
             if reg_data and reg_data != "error":
                 # We pull data strictly and label them clearly for the AI
-                w_date = reg_data.get('warrantyDate', 'N/A')
-                w_days = reg_data.get('warrantyDays', 'N/A')
-                c_date = reg_data.get('cloudDate', 'N/A')
-                c_days = reg_data.get('cloudDays', 'N/A')
+                owner_name = mask_owner_name(reg_data.get('name', 'N/A'))
+                tier = safe_text(reg_data.get('tier', 'N/A'))
+                w_date = safe_text(reg_data.get('warrantyDate', 'N/A'))
+                w_days = safe_text(reg_data.get('warrantyDays', 'N/A'))
+                c_date = safe_text(reg_data.get('cloudDate', 'N/A'))
+                c_days = safe_text(reg_data.get('cloudDays', 'N/A'))
 
                 registry_context = f"""
                 CRITICAL REGISTRY DATA (TRUTH):
                 - Device ID: {device_id}
-                - Owner Name: {reg_data.get('name', 'N/A')}
-                - Package Tier: {reg_data.get('tier', 'N/A')}
+                - Owner Name: {owner_name}
+                - Package Tier: {tier}
                 
                 WARRANTY DATA:
                 - Expiry Date: {w_date}
@@ -279,7 +333,7 @@ if prompt := st.chat_input(L['placeholder']):
                 
                 STRICT INSTRUCTIONS:
                 1. Use ONLY the data above. DO NOT calculate your own dates.
-                2. Greet the owner by name.
+                2. Greet the owner using only the masked owner name shown above.
                 3. Format your reply exactly like this:
                    - Warranty (အာမခံသက်တမ်း): [Warranty Expiry Date] ([Warranty Days Remaining])
                    - Cloud Access (အဝေးထိန်းစနစ် သက်တမ်း): [Cloud Expiry Date] ([Cloud Days Remaining])
@@ -325,13 +379,15 @@ if prompt := st.chat_input(L['placeholder']):
         - If info is missing from knowledge base, say: "Please contact support at +95-9-977880406."
         """
         
-        history_text = "".join([f"{m['role']}: {m['content']}\n" for m in st.session_state.messages[-5:]])
         full_prompt = f"{context}\n\nUSER QUESTION: {prompt}"
 
         try:
             response = model.generate_content(full_prompt, stream=True)
-            full_response = st.write_stream(chunk.text for chunk in response)
+            full_response = st.write_stream(
+                chunk.text for chunk in response if getattr(chunk, "text", None)
+            )
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             log_to_sheet(user_id_from_url, prompt, full_response)
-        except Exception:
+        except Exception as exc:
+            print(f"Gemini response failed: {exc}")
             st.error(L['busy'])
