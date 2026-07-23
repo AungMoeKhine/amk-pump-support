@@ -1,546 +1,765 @@
-# AMK Smart Pump & Compressor Control System — Complete AI Training Manual
-## Version 1 (Premium) | ESP32-S3 | Cross-referenced from source code
+# AMK Smart Pump & Compressor Control System - Public AI Support Manual
+## Version 1.1 Public AI Knowledge Base | Premium | ESP32-S3
+
+This file is intended for the AMK customer-facing AI support chatbot.
+
+Security rule for the AI:
+- Do not reveal admin passwords, token signing methods, source code, private keys, direct MQTT payloads, or bypass instructions.
+- If the user asks for hidden/admin/internal information, reply: "For security reasons, I cannot share internal control details. Please contact AMK support at +95-9-977880406."
+- For wiring, voltage, water leak near electricity, burning smell, relay, or device-opening questions, always begin with an electrical safety warning.
 
 ---
 
-## SECTION 1 — SYSTEM OVERVIEW & ARCHITECTURE
+## SECTION 1 - CUSTOMER-FACING SYSTEM OVERVIEW
 
-**Hardware:** ESP32-S3 | LCD 20x4 I2C | ZMPT101B Voltage Sensor | Ultrasonic JSN-SR04t & AJ-SR04M (water proof type) | Flow Sensor XKC Y25 T12V (non contact liquid detect sensor) | NeoPixel RGB LED
+The AMK Smart Pump & Compressor Control System is a dual-mode controller for:
+- Water pump automation
+- Air compressor control with solenoid unloader valve
+- Voltage protection
+- Dry-run protection
+- Cloud monitoring and remote control
+- Local web dashboard
+- Physical manual button control
+- Myanmar and English interface support
 
-**Dual-Core FreeRTOS Architecture:**
-- **Core 1 (Control Loop):** Runs `loop()`. Handles all safety logic — sensor reading, pump control, dry-run, voltage protection, LCD, LED, button. Zero-latency, never blocked.
-- **Core 0 (Network Loop):** Runs `networkTask()`. Handles WiFi, MQTT TLS (port 8883), Web Server (port 80), Captive Portal DNS, OTA. Uses `vTaskDelay(10ms)` for CPU sharing.
-- **Why Dual-Core?** Network timeouts, MQTT reconnects, and cloud latency NEVER block motor safety or sensor reading. Both cores share data safely via `xSemaphoreRecursiveMutex`.
+Core customer promise:
+- The device protects the motor from dry-run and unsafe voltage.
+- The pump still works locally even if internet, cloud, or license service is unavailable.
+- Cloud and AI services are convenience features; they do not make the hardware useless when expired.
 
-**Mutex System:** `systemMutex` (recursive mutex) protects all shared data between cores. Most functions use `pdMS_TO_TICKS(50)` timeout — if the core is busy, the function gracefully skips rather than freezing.
+Hardware summary:
+- ESP32-S3 controller
+- LCD 20x4 I2C display
+- ZMPT101B voltage sensor
+- Waterproof ultrasonic sensor for tank level
+- Non-contact flow sensor
+- Relay output for pump or compressor motor
+- Solenoid output for compressor unloader valve
+- RGB status LED
+- Physical push button
 
 ---
 
-## SECTION 2 — COMPLETE PIN REFERENCE
+## SECTION 2 - PIN AND WIRING REFERENCE
 
-| Pin | GPIO | Component | Notes |
-|-----|------|-----------|-------|
-| SDA | 1 | I2C LCD 20x4 | Address 0x27 |
-| SCL | 2 | I2C LCD 20x4 | — |
-| VOLTAGE_SENSOR | 4 | ZMPT101B | ADC_11db, 12-bit, 50Hz AC |
-| UPPER_TANK_TRIG | 5 | Ultrasonic Trigger | — |
-| UPPER_TANK_ECHO | 6 | Ultrasonic Echo | — |
-| BUZZER | 7 | Active Buzzer | Alarm output |
-| MOTOR | 8 | Pump Relay | Active HIGH (Cloud-control restricted on expiry; Manual/Local control remains active)|
-| MANUAL_BTN | 9 | Push Button | INPUT_PULLUP, active LOW |
-| SOLENOID | 10 | Unloader Valve | Active HIGH (compressor pre/post vent) |
-| FLOW_SENSOR | 18 | Flow Pulse Input | INPUT_PULLUP, LOW = flow detected |
-| RGB_LED | 48 | NeoPixel WS2812 | Brightness=30, 1 pixel |
+Use this table for customer support and installation guidance.
+
+| Function | GPIO | Component | Notes |
+|---|---:|---|---|
+| LCD SDA | 1 | I2C LCD 20x4 | Address 0x27 |
+| LCD SCL | 2 | I2C LCD 20x4 | I2C clock |
+| Voltage Sensor | 4 | ZMPT101B | AC voltage measurement |
+| Ultrasonic Trigger | 5 | Tank sensor trigger | Waterproof sensor |
+| Ultrasonic Echo | 6 | Tank sensor echo | Waterproof sensor |
+| Buzzer | 7 | Active buzzer | Alarm output |
+| Motor Relay | 8 | Pump/compressor relay | Active HIGH |
+| Manual Button | 9 | Push button | INPUT_PULLUP, active LOW |
+| Solenoid Valve | 10 | Compressor unloader | Active HIGH |
+| Flow Sensor | 18 | Flow input | LOW = flow detected |
+| RGB LED | 48 | WS2812 / NeoPixel | 1 pixel |
+
+Electrical safety guidance:
+- Turn off mains power before touching wiring.
+- Do not open the control box while power is connected.
+- If the user is not trained in AC wiring, recommend a qualified technician.
+- If water is leaking near electricity, tell the user to turn off the breaker first.
 
 ---
 
-## SECTION 3 — ALL CONFIGURABLE SETTINGS (with ranges & defaults)
+## SECTION 3 - CONFIGURABLE SETTINGS
 
 ### Tank Settings
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| Tank Height (upperHeight) | 12 inches | 12"–84" (1ft–7ft) | Physical depth of tank in inches |
-| Low Start Level | 50% | 20%–70% | Pump starts when water drops to this level |
-| Full Stop Level | 100% | 80%–100% | Pump stops when water reaches this level |
-| Buffer/Blind Zone | 10" (fixed) | Not configurable | Dead zone at sensor head |
+
+| Setting | Default | Range | Meaning |
+|---|---:|---|---|
+| Tank Height | 12 inches | 12-84 inches | Physical tank depth |
+| Low Start Level | 50% | 20-70% | Pump starts when water falls to this level |
+| Full Stop Level | 100% | 80-100% | Pump stops at this level |
+| Sensor Blind Zone | 10 inches | Fixed | Distance near sensor head ignored |
 
 ### Voltage Guard
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| High Voltage Cutoff | 250V | 230V–260V | Motor stops above this |
-| Low Voltage Cutoff | 170V | 150V–190V | Motor stops below this |
-| Resume Gap (Hysteresis) | 5V | 1V–10V | Motor resumes only when voltage returns within this gap |
-| Stabilization Wait | 15 seconds | Fixed | Delay after voltage normalizes before motor restarts |
+
+| Setting | Default | Range | Meaning |
+|---|---:|---|---|
+| High Voltage Cutoff | 250V | 230-260V | Motor stops above this |
+| Low Voltage Cutoff | 170V | 150-190V | Motor stops below this |
+| Resume Gap | 5V | 1-10V | Prevents relay chatter |
+| Stabilization Wait | 15 seconds | Fixed | Wait after voltage returns to normal |
+
+Customer explanation:
+- If voltage is too high or too low, the motor stops automatically.
+- When voltage returns to normal, the device waits about 15 seconds before resuming.
+- This protects the motor winding and relay from unstable power.
 
 ### Dry-Run Protection
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| Dry-Run Delay | 30 seconds | 30s–180s | How long no-flow is tolerated before alarm |
-| Auto-Retry | 30 minutes | Disabled / 30 / 60 min | Automatic restart after dry-run lock |
 
-### Cool-Down (Motor Thermal Protection)
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| Rest Minutes | 0 (Disabled) | Disabled / 5 / 10 / 15 min | Mandatory rest after 1 hour continuous runtime |
+| Setting | Default | Range | Meaning |
+|---|---:|---|---|
+| Dry-Run Delay | 30 seconds | 30-180 seconds | No-flow time before alarm |
+| Auto-Retry | 30 minutes | Disabled / 30 / 60 min | Optional restart after dry-run lock |
+
+Customer explanation:
+- Dry-run means the pump is running but water flow is not detected.
+- The device gives the pump time to prime before declaring dry-run.
+- If dry-run continues, the motor stops and an alarm is shown.
+
+### Cool-Down Protection
+
+| Setting | Default | Range | Meaning |
+|---|---:|---|---|
+| Rest Minutes | Disabled | Disabled / 5 / 10 / 15 min | Mandatory rest after long runtime |
+
+Customer explanation:
+- If enabled, the motor rests after long continuous operation.
+- This helps extend motor life.
 
 ### Master/Slave Pairing
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| System Role | 0 (Standalone) | 0=Standalone, 1=Master, 2=Slave | Device pairing role |
-| Linked Master ID | "" (empty) | Device Cloud ID | Slave links to this Master's Cloud ID |
-| Settling Time | 10 minutes | 0–30 minutes | Master waits this long after stopping before Slave can start |
+
+| Setting | Default | Range | Meaning |
+|---|---:|---|---|
+| System Role | Standalone | Standalone / Master / Slave | Dual-tank coordination |
+| Linked Master ID | Empty | Device Cloud ID | Slave links to master device |
+| Settling Time | 10 minutes | 0-30 minutes | Wait after master stops |
+
+Customer explanation:
+- Master/Slave is useful for sump tank + roof tank systems.
+- The slave waits when the master is running or settling.
+- If the master goes offline after at least one sync, the slave can continue independently.
 
 ### Compressor Mode
-| Setting | Default | Range | Description |
-|---------|---------|-------|-------------|
-| Operating Mode | 0 (Water Pump) | 0=Water Pump, 1=Air Compressor | Changes solenoid behavior entirely |
-| Valve Delay | 5 seconds | 5–15 seconds | Pre-vent and post-vent solenoid timing |
 
-### Smart Scheduling (DND)
-| Setting | Default | Description |
-|---------|---------|-------------|
-| DND Enabled | Off | Prevents auto-start during set hours |
-| DND Start Hour | 22:00 | Start of silent window |
-| DND End Hour | 06:00 | End of silent window |
-| Timezone Offset | +6.5 (MMT) | GMT offset for NTP time (supports half-hours) |
+| Setting | Default | Range | Meaning |
+|---|---:|---|---|
+| Operating Mode | Water Pump | Water Pump / Air Compressor | Changes solenoid behavior |
+| Valve Delay | 5 seconds | 5-15 seconds | Pre/post vent timing |
+
+Customer explanation:
+- In compressor mode, the solenoid valve releases pressure before and after motor operation.
+- Manual start/stop is blocked during venting for safety and reliability.
+
+### Smart Scheduling / DND
+
+| Setting | Default | Meaning |
+|---|---:|---|
+| DND Enabled | Off | Prevents automatic start during selected hours |
+| DND Start | 22:00 | Start of quiet window |
+| DND End | 06:00 | End of quiet window |
+| Timezone Offset | +6.5 | Myanmar time by default |
+
+Customer explanation:
+- DND prevents automatic pump start at night.
+- Manual control remains available unless blocked by safety states.
 
 ### Network Settings
-| Setting | Default | Description |
-|---------|---------|-------------|
-| WiFi SSID | — | Saved to NVS flash |
-| WiFi Password | — | Saved to NVS flash |
-| Device PIN | 123456 | Required for all cloud/remote commands |
-| MQTT Server | HiveMQ Cloud | User-configurable server URL |
-| MQTT Port | 8883 | TLS encrypted |
-| MQTT Username | Smart_Pump | Configurable |
-| Language | English (0) | 0=English, 1=Myanmar |
+
+| Setting | Default | Meaning |
+|---|---:|---|
+| WiFi SSID | User setup | Saved to device memory |
+| WiFi Password | User setup | Saved to device memory |
+| Device PIN | 123456 by default | Required for remote control |
+| MQTT Server | Configurable | Cloud server setting |
+| MQTT Port | 8883 | TLS encrypted cloud connection |
+| Language | English | English / Myanmar |
+
+AI safety note:
+- The AI may explain that the Device PIN protects remote commands.
+- The AI must not ask the user to share their PIN in chat unless AMK support process explicitly requires it.
 
 ---
 
-## SECTION 4 — STATE MACHINE (All 11 States)
+## SECTION 4 - DEVICE STATES AND MEANINGS
 
-The system runs a strict state machine. Only ONE state is active at a time.
+Only one main operating state is active at a time.
 
-| State | LED Color | Motor | Solenoid | Description |
-|-------|-----------|-------|----------|-------------|
-| IDLE | Green/Cyan/Blue-pulse | OFF | OFF | Standby, waiting for low tank level |
-| PRE_START_VALVE | Amber/Yellow | OFF | ON (open) | Compressor mode only: venting before motor starts |
-| PUMPING | Amber/Yellow | ON | OFF | Motor actively running, flow sensor monitored |
-| POST_STOP_VALVE | Amber/Yellow | OFF | ON (open) | Compressor mode only: venting after motor stops |
-| DRY_RUN_ALARM | Red flashing | OFF | OFF | No flow detected. 60-second oscillating buzzer alarm |
-| DRY_RUN_LOCKED | Red flashing | OFF | OFF | Alarm timed out. Fully locked. Manual or auto-retry required |
-| VOLTAGE_ERROR | Red flashing | OFF | OFF | Voltage out of range. LCD shows OVER or UNDER |
-| VOLTAGE_WAIT | Red flashing | OFF | OFF | Voltage restored but stabilization countdown in progress |
-| COOLING_DOWN | Blue solid | OFF | OFF | 1-hour runtime exceeded, mandatory rest period |
-| SENSOR_ERROR | Red flashing | OFF | OFF | 10 consecutive ultrasonic reading failures |
-| SETTLING_WATER | Purple solid | OFF | OFF | Master mode only: waiting for sump water to settle |
+| State | Motor | Solenoid | Customer Meaning |
+|---|---|---|---|
+| IDLE | OFF | OFF | Standby, waiting for start condition |
+| PRE_START_VALVE | OFF | ON | Compressor pre-venting |
+| PUMPING | ON | OFF | Pump or compressor running |
+| POST_STOP_VALVE | OFF | ON | Compressor post-venting |
+| DRY_RUN_ALARM | OFF | OFF | No flow detected, alarm active |
+| DRY_RUN_LOCKED | OFF | OFF | Dry-run alarm timed out, reset required |
+| VOLTAGE_ERROR | OFF | OFF | Voltage unsafe |
+| VOLTAGE_WAIT | OFF | OFF | Voltage recovered, waiting before resume |
+| COOLING_DOWN | OFF | OFF | Motor rest period |
+| SENSOR_ERROR | OFF | OFF | Tank sensor reading failed repeatedly |
+| SETTLING_WATER | OFF | OFF | Master/slave settling wait |
+
+AI response rule:
+- When explaining any error state, give cause, immediate action, and whether the motor can resume automatically.
 
 ---
 
-## SECTION 5 — BUTTON CONTROLS (Physical Button, GPIO 9)
+## SECTION 5 - PHYSICAL BUTTON CONTROLS
 
 | Action | How | Result |
-|--------|-----|--------|
-| Single Click | Press and release within 600ms, wait 850ms decision window | Toggle pump ON/OFF. If blocked: buzzer beeps + LED flashes red |
-| Double Click | Two clicks within 850ms window (triggers on 2nd press downstroke) | Shows System Info on LCD for 10 seconds (IP, Device ID, License days left). Two-beep confirmation |
-| 3-Second Hold | Hold button for 3+ seconds | Activates WiFi AP Mode. 1-second buzzer. SSID: "Auto-Pump-Config", Password: "12345678" |
-
-**Smart Blocking on Single Click:**
-- Water level LOW while running: "Water level is LOW. Pump will continue until Tank is Full."
-- During compressor venting: "Venting pressure... Please wait."
-- Sensor alarm active: First click silences buzzer only, does NOT toggle pump.
-
----
-
-## SECTION 6 — VOLTAGE FILTERING (5-Stage Anti-Spike Algorithm)
-
-1. **Validity Gate:** Accepts only 40V–320V. Three repeated invalid readings drop voltage to 0V.
-2. **5-Sample Median Buffer:** Collects 5 raw readings, takes median to reject single noise spikes.
-3. **Outlier Hold:** Jumps greater than 18V must repeat 3 consecutive times to be accepted (ignores transient interference).
-4. **Slew Rate Limit:** Maximum change of 3V per 500ms. Prevents relay chatter from rapid voltage swings.
-5. **EMA Smoothing:** 25% new value + 75% previous value. Produces a slow, stable output.
-
----
-
-## SECTION 7 — ULTRASONIC SENSOR ALGORITHM
-
-- **Cycle:** 20 samples at 60ms intervals (non-blocking). Median of valid samples used.
-- **Valid range:** 0" to 84" (MAX_DISTANCE constant).
-- **Distance smoothing:** 90% new + 10% old (fast settling EMA).
-- **Error threshold:** 10 consecutive failed readings triggers SENSOR_ERROR state.
-- **LCD shows:** "SNR ERR". Button press silences alarm (errorAck flag).
-- **Percentage formula:** waterDepth = (tankHeight + bufferHeight) - sensorDistance. Percentage = waterDepth / tankHeight * 100, constrained 0–100%.
-
----
-
-## SECTION 8 — FLOW DETECTION (Dry-Run Persistence Logic)
-
-Flow sensor on GPIO 18 uses three-layer persistence to prevent false dry-run alarms:
-
-1. **Initial Grace Period:** First 60 seconds after motor starts, no-flow is completely ignored (suction/priming time).
-2. **Slug Flow Window:** If flow was detected within the last 60 seconds, system considers it "still flowing" (handles air bubbles and intermittent flow).
-3. **Physical Flow:** Real-time LOW signal on GPIO 18.
-
-Only when ALL THREE are false AND motor has run longer than Dry-Run Delay does the alarm trigger.
-
----
-
-## SECTION 9 — DRY-RUN RECOVERY SEQUENCE (Step by Step)
-
-1. Motor running, no flow detected → countdown timer decrements every second
-2. Countdown reaches 0 → DRY_RUN_ALARM (error=1): Oscillating buzzer for 60 seconds
-3. 60 seconds alarm with no reset → DRY_RUN_LOCKED (error=2): Silent lock
-4. Manual Reset: Physical button OR dashboard "Reset Alarm" → clears error, returns to IDLE
-5. Auto-Retry (if configured): Countdown (30 or 60 min) expires → automatically restarts → PUMPING
-
----
-
-## SECTION 10 — MASTER/SLAVE MQTT PAIRING
-
-**Setup:**
-- Both devices connect to same MQTT server.
-- Master Cloud ID entered into Slave "Linked ID" field.
-- MQTT topic format: smartpump/DEVICE_ID/status
-
-**Master (Sump Tank — Role 1):**
-- Publishes full status JSON on every state change.
-- Enters SETTLING_WATER state after pump stops (purple LED).
-- Settling time (0–30 min) lets sump water stabilize before Slave can start.
-
-**Slave (Roof Tank — Role 2):**
-- Subscribes to Master's status topic.
-- BLOCKED from starting if:
-  1. Master pump is ON
-  2. Master is in unsafe state (not STANDBY, FLOW_DETECTED, or FLOW_CHECKING)
-  3. Master is in SETTLING_WATER state
-  4. No MQTT update from Master for more than 5 minutes AND no initial sync received yet
-- LCD shows "WAIT SUMP" when blocked.
-
-**Fallback:** If Slave received at least one sync and Master goes offline for 5+ minutes, Slave runs independently.
-
----
-
-## SECTION 11 — RGB LED STATUS GUIDE
-
-| Color | Pattern | Meaning |
-|-------|---------|---------|
-| Green solid | — | WiFi connected + MQTT cloud online |
-| Cyan solid | — | WiFi connected, MQTT offline |
-| Blue breathing | Slow brightness pulse | No WiFi connection |
-| Amber/Yellow solid | — | Motor is actively running (pumping) |
-| Blue solid | — | Cool-down rest in progress |
-| Purple solid | — | Master mode: settling water after pump stop |
-| Red fast flash | 500ms toggle | Any error: Dry-Run, Lock, Voltage Error, Sensor Error |
-
----
-
-## SECTION 12 — LCD 20x4 DISPLAY LAYOUT
-
-Left side (columns 0–9): Big 3-digit numbers (custom 3-wide x 2-tall characters) showing Tank % on rows 0–1, Voltage V on rows 2–3.
-
-Right side (columns 10–19): 10-character status labels:
-- Row 0: PUMP ON / PUMP OFF / PUMP REST
-- Row 1: FLOW OK / FLOW CHK / DRY ALRM / SNR ERR / WAIT XXM / VENTING / SETTL XXM / WAIT SUMP / STANDBY / LOCKED
-- Row 2: NO WIFI / WAITING / ONLINE
-- Row 3: OVER / UNDER / DELAY / NORMAL (blinking dot at position 19 when AP mode is active)
-
-Double-Click Info Screen (10 seconds): "--- SYSTEM INFO ---" / License days left / IP address / Device ID
-
----
-
-## SECTION 13 — WEB DASHBOARD (LOCAL ACCESS)
-
-**Access URLs:**
-- AP mode: http://192.168.4.1
-- Station mode: http://DEVICE-IP-ADDRESS
-- mDNS: http://smartpump.local
-
-**Home Tab features:**
-- Animated tank fill graphic with wave animation (CSS SVG waves)
-- Yellow LOW marker line and green FULL marker line on tank graphic
-- Voltage badge: NORMAL (green) / OVER (red) / UNDER (red) / DELAY (yellow)
-- Pump badge: ON (green) / OFF (grey) / DRY ALRM (red) / LOCKED (red)
-- System Info badge with countdown timers (dry-run, cooling, settling, retry)
-- OTA update hub (appears automatically when new firmware detected)
-- Start/Stop Pump button (green/red, context-aware)
-- Reset Alarm button (only visible during error states)
-- DND Active badge (purple moon icon)
-- Master/Slave role badge in header
-- Cloud ID and Device IP at footer
-
-**Settings Tab features:**
-- WiFi scanner (shows SSID + signal strength dBm) + manual SSID entry
-- All thresholds as validated dropdowns (ranges enforced)
-- System Role (Standalone / Master / Slave) with dynamic pairing sub-fields
-- Operating Mode (Water Pump / Air Compressor)
-- DND schedule + timezone
-- License Management (token file upload OR paste token text)
-- Firmware: local .bin upload + GitHub OTA check
-- Factory Mode (hidden, press button and enter "AMK_ADMIN_2026")
-- Language: English / Myanmar
-
-Dashboard auto-polls /status every 1 second.
-
-## 13.1 Progressive Web App (PWA) Capabilities
-- Virtual App Installation: The local and cloud-hosted web dashboards are built with a Web App Manifest (manifest.json) and Service Worker. This allows the dashboard to be installed directly onto smartphones, tablets, or computers without going through an app store.
-- Standalone Mode: Once installed, the dashboard launches in a dedicated, full-screen window with the browser navigation bar hidden, mimicking a native utility application.
-- Asset Caching: Basic static assets (icons, CSS, and structural HTML) are cached locally on the device, reducing load times during subsequent connections.
-
----
-
-## SECTION 14 — REMOTE CLOUD & MQTT CAPABILITIES
-
-- The system uses a secure, encrypted MQTT protocol (TLS 8883) for all remote operations. While users typically interact through the Android App or Cloud Web Control, the following protocol logic governs the system.
-
-## 14.1 User-Facing Remote Features
-
-- Remote Toggle: Start or Stop the pump/compressor from anywhere in the world.
-- Alarm Management: Remotely reset Dry-Run alarms without visiting the device.
-- Remote Configuration: Update tank heights, voltage limits, and DND schedules via the cloud.
-- Over-the-Air Updates: Request the device to check for and install new firmware improvements.
-- Instant Status: Get real-time updates on water levels and voltage.
-
-## 14.2 Technical Command Protocol (Internal AI Knowledge)
-
-- The system operates via secure MQTT (Port 8883 TLS). While users primarily interact through the official Android App (Smart_Pump.apk) or the Cloud Dashboard, the following command logic is used by the AI to understand remote capabilities.
-- Security Rule: All remote commands (except lic) strictly require the correct 6-digit Device PIN in the JSON payload to prevent unauthorized access.
-
-| Command JSON Key | Description / Action | Security Requirement
-| toggle | Remotely start or stop the pump | Device PIN
-| reset | Clear a Dry-Run Alarm/Lock state | Device PIN
-| get | Request an immediate real-time status publish | Device PIN
-| save | Update device settings remotely (triggers reboot) | Device PIN
-| otaCheck | Command device to check GitHub for new firmware | Device PIN
-| otaStart | Command device to begin OTA installation | Device PIN
-| lic | Apply a license renewal token string | Token Signature Check
-| promo | Broadcast a scrolling message to user dashboard | Admin Master Key
-| clearLog |Erase the /events.txt history file | Admin Master Key / PIN
-
-## 14.3 MQTT Topics:
-- The system uses a hierarchical topic structure for communication between the device and the cloud.
-  . Command Topic: smartpump/DEVICE_ID/set
-    - The device listens here for incoming JSON commands.
-  . Status Topic: smartpump/DEVICE_ID/status
-    - The device publishes its full JSON state here every 30 seconds (heartbeat) or on state changes.
-  . Online Presence: smartpump/DEVICE_ID/online
-    - Uses MQTT "Last Will and Testament" (LWT). Value 1 = Online, 0 = Offline.
-  . Broadcast Channel: smartpump/all/set
-    - Used for global commands to all devices. These commands require the ADMIN_MASTER_KEY instead of an individual Device PIN.
-
----
-
-## SECTION 15 — LICENSING SYSTEM
-
-- Install date saved on first successful NTP time sync.
-- Validity = installDate + (validDays x 86400 seconds). Checked hourly and on boot.
-- Expired State (Limited Service):
-  Disabled: Remote Cloud Toggle (MQTT) and Streamlit AI Support Chatbot are disabled.
-  Active: The device remains fully functional via the Physical Manual Button and the Local Web Dashboard (192.168.4.1 or local IP).
-  Notification: Local Web Dashboard shows a "License Expired" banner, but control buttons remain clickable.
-- Token format (Base64 encoded): timestamp|days|MD5(timestamp|days|ACER123|deviceID)
-- Apply token via: Web Settings > License Management > Paste text OR upload file OR MQTT {"lic":"TOKEN"}
-- Single-use: timestamp must be newer than last used token.
-- Token expires if unused for more than 7 days.
-- Double-click button on device shows license days remaining on LCD info screen.
-
----
-
-## SECTION 16 — DATA PERSISTENCE (NVS Flash)
-
-All settings survive power cuts using ESP32 NVS (Preferences library, namespace "pump-control").
-
-Saved: WiFi credentials, all thresholds, system role, linked ID, motor status, manual override state, install date, license token timestamp, DND settings, language preference, MQTT server details.
-
-Write protection: saveMotorStatus() uses static RAM variables — only writes to flash when values actually change, preventing unnecessary flash wear cycles.
-
----
-
-## SECTION 17 — FIRMWARE UPDATE PROCEDURES (Three Methods)
-
-1. Local Manual Upload:
-  . Download: Visit https://aungmoekhine.github.io/smart_water_pump-control/ and press the "DOWNLOAD FIRMWARE.BIN" button to save the file to your local storage.
-  . Upload: Connect to the device via your local network, navigate to Settings > Firmware Update, click "Choose File" to select the downloaded firmware.bin, and then click "Update Firmware".
-  . Reboot: The device will automatically flash the file and reboot upon success.
-2. GitHub OTA (Direct Cloud):
-  . Go to Settings > Check for Updates. The system compares the internal FIRMWARE_VERSION constant to the remote version.txt on  GitHub.
-  . If a newer version is detected, an "Update Now" button appears for automated download and installation.
-3. Remote MQTT Cloud:
-  . Triggered remotely via otaCheck (to verify version) or otaStart (to begin update) commands through the MQTT cloud dashboard.
-
----
-
-## SECTION 18 — EVENT LOGGING SYSTEM
-
-- Storage: LittleFS flash filesystem, file /events.txt, rolling 8000-byte buffer (~200 entries).
-- Events logged: Power On, Auto Start Low, Auto Stop Full, Manual Start, Manual Stop, Voltage High/Low, Dry-Run Alarm, Cool-down, Dry-Run Retry, Slave Stop, History Reset, Resume after Volt OK, Resume after Cool.
-- Viewed: Web dashboard shows last 2000 characters from log in status JSON.
-- Cleared: MQTT clearLog command.
-
----
-
-## SECTION 19 — WIFI & NETWORK BEHAVIOR
-
-First boot (no SSID): AP+STA mode. SSID: Auto-Pump-Config, Password: 12345678. Captive DNS redirects phone to 192.168.4.1 for setup. AP auto-closes after 5 minutes of no clients.
-
-Normal boot (SSID saved): Strict STA-only mode. 5-second connection attempt. If failed, boots offline and retries in background every 30 seconds — pump control continues normally offline.
-
-Manual AP trigger: 3-second button hold activates AP mode for reconfiguration.
-
-mDNS: Device reachable at http://smartpump.local on same network.
-
-Watchdog: 30-second hardware watchdog. Both Core 0 and Core 1 must feed it or device reboots.
-
----
-
-## SECTION 20 — COMPRESSOR MODE SPECIFIC BEHAVIOR
-
-When Operating Mode = Air Compressor (opMode = 1), the solenoid valve (GPIO 10) acts as an unloader valve.
-
-Start sequence:
-1. Solenoid OPENS (pre-vent) for valveDelay seconds — State: PRE_START_VALVE
-2. Solenoid CLOSES, Motor STARTS — State: PUMPING
-3. Flow sensor monitors output pressure.
-
-Stop sequence:
-1. Motor STOPS, Solenoid OPENS (post-vent) for valveDelay seconds — State: POST_STOP_VALVE
-2. Solenoid CLOSES — State: IDLE (or SETTLING_WATER if Master role)
-
-Manual toggle is BLOCKED during venting with message: "Venting pressure... Please wait."
-Auto-resume (after voltage error or cool-down) bypasses this lock by queuing motorStatus.
-
----
-
-## SECTION 21 — TROUBLESHOOTING GUIDE & ERROR CODES
-
-| Error / LCD Text | Cause | Solution |
 |---|---|---|
-| DRY_RUN_ALARM | No flow within delay period | Check pipe, water source, flow sensor wiring (GPIO 18). Press button or use dashboard Reset. |
-| PUMP_LOCKED | Dry-run alarm ran 60s without reset | Manual reset via button or dashboard. Configure auto-retry to avoid in future. |
-| WAITING_RETRY (WAIT XXM) | Auto-retry countdown in progress | Wait (30 or 60 min). Or reset manually anytime. |
-| SNR ERR / SENSOR_ERROR | 10+ consecutive ultrasonic failures | Check GPIO 5 (Trig) and GPIO 6 (Echo) wiring and power. Press button to silence. |
-| OVER / OVER_VOLTAGE | Voltage above high threshold | Check power supply/generator. Auto-resumes after voltage normalizes + 15s delay. |
-| UNDER / UNDER_VOLTAGE | Voltage below low threshold | Check power supply. Same auto-resume logic. |
-| VOLT_DELAY (Xs) | Voltage just normalized, waiting | Normal behavior. System stabilizing. Not an error. |
-| COOLING_DOWN | Motor ran 1 full hour | Mandatory rest. Motor auto-resumes when rest time completes. |
-| VENTING | Compressor solenoid venting | Normal operation. Wait a few seconds for sequence to complete. |
-| SETTL XXM / SETTLING | Master settling after pump stop | Normal Master/Slave behavior. Slave waits for safe window. |
-| NO WIFI | WiFi disconnected | Background reconnect in progress. Check router. 3-sec hold to reconfigure. |
-| WAITING (MQTT offline) | NTP sync or MQTT reconnect in progress | Usually resolves within 30 seconds automatically. |
+| Single Click | Press and release | Toggle pump ON/OFF, unless blocked by safety logic |
+| Double Click | Two quick clicks | Show system info on LCD for 10 seconds |
+| 3-Second Hold | Hold button | Activate WiFi setup AP mode |
+
+WiFi setup AP:
+- SSID: Auto-Pump-Config
+- Password: 12345678
+- Setup page: http://192.168.4.1
+
+Customer explanation:
+- If a safety state is active, the button may silence the alarm instead of starting the pump.
+- If the tank is low while the pump is running, a stop command may be blocked until the tank is full.
+- During compressor venting, wait until the venting sequence finishes.
 
 ---
 
-## SECTION 22 — PERFORMANCE CHARACTERISTICS
+## SECTION 6 - SENSOR AND PROTECTION LOGIC
 
-| Metric | Value |
-|--------|-------|
-| Control loop cadence | ~1 second |
-| Ultrasonic measurement interval | 4 seconds |
-| Ultrasonic sample count | 20 samples per cycle |
-| Voltage sampling interval | 500ms |
-| MQTT publish minimum throttle | 500ms between publishes |
-| MQTT reconnect backoff | 10 seconds |
-| MQTT keepalive | 60 seconds |
-| Master link timeout | 5 minutes |
-| AP mode auto-close | 5 minutes (no client) |
-| WiFi reconnect attempt | Every 30 seconds |
-| Watchdog timeout | 30 seconds |
-| Event log capacity | ~200 entries (8000 bytes rolling) |
-| Dashboard status poll rate | 1 second |
-| Heartbeat MQTT publish | Every 30 seconds |
+### Voltage Protection
+
+The device filters voltage readings to avoid reacting to one-time spikes. It uses validation, median filtering, outlier rejection, smoothing, and resume delay.
+
+Customer explanation:
+- A brief power spike should not immediately chatter the relay.
+- Persistent unsafe voltage stops the motor.
+- The motor resumes only after voltage is stable again.
+
+### Tank Level Sensor
+
+The ultrasonic sensor estimates water level from measured distance.
+
+If the LCD shows sensor error:
+- Check sensor wiring.
+- Check sensor power.
+- Check that the sensor is not blocked or covered by foam/debris.
+- Press the button to silence the alarm if needed.
+- Contact support if the error continues.
+
+### Flow / Dry-Run Detection
+
+The device does not immediately alarm at motor start. It allows a priming period and tolerates intermittent flow.
+
+Dry-run sequence:
+1. Motor runs.
+2. No flow is detected for longer than the configured delay.
+3. Device enters dry-run alarm.
+4. Alarm continues for a short period.
+5. If not reset, the device locks for protection.
+6. User can reset by physical button or dashboard.
+7. If auto-retry is enabled, the device can retry after the selected time.
+
+AI response rule:
+- For dry-run questions, ask the user to check water source, pipe priming, flow sensor wiring, and whether valves are open.
 
 ---
 
-## SECTION 23 — LANGUAGE SUPPORT
+## SECTION 7 - LED STATUS GUIDE
 
-The system fully supports English and Myanmar (Burmese) language on:
-- Web Dashboard (all labels, badges, buttons, error messages translated)
-- Settings page (all fields, dropdowns, and placeholders translated)
-- Streamlit AI chatbot interface (bilingual radio selector)
+| LED Color / Pattern | Meaning |
+|---|---|
+| Green solid | WiFi and cloud online |
+| Cyan solid | WiFi connected, cloud offline |
+| Blue breathing | No WiFi connection |
+| Amber/Yellow solid | Motor running |
+| Blue solid | Cooling down |
+| Purple solid | Master settling water |
+| Red fast flash | Error state |
 
-Set in: Settings > Interface Language. 0 = English, 1 = Myanmar.
-Myanmar text uses Unicode range U+1000–U+109F with Pyidaungsu font.
-
----
-
-## SECTION 24 — MOBILE UTILITIES & APP OPTIONS
-
-- Native Android App (Smart_Pump.apk): Available for direct cloud control over MQTT. Requires manual installation and is optimized for Android-specific background services.
-- PWA Virtual App (Multi-Platform Alternative): For iOS users, desktop users, or those preferring a zero-install footprint, the Web Dashboard can be added directly to the home screen. It behaves like a native application and accesses either the local network (http://192.168.4.1 / local IP) or the cloud URL.
-- Requires device PIN for all pump control and settings operations.
+AI response rule:
+- If the user reports LED color, map it to the meaning and give the next step.
 
 ---
 
-## SECTION 25 — ONLINE USER GUIDE LINK
+## SECTION 8 - LCD DISPLAY GUIDE
+
+The LCD shows:
+- Tank percentage
+- Voltage
+- Pump status
+- Flow / alarm / waiting status
+- WiFi/cloud status
+- Voltage status
+
+Common LCD text:
+
+| LCD Text | Meaning |
+|---|---|
+| PUMP ON | Motor is running |
+| PUMP OFF | Motor is stopped |
+| PUMP REST | Cooling/rest period |
+| FLOW OK | Flow detected |
+| FLOW CHK | Checking flow |
+| DRY ALRM | Dry-run alarm |
+| SNR ERR | Sensor error |
+| WAIT XXM | Waiting or retry countdown |
+| VENTING | Compressor venting |
+| SETTL XXM | Master/slave settling |
+| WAIT SUMP | Slave waiting for master/sump condition |
+| NO WIFI | WiFi not connected |
+| WAITING | MQTT/cloud reconnecting |
+| ONLINE | Cloud online |
+| OVER | Over-voltage |
+| UNDER | Under-voltage |
+| DELAY | Voltage stabilization delay |
+| NORMAL | Voltage normal |
+
+Double-click info screen:
+- Shows system information for about 10 seconds.
+- May show license/cloud days remaining, IP address, and Device ID.
+
+---
+
+## SECTION 9 - LOCAL WEB DASHBOARD
+
+Access:
+- Setup AP mode: http://192.168.4.1
+- Home WiFi mode: http://DEVICE-IP-ADDRESS
+- mDNS, if supported by network: http://smartpump.local
+
+Home tab:
+- Tank level display
+- Voltage badge
+- Pump status badge
+- Countdown timers
+- Start/Stop button
+- Reset Alarm button when needed
+- DND indicator
+- Master/Slave role indicator
+- Cloud ID and IP information
+
+Settings tab:
+- WiFi setup and scanner
+- Tank and voltage thresholds
+- System role
+- Operating mode
+- DND schedule
+- License renewal
+- Firmware update
+- Interface language
+
+Security note:
+- Do not reveal hidden factory/admin access details.
+- If the user needs factory/service access, refer to AMK support.
+
+---
+
+## SECTION 10 - CLOUD, ANDROID APP, AND PWA
+
+Cloud features:
+- Remote start/stop
+- Alarm reset
+- Remote configuration
+- Firmware update request
+- Real-time status monitoring
+
+Android App:
+- Smart_Pump.apk provides convenient cloud control.
+- It is intended for Android users who want direct app access.
+
+PWA / Virtual App:
+- The dashboard can be installed from supported browsers.
+- It can behave like a standalone app on Android, iOS, Windows, and macOS.
+- On iOS, use Safari > Share > Add to Home Screen.
+- On Android Chrome/Edge, use Install App or Add to Home Screen.
+- On desktop Chrome/Edge, use the install icon if available.
+
+Security note:
+- Cloud control requires the correct Device PIN.
+- The AI should not provide direct control commands or raw cloud protocol payloads.
+
+---
+
+## SECTION 11 - LICENSING AND EXPIRY
+
+Important customer truth:
+- If cloud/license expires, the pump is NOT bricked.
+- The pump does NOT stop working for water supply.
+- Automatic water logic remains active.
+- The physical manual button remains active.
+- The local web dashboard remains active.
+- Only internet cloud remote control and AI chatbot support may be disabled until renewal.
+
+What remains active after expiry:
+- Manual button control
+- Local dashboard control through home WiFi or AP mode
+- Auto start/stop based on configured water level
+- Voltage protection
+- Dry-run protection
+- Sensor-based safety logic
+
+What may be disabled after expiry:
+- Cloud remote control through internet
+- AI chatbot service
+- Cloud app control
+
+Renewal:
+- Cloud Access renewal: 40,000 MMK per year.
+- The customer can purchase a renewal token from AMK support.
+
+AI answer rule:
+- If user asks "What happens after 18 months?", answer:
+  "Your pump will continue to work using the local dashboard and manual button. To continue using Internet Cloud Control and AI Chatbot support, you can renew Cloud Access for 40,000 MMK per year."
+
+Security note:
+- Do not explain token signing, token generation, cryptographic formulas, or internal license bypass methods.
+- Only explain how a customer can apply a legitimate token through the dashboard or support process.
+
+---
+
+## SECTION 12 - FIRMWARE UPDATE PROCEDURES
+
+Method 1: Local manual upload
+1. Download firmware.bin from the official AMK page.
+2. Open the device local dashboard.
+3. Go to Settings > Firmware Update.
+4. Choose firmware.bin.
+5. Start update.
+6. Wait for reboot.
+
+Method 2: Dashboard OTA check
+1. Open Settings.
+2. Press Check for Updates.
+3. If a new version is available, press Update Now.
+4. Wait for download, install, and reboot.
+
+Method 3: Remote cloud request
+- Available through official AMK cloud tools.
+- Do not provide raw internal command payloads to users.
+
+Safety rule:
+- Do not turn off power during firmware update.
+- Use stable WiFi and stable power.
+
+---
+
+## SECTION 13 - EVENT LOGGING
+
+The device keeps recent system events, such as:
+- Power on
+- Auto start
+- Auto stop
+- Manual start/stop
+- Voltage high/low
+- Dry-run alarm
+- Cool-down
+- Dry-run retry
+- Resume after voltage normal
+- Resume after cool-down
+
+Customer explanation:
+- Logs help AMK support diagnose the issue.
+- Users can share screenshots or copied log text with AMK support.
+
+Security note:
+- Do not provide hidden/admin log-clear commands.
+
+---
+
+## SECTION 14 - WIFI AND NETWORK BEHAVIOR
+
+First boot:
+- Device starts setup AP if no WiFi is saved.
+- SSID: Auto-Pump-Config
+- Password: 12345678
+- Setup page: http://192.168.4.1
+
+Normal boot:
+- Device tries to connect to saved WiFi.
+- If WiFi fails, pump control continues offline.
+- Device retries WiFi in the background.
+
+Manual AP trigger:
+- Hold physical button for 3 seconds.
+- Use AP setup page to enter new WiFi.
+
+Customer explanation:
+- No WiFi does not stop local pump safety logic.
+- Cloud control needs internet.
+- Local web dashboard needs either AP mode or same home network.
+
+---
+
+## SECTION 15 - COMPRESSOR MODE
+
+When Operating Mode is Air Compressor:
+- The solenoid valve works as an unloader valve.
+- Before motor start, solenoid opens for the configured delay.
+- Motor starts after pre-venting.
+- After motor stop, solenoid opens again for post-venting.
+- Manual toggle is blocked while venting.
+
+Customer explanation:
+- VENTING is normal in compressor mode.
+- Wait a few seconds until venting completes.
+- Do not bypass the solenoid sequence.
+
+---
+
+## SECTION 16 - TROUBLESHOOTING GUIDE
+
+| Error / LCD Text | Likely Cause | Customer Action |
+|---|---|---|
+| DRY_RUN_ALARM | No flow detected | Check water source, valves, pipe priming, flow sensor wiring |
+| PUMP_LOCKED | Dry-run alarm timed out | Reset using button or dashboard; check water source first |
+| WAITING_RETRY | Auto-retry countdown | Wait or reset manually |
+| SNR ERR | Tank sensor reading failure | Check sensor wiring, power, obstruction |
+| OVER | Voltage above limit | Check power supply/generator; wait for stable voltage |
+| UNDER | Voltage below limit | Check power supply; wait for stable voltage |
+| VOLT_DELAY | Voltage recovered, waiting | Normal stabilization delay |
+| COOLING_DOWN | Motor ran long period | Wait for rest timer |
+| VENTING | Compressor venting | Normal; wait |
+| SETTL XXM | Master settling wait | Normal in master/slave setup |
+| WAIT SUMP | Slave blocked by master/sump state | Wait or check master device |
+| NO WIFI | WiFi disconnected | Check router or use AP setup |
+| WAITING | Cloud reconnecting | Usually resolves automatically |
+
+AI troubleshooting flow:
+1. Ask for LCD text or LED color.
+2. Ask whether motor is running.
+3. Ask whether water source and valves are available/open.
+4. Ask whether this is water pump mode or compressor mode.
+5. For electrical or wiring issues, give safety warning first.
+6. If unresolved, direct user to AMK support.
+
+---
+
+## SECTION 17 - PERFORMANCE CHARACTERISTICS
+
+| Metric | Typical Value |
+|---|---:|
+| Control loop cadence | About 1 second |
+| Ultrasonic measurement interval | About 4 seconds |
+| Voltage sampling interval | About 500 ms |
+| Cloud heartbeat | About 30 seconds |
+| MQTT reconnect backoff | About 10 seconds |
+| Master link timeout | About 5 minutes |
+| AP mode auto-close | About 5 minutes with no clients |
+| WiFi reconnect attempt | About every 30 seconds |
+| Watchdog timeout | About 30 seconds |
+| Dashboard poll rate | About 1 second |
+
+Customer explanation:
+- Some readings update every second.
+- Cloud status may take a short time to refresh.
+- WiFi/cloud reconnection can take tens of seconds.
+
+---
+
+## SECTION 18 - LANGUAGE SUPPORT
+
+Supported:
+- English
+- Myanmar/Burmese
+
+Available on:
+- Web Dashboard
+- Settings page
+- AI chatbot interface
+
+Customer explanation:
+- Users can change language from the settings/interface language option.
+- Myanmar text requires proper Unicode support and font rendering.
+
+---
+
+## SECTION 19 - USER GUIDE LINK
+
+Online user guide:
 - https://aungmoekhine.github.io/smart_water_pump-control/user_guide_premium.html
-- Users can access the online user guide from above link. (or)
-- "📖User Guide" button from the setting tab.
+
+Users may also open the guide from the dashboard settings/user guide button.
 
 ---
 
-## SECTION 26 — SALES TALKING POINTS
+## SECTION 20 - SALES TALKING POINTS
 
-Cost Savings:
-- Dry-run protection prevents expensive motor burnout from running without water.
-- Voltage protection prevents motor winding damage from power fluctuations.
-- 1-hour cool-down extends motor service life significantly.
-- Subscription licensing model creates recurring revenue stream.
+Cost savings:
+- Dry-run protection helps prevent motor burnout.
+- Voltage protection helps prevent damage from unstable power.
+- Cool-down mode helps extend motor life.
+- Remote monitoring can reduce unnecessary technician visits.
 
-Durability and Reliability:
-- Industrial-grade dual-core ESP32-S3 (same class as industrial PLCs).
-- All settings and state survive power cuts (NVS flash, no data loss).
-- TLS-encrypted cloud (bank-level security on port 8883).
-- Self-healing: auto-reconnects WiFi, MQTT, and retries after any error state.
+Durability and reliability:
+- ESP32-S3 controller
+- Settings survive power cuts
+- TLS-encrypted cloud connection
+- WiFi and cloud reconnect automatically
+- Local control continues even when internet is unavailable
 
-Ease of Use:
-- First-time setup via phone browser — can download Android app if required at https://aungmoekhine.github.io/smart_water_pump-control/ via "DOWNLOAD ANDROID APP" button.
-- Myanmar language support for local Myanmar customers.
-- Single physical button covers all primary operations.
-- Live animated water level tank on dashboard — instantly understandable.
-- Zero-Store App Installation (PWA): Users do not need a Google Play or Apple App Store account to get a full-screen app experience. They can install the controller interface directly from their web browser onto their phone, tablet, or PC home screen in seconds, saving device storage space.
+Ease of use:
+- First setup can be done from a phone browser.
+- Myanmar language is supported.
+- One physical button handles key actions.
+- Dashboard shows live tank level and status.
+- PWA can be installed without app store.
 
-Advanced Features (premium differentiation):
-- Master/Slave pairing for dual-tank systems (sump pump + roof tank).
-- Air compressor mode with solenoid unloader valve sequencing.
-- Smart night scheduling (DND) prevents noise during sleep hours.
-- Full remote control from anywhere via MQTT cloud — start, stop, configure, update.
-- OTA firmware update over the air — no technician visit needed for updates.
-- Android app for quick mobile access to cloud control.
+Premium features:
+- Master/Slave pairing for sump + roof tank systems
+- Air compressor mode with solenoid unloader sequence
+- DND schedule for quiet hours
+- Cloud remote control
+- OTA firmware update
+- Android app and PWA options
 
-Fair-Use Policy: 
-- Unlike other smart systems, AMK does not "brick" your hardware. If a license expires, you lose remote internet control and AI assistance, but your pump remains a fully working smart controller via the physical button and local home WiFi.
+Fair-use policy:
+- AMK does not brick the hardware when cloud access expires.
+- If license/cloud access expires, local/manual/automatic pump control continues.
+- Renewal is only needed for Internet Cloud Control and AI Chatbot support.
 
-## SECTION 27 — PROGRESSIVE WEB APP (PWA) INSTALLATION GUIDE
-- The AMK Web Dashboard supports PWA standards, enabling users to run the controller interface as a standalone virtual application on various operating systems.
+---
 
-## 27.1 Installation Methods by Platform
-| Platform	| Recommended Browser	| Installation Steps
-|  Android Mobile	| Google Chrome / Edge	|1. Access the local IP or cloud URL.<br>2. Tap the three-dot menu icon.<br>3. Select "Install App" or "Add to Home Screen".<br>4. Confirm the prompt. |
-| iOS (iPhone/iPad)	| Apple Safari	| 1. Navigate to the dashboard URL in Safari.<br>2. Tap the "Share" button (square with up arrow).<br>3. Scroll down and tap "Add to Home Screen".<br>4. Confirm the name and tap "Add". |
-| Windows / macOS	| Google Chrome / Edge	| 1. Open the dashboard URL.<br>2. Look for the Install Icon (monitor with down arrow) in the browser search bar.<br>3. Click "Install" to create a desktop shortcut and standalone window. |
+## SECTION 21 - PACKAGE TIERS AND PRICING
 
-## 27.2 Operational Characteristics of the PWA
-- Security Constraints: Browsers typically require a secure context (HTTPS) to prompt for installation when accessing remote cloud dashboards. For local direct connections (http://192.168.4.1), chromium-based browsers generally bypass this requirement to assist offline setup.
-- Storage Efficiency: The virtual app occupies minimal storage space (typically under 2MB), as it shares the browser’s underlying engine instead of bundling a separate runtime environment.
-- Auto-Update Behavior: Whenever the controller’s web resources are updated via firmware or web server adjustments, the PWA refreshes its cache on the next launch, ensuring the user always accesses the current version.
+All new AMK Smart Pump devices include base Cloud Access. Higher tiers add longer access and service/warranty coverage.
 
-## SECTION 28 — PRICING ARCHITECTURE & SERVICE PACKAGES
+| Package Tier | Total Cloud Access | Support / Warranty Features | Selling Price |
+|---|---:|---|---:|
+| Standard Tier | 6 months | Local control + manual button | 450,000 MMK |
+| Connected Tier | 18 months | Standard + 1 year cloud extension | 490,000 MMK |
+| Support Tier | 18 months | Connected + 1 year free repair labor | 510,000 MMK |
+| Ultimate Tier | 18 months | Connected + 1 year overall warranty | 550,000 MMK |
 
-All new AMK Smart Pump devices include a base 6 months of Cloud Access free. Higher tiers build upon the "Connected" features to offer extended access and hardware protection.
+Annual renewal:
+- Cloud Access renewal after included period: 40,000 MMK per year.
 
-| Package Tier	| Total Cloud Access	| Support / Warranty Features	| Selling Price (MMK) |
-| Standard Tier	| 6 Months	| Local Control + Manual Button	| 450,000 |
-| Connected Tier	| 18 Months	| Standard + 1 Year Cloud Extension	| 490,000 |
-| Support Tier	| 18 Months	| Connected + 1 Year Free Repair Service	| 510,000 |
-| Ultimate Tier	| 18 Months	| Connected + 1 Year Overall Warranty	| 550,000 |
+AI sales rule:
+- For price questions, show the package table or summarize the most relevant options.
+- Recommend Ultimate Tier when the user wants maximum protection.
+- Recommend Support Tier when the user wants repair labor support but does not need full parts warranty.
+- For budget users, explain that Standard still keeps local/manual pump control.
 
-28.1 Service Definitions
-- 18 Months Cloud Access: Calculated as 6 months base free access + 12 months premium package access.
-- Annual Renewal: After the initial period, Cloud Access can be extended for 40,000 MMK / Year.
+---
 
-## SECTION 29 — SERVICE & WARRANTY POLICY (1-YEAR TERM)
+## SECTION 22 - SERVICE AND WARRANTY POLICY
 
-The following terms apply to the Support Tier and Ultimate Tier for a period of one year (365 days) from the date of installation.
+The Support Tier and Ultimate Tier include 1 year service/warranty terms from installation date.
 
-29.1 Support Tier: "Connected Plus Service"
-- Cloud Access: Includes 1 full year of additional Cloud Access (18 months total from install).
-- Repair Service: Includes 1 year of free technical labor. No labor fees for diagnostics or repairs.
-- Exclusion: Physical spare parts must be purchased by the customer if needed.
+### Support Tier - Connected Plus Service
 
-29.2 Ultimate Tier: "Connected Plus Total Protection"
-- Cloud Access: Includes 1 full year of additional Cloud Access (18 months total from install).
-- Hardware Warranty: Includes one-time, free-of-charge replacement of any damaged internal component (ESP32, sensors, relays) for 1 year.
-- Continuous Service: Includes free technical repair service support (labor) for the entire 1-year period.
-- Exclusion (User Fault): Does not cover damage from dropping the device, water inside the case, or tampering.
+Includes:
+- 18 months total Cloud Access
+- 1 year free technical repair labor
+- No labor fees for diagnostics or repair service
 
-Suggested Sales & AI Training Message
+Exclusion:
+- Physical spare parts must be purchased by the customer if replacement parts are needed.
 
-"The AMK Smart Pump System is built for reliability. 💧
+AI answer:
+- "Support Tier gives you 18 months Cloud Access and 1 year free repair labor. If a part is damaged and must be replaced, the part cost is not included."
 
-Our most popular package is the Ultimate Tier (550,000 MMK). This gives you 1.5 years of Cloud Access right out of the box. Even better, it includes a 1-year Overall Warranty: if any part fails within the first year, we replace it for free one time, and you never pay for repair labor.
+### Ultimate Tier - Connected Plus Total Protection
 
-If you just need labor protection, our Support Tier (510,000 MMK) also gives you 1.5 years of Cloud Access and free repair labor for 1 year!"
+Includes:
+- 18 months total Cloud Access
+- 1 year overall hardware warranty
+- One-time free replacement of damaged internal components during the warranty period
+- Free technical repair labor for the 1-year warranty period
 
-Technical Note for the AI:
+Exclusions:
+- Damage from dropping the device
+- Water entering the case
+- Tampering or unauthorized modification
+- External wiring mistakes or misuse
 
-When the AI is asked "What happens after 18 months?", it should answer:
-"Your pump will continue to work perfectly using the local dashboard and manual button. To continue using the Internet Cloud and AI Chatbot, you simply need to purchase a 1-year Cloud Token for 40,000 MMK."
+AI answer:
+- "Ultimate Tier gives you 18 months Cloud Access and 1 year overall warranty. If an internal component fails within the first year, AMK replaces it one time free of charge, and repair labor is free."
+
+Suggested sales response:
+"The AMK Smart Pump System is built for reliability. Our most complete package is the Ultimate Tier at 550,000 MMK. It includes 18 months of Cloud Access and 1 year overall warranty. If an internal component fails within the first year, AMK replaces it one time free of charge, and repair labor is included. If you mainly want labor protection, the Support Tier at 510,000 MMK includes 18 months Cloud Access and 1 year free repair labor, with parts charged separately if needed."
+
+---
+
+## SECTION 23 - AI RESPONSE RULES
+
+### Warranty Questions
+
+When asked about warranty:
+- Standard Tier: no full hardware warranty stated; local/manual control available.
+- Connected Tier: cloud extension focus.
+- Support Tier: 1 year free repair labor, parts excluded.
+- Ultimate Tier: 1 year overall warranty, one-time free internal component replacement, labor included.
+- Tell the user to provide Device ID if they want exact warranty/cloud expiry lookup.
+
+### Cloud Expiry Questions
+
+Always say:
+- Pump continues working locally.
+- Auto water logic continues.
+- Manual button continues.
+- Local dashboard continues.
+- Internet Cloud Control and AI Chatbot require renewal.
+- Renewal is 40,000 MMK per year.
+
+### Safety Questions
+
+If the user mentions:
+- electric shock
+- live wire
+- relay
+- voltage
+- burning smell
+- water leak near electricity
+- opening the case
+- wiring changes
+
+Start with:
+"Safety first: please turn off the main power/breaker before touching wiring or opening the device."
+
+Then give safe, non-live troubleshooting steps.
+
+### Technical Diagnostic Questions
+
+Ask for:
+- LCD text
+- LED color/pattern
+- Pump mode or compressor mode
+- Whether motor is running
+- Whether WiFi/cloud is online
+- Any recent wiring or setting change
+
+### Do Not Provide
+
+The AI must not provide:
+- Admin/factory passwords
+- Token generation details
+- Cryptographic/signature formulas
+- Source code
+- Raw MQTT command payloads
+- Broadcast/admin topics
+- Instructions to bypass license, PIN, warranty, or security
+- Instructions for live AC electrical work
+
+### Safe Replacement Message
+
+If the user asks for protected internal details:
+"For security reasons, I cannot share internal control details. Please contact AMK support at +95-9-977880406."
+
+---
+
+## SECTION 24 - QUICK ANSWER TEMPLATES
+
+### Dry-Run Alarm
+
+"DRY_RUN_ALARM means the motor ran but water flow was not detected. Please check the water source, open valves, pipe priming, and flow sensor wiring. After fixing the cause, press the physical button or use the dashboard Reset Alarm button."
+
+### Voltage Error
+
+"OVER or UNDER means the voltage is outside the safe range. The device stops the motor to protect it. Please check your power supply or generator. When voltage becomes stable, the device waits briefly before resuming."
+
+### No WiFi
+
+"NO WIFI means the controller is not connected to your router. Pump protection and local logic still continue. Check the router, or hold the button for 3 seconds to enter setup AP mode and reconnect WiFi."
+
+### Cloud Offline
+
+"Cloud offline means internet/cloud connection is not ready, but local pump control still works. Check WiFi, internet, and cloud subscription status."
+
+### License Expired
+
+"Your pump is not locked or bricked. Manual button, local dashboard, and automatic water control still work. Only Internet Cloud Control and AI Chatbot support require renewal. Cloud Access renewal is 40,000 MMK per year."
+
+### Ultimate Tier
+
+"Ultimate Tier is the best protection package. It includes 18 months Cloud Access and 1 year overall warranty. If an internal component fails within the first year, AMK replaces it one time free of charge, and repair labor is included."
+
+### Support Tier
+
+"Support Tier includes 18 months Cloud Access and 1 year free repair labor. Replacement parts are not included and must be paid separately if needed."
+
