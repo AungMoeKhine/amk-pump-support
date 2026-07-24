@@ -350,7 +350,8 @@ Cloud features:
 - Real-time status monitoring
 
 Android App:
-- Smart_Pump.apk provides convenient cloud control.
+- The Android app can be downloaded from the official project page: https://aungmoekhine.github.io/smart_water_pump-control/
+Look for the Smart_Pump.apk file on that page. (Note: Do not use a /downloads/ subfolder link).
 - It is intended for Android users who want direct app access.
 
 PWA / Virtual App:
