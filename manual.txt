@@ -225,7 +225,7 @@ Left side (columns 0–9): Big 3-digit numbers (custom 3-wide x 2-tall character
 
 Right side (columns 10–19): 10-character status labels:
 - Row 0: PUMP ON / PUMP OFF / PUMP REST
-- Row 1: FLOW OK / FLOW CHK / DRY ALRM / SNR ERR / WAIT XXM / VENTING / SETTL XXM / WAIT SUMP / STANDBY / LOCKED
+- Row 1: FLOW OK / FLOW CHK / DRY ALRM / SNR ERR / WAIT XXM / VENTING / SETTL XXM / WAIT SUMP / STANDBY / LOCKED / SERVICE!
 - Row 2: NO WIFI / WAITING / ONLINE
 - Row 3: OVER / UNDER / DELAY / NORMAL (blinking dot at position 19 when AP mode is active)
 
@@ -412,6 +412,7 @@ Auto-resume (after voltage error or cool-down) bypasses this lock by queuing mot
 | COOLING_DOWN | Motor ran 1 full hour | Mandatory rest. Motor auto-resumes when rest time completes. |
 | VENTING | Compressor solenoid venting | Normal operation. Wait a few seconds for sequence to complete. |
 | SETTL XXM / SETTLING | Master settling after pump stop | Normal Master/Slave behavior. Slave waits for safe window. |
+| SERVICE! | Motor Runtime exceeded limit | Perform motor maintenance (check bearings). Reset the "Motor Life Counter" in Settings. |
 | NO WIFI | WiFi disconnected | Background reconnect in progress. Check router. 3-sec hold to reconfigure. |
 | WAITING (MQTT offline) | NTP sync or MQTT reconnect in progress | Usually resolves within 30 seconds automatically. |
 
