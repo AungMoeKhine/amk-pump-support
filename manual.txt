@@ -498,8 +498,11 @@ Advanced Features (premium differentiation):
 - Air compressor mode with solenoid unloader valve sequencing.
 - Smart night scheduling (DND) prevents noise during sleep hours.
 - Full remote control from anywhere via MQTT cloud — start, stop, configure, update.
-- OTA firmware update over the air — no technician visit needed for updates.
 - Android app for quick mobile access to cloud control.
+
+Future-Proof & Remote Maintenance (Zero-Hassle Support):
+- True Smart Device Experience: Because this is a fully cloud-connected product, our engineering team can diagnose errors, tune settings, and push Over-The-Air (OTA) firmware upgrades completely remotely.
+- No waiting for a technician: You never need to schedule a home visit for software updates or system bugs. Your device is silently updated in the background, ensuring it is always running with the utmost performance, latest features, and highest safety standards without you even having to notice.
 
 Fair-Use Policy: 
 - Unlike other smart systems, AMK does not "brick" your hardware. If a license expires, you lose remote internet control and AI assistance, but your pump remains a fully working smart controller via the physical button and local home WiFi.
