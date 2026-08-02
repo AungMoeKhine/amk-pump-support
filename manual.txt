@@ -75,11 +75,14 @@
 | Linked Master ID | "" (empty) | Device Cloud ID | Slave links to this Master's Cloud ID |
 | Settling Time | 10 minutes | 0–30 minutes | Master waits this long after stopping before Slave can start |
 
-### Compressor Mode
+### Pump or Compressor Mode
 | Setting | Default | Range | Description |
 |---------|---------|-------|-------------|
 | Operating Mode | 0 (Water Pump) | 0=Water Pump, 1=Air Compressor | Changes solenoid behavior entirely |
 | Valve Delay | 5 seconds | 5–15 seconds | Pre-vent and post-vent solenoid timing |
+| opMode 0 | Instant | Pump Mode: 0s Buffer (Fastest Protection) |
+| opMode 1 | Filtered | Compressor Mode: 60s Buffer (Air-Bubble Stability) |
+
 
 ### Smart Scheduling (DND)
 | Setting | Default | Description |
@@ -158,15 +161,23 @@ The system runs a strict state machine. Only ONE state is active at a time.
 
 ---
 
-## SECTION 8 — FLOW DETECTION (Dry-Run Persistence Logic)
+## SECTION 8 — INTELLIGENT FLOW PERSISTENCE (Mode-Based)
 
-Flow sensor on GPIO 18 uses three-layer persistence to prevent false dry-run alarms:
+The system automatically adapts its flow detection sensitivity based on the Operating Mode to balance safety and stability.
 
-1. **Initial Grace Period:** First 60 seconds after motor starts, no-flow is completely ignored (suction/priming time).
-2. **Slug Flow Window:** If flow was detected within the last 60 seconds, system considers it "still flowing" (handles air bubbles and intermittent flow).
-3. **Physical Flow:** Real-time LOW signal on GPIO 18.
+## 8.1 Water Pump Mode (opMode = 0): High Sensitivity
+- Slug Window: 0 Seconds.
+- Grace Period: None.
+- Behavior: Detection is instant. If the flow sensor stops detecting water for even one second, the Dry-Run countdown timer begins immediately. This   provides maximum protection for water pump mechanical seals.
 
-Only when ALL THREE are false AND motor has run longer than Dry-Run Delay does the alarm trigger.
+## 8.2 Air Compressor Mode (opMode = 1): High Stability
+
+- Slug Window: 60 Seconds.
+- Initial Grace Period: 60 Seconds.
+- Behavior: Handles "Signal Noise" caused by air bubbles in air-lifting systems.
+  . Startup Grace: Upon motor start, the system provides 60s of "invisible" flow to allow pressure to build.
+  . Operational Slug Window: During pumping, air gaps lasting less than 60s are ignored by the UI and safety timer to prevent nuisance alarms.
+  . Total Protection: The Dry-Run timer only starts counting down after the 60s window expires without any flow detected.
 
 ---
 
@@ -388,6 +399,7 @@ Start sequence:
 1. Solenoid OPENS (pre-vent) for valveDelay seconds — State: PRE_START_VALVE
 2. Solenoid CLOSES, Motor STARTS — State: PUMPING
 3. Flow sensor monitors output pressure.
+4. Startup Grace Period: The system initializes a 60-second virtual flow signal. This prevents the "Dry-Run" countdown from appearing while the compressor is building initial pressure to lift water.
 
 Stop sequence:
 1. Motor STOPS, Solenoid OPENS (post-vent) for valveDelay seconds — State: POST_STOP_VALVE
