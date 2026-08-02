@@ -134,9 +134,11 @@ The system runs a strict state machine. Only ONE state is active at a time.
 | 3-Second Hold | Hold button for 3+ seconds | Activates WiFi AP Mode. 1-second buzzer. SSID: "Auto-Pump-Config", Password: "12345678" |
 
 **Smart Blocking on Single Click:**
+- During Compressor Venting: Action is automatically locked.
+  . Web Dashboard: The button turns grey, displays "PLEASE WAIT..." / "စောင့်ဆိုင်းပါ...", and is disabled.
+  . Physical Button: Pressing the button will trigger a warning beep and a Red LED flash. The pump will not toggle until the venting sequence is finished.
 - Water level LOW while running: "Water level is LOW. Pump will continue until Tank is Full."
-- During compressor venting: "Venting pressure... Please wait."
-- Sensor alarm active: First click silences buzzer only, does NOT toggle pump.
+- Sensor alarm active: First click silences buzzer only.
 
 ---
 
@@ -405,7 +407,8 @@ Stop sequence:
 1. Motor STOPS, Solenoid OPENS (post-vent) for valveDelay seconds — State: POST_STOP_VALVE
 2. Solenoid CLOSES — State: IDLE (or SETTLING_WATER if Master role)
 
-Manual toggle is BLOCKED during venting with message: "Venting pressure... Please wait."
+Manual Toggle Lock: During the pre-vent and post-vent phases, manual control is strictly disabled to protect the compressor head from starting under back-pressure. The system info will report "VENTING_VALVE!" and the dashboard button will remain in a grey "Waiting" state until the solenoid closes.
+
 Auto-resume (after voltage error or cool-down) bypasses this lock by queuing motorStatus.
 
 ---
