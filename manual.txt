@@ -525,13 +525,13 @@ Fair-Use Policy:
 ## SECTION 27 — PROGRESSIVE WEB APP (PWA) INSTALLATION GUIDE
 - The AMK Web Dashboard supports PWA standards, enabling users to run the controller interface as a standalone virtual application on various operating systems.
 
-## 27.1 Installation Methods by Platform
+# 27.1 Installation Methods by Platform
 | Platform	| Recommended Browser	| Installation Steps
 |  Android Mobile	| Google Chrome / Edge	|1. Access the local IP or cloud URL.<br>2. Tap the three-dot menu icon.<br>3. Select "Install App" or "Add to Home Screen".<br>4. Confirm the prompt. |
 | iOS (iPhone/iPad)	| Apple Safari	| 1. Navigate to the dashboard URL in Safari.<br>2. Tap the "Share" button (square with up arrow).<br>3. Scroll down and tap "Add to Home Screen".<br>4. Confirm the name and tap "Add". |
 | Windows / macOS	| Google Chrome / Edge	| 1. Open the dashboard URL.<br>2. Look for the Install Icon (monitor with down arrow) in the browser search bar.<br>3. Click "Install" to create a desktop shortcut and standalone window. |
 
-## 27.2 Operational Characteristics of the PWA
+# 27.2 Operational Characteristics of the PWA
 - Security Constraints: Browsers typically require a secure context (HTTPS) to prompt for installation when accessing remote cloud dashboards. For local direct connections (http://192.168.4.1), chromium-based browsers generally bypass this requirement to assist offline setup.
 - Storage Efficiency: The virtual app occupies minimal storage space (typically under 2MB), as it shares the browser’s underlying engine instead of bundling a separate runtime environment.
 - Auto-Update Behavior: Whenever the controller’s web resources are updated via firmware or web server adjustments, the PWA refreshes its cache on the next launch, ensuring the user always accesses the current version.
@@ -546,7 +546,7 @@ All new AMK Smart Pump devices include a base 6 months of Cloud Access free. Hig
 | Support Tier	| 18 Months	| Connected + 1 Year Free Repair Service	| 510,000 |
 | Ultimate Tier	| 18 Months	| Connected + 1 Year Overall Warranty	| 550,000 |
 
-28.1 Service Definitions
+# 28.1 Service Definitions
 - 18 Months Cloud Access: Calculated as 6 months base free access + 12 months premium package access.
 - Annual Renewal: After the initial period, Cloud Access can be extended for 40,000 MMK / Year.
 
@@ -554,12 +554,12 @@ All new AMK Smart Pump devices include a base 6 months of Cloud Access free. Hig
 
 The following terms apply to the Support Tier and Ultimate Tier for a period of one year (365 days) from the date of installation.
 
-29.1 Support Tier: "Connected Plus Service"
+# 29.1 Support Tier: "Connected Plus Service"
 - Cloud Access: Includes 1 full year of additional Cloud Access (18 months total from install).
 - Repair Service: Includes 1 year of free technical labor. No labor fees for diagnostics or repairs.
 - Exclusion: Physical spare parts must be purchased by the customer if needed.
 
-29.2 Ultimate Tier: "Connected Plus Total Protection"
+# 29.2 Ultimate Tier: "Connected Plus Total Protection"
 - Cloud Access: Includes 1 full year of additional Cloud Access (18 months total from install).
 - Hardware Warranty: Includes one-time, free-of-charge replacement of any damaged internal component (ESP32, sensors, relays) for 1 year.
 - Continuous Service: Includes free technical repair service support (labor) for the entire 1-year period.
@@ -584,6 +584,31 @@ Signal Strength (RSSI) Monitoring:
 - Weak: -76dBm to -85dBm (2 Bars)
 - Unstable: Below -86dBm (1 Bar)
 - If a user reports "Waiting" or "No WiFi," the AI should suggest checking the Signal Bar on the dashboard and moving the router closer if bars are at 1 or 2.
+
+## SECTION 31 — SYSTEM CONTACTS & SALES REPRESENTATIVES
+
+## 31.1 Lead Technical Contact & System Support
+- **Technical Lead / Developer:** Aung Moe Khine
+- **Role:** System Architecture, Hardware/Software Support, Cloud & Firmware Maintenance
+- **Phone / Viber:** [+95-9-977880406]
+- **Email:** [aungmoekhine@gmail.com]
+- **Support Scope:** System bugs, OTA updates, advanced troubleshooting, custom integration, and technical escalations.
+
+---
+
+# 31.2 Authorized Sales Representatives
+
+| Representative | Territory / Region | Phone / Contact | Viber / Telegram | Responsibilities |
+|----------------|-------------------|-----------------|------------------|------------------|
+| Mr. Aung Ko Ko | Yangon / Lower Myanmar | [+95-9-973781315] | [+95-9-973781315] | Sales Inquiries, On-site Demos, Package Selection |
+| Mr. Pyae Sone Aung | Yangon / Lower Myanmar | [+95-9-254897238] | [+95-9-254897238] | Sales Inquiries, On-site Demos, Package Selection |
+
+---
+
+# 31.3 Sales & Technical Escalation Workflow
+1. **General Sales & Package Orders:** Contact Sales Representative 1, 2, or 3 based on region.
+2. **License Activation & Tokens:** Processed via Sales Representatives or Automated Cloud Portal.
+3. **Hardware Failures & System Bugs:** Escalate directly to Technical Contact (**Aung Moe Khine**) if issue cannot be resolved via Section 21 (Troubleshooting Guide).
 
 Suggested Sales & AI Training Message
 
