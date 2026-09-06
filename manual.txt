@@ -5,7 +5,7 @@
 
 ## SECTION 1 — SYSTEM OVERVIEW & ARCHITECTURE
 
-**Hardware:** ESP32-S3 | LCD 20x4 I2C | ZMPT101B Voltage Sensor | Ultrasonic JSN-SR04t & AJ-SR04M (water proof type) | Flow Sensor XKC Y25 T12V (non contact liquid detect sensor) | NeoPixel RGB LED
+**Hardware:** ESP32-S3 | LCD 20x4 I2C | ZMPT101B Voltage Sensor | Level Sensors (Selectable): Ultrasonic (AJ-SR04M/JSN-SR04T) OR Hydrostatic Level Sensor (0-3.0m, 0-3.3V ADC1) | Flow Sensor XKC Y25 T12V (non contact liquid detect sensor) | NeoPixel RGB LED
 
 **Dual-Core FreeRTOS Architecture:**
 - **Core 1 (Control Loop):** Runs `loop()`. Handles all safety logic — sensor reading, pump control, dry-run, voltage protection, LCD, LED, button. Zero-latency, never blocked.
@@ -22,6 +22,7 @@
 |-----|------|-----------|-------|
 | SDA | 1 | I2C LCD 20x4 | Address 0x27 |
 | SCL | 2 | I2C LCD 20x4 | — |
+| HYDROSTATIC_SENSOR | 3 | Submersible Level Sensor | 0-3.3V ADC1 (0-3.0m water depth) |
 | VOLTAGE_SENSOR | 4 | ZMPT101B | ADC_11db, 12-bit, 50Hz AC |
 | UPPER_TANK_TRIG | 5 | Ultrasonic Trigger | — |
 | UPPER_TANK_ECHO | 6 | Ultrasonic Echo | — |
@@ -44,10 +45,11 @@
 ### Tank Settings
 | Setting | Default | Range | Description |
 |---------|---------|-------|-------------|
+| Water Sensor Hardware (sType) | 0 (Ultrasonic) | 0=Ultrasonic, 1=Hydrostatic Pressure | Hardware water level sensor type |
 | Tank Height (upperHeight) | 12 inches | 12"–84" (1ft–7ft) | Physical depth of tank in inches |
 | Low Start Level | 50% | 20%–70% | Pump starts when water drops to this level |
 | Full Stop Level | 100% | 80%–100% | Pump stops when water reaches this level |
-| Buffer/Blind Zone | 10" (fixed) | Not configurable | Dead zone at sensor head |
+| Buffer/Blind Zone | 10" (fixed) | Ultrasonic Only | Dead zone at sensor head (bypassed in Hydrostatic Mode) | 
 
 ### Voltage Guard
 | Setting | Default | Range | Description |
@@ -146,20 +148,36 @@ The system runs a strict state machine. Only ONE state is active at a time.
 
 1. **Validity Gate:** Accepts only 40V–320V. Three repeated invalid readings drop voltage to 0V.
 2. **5-Sample Median Buffer:** Collects 5 raw readings, takes median to reject single noise spikes.
-3. **Outlier Hold:** Jumps greater than 18V must repeat 3 consecutive times to be accepted (ignores transient interference).
-4. **Slew Rate Limit:** Maximum change of 3V per 500ms. Prevents relay chatter from rapid voltage swings.
-5. **EMA Smoothing:** 25% new value + 75% previous value. Produces a slow, stable output.
+3. **Outlier Hold:** Jumps greater than 25V must repeat 3 consecutive times to be accepted (ignores transient interference).
+4. **Slew Rate Limit:** Asymmetric limit (+2V rise / -5V fall) per 500ms. Prevents relay chatter from rapid voltage swings.
+5. **EMA Smoothing:** 15% new value + 85% previous value (0.15 * med + 0.85 * filteredVolt). Produces a slow, stable output.
 
 ---
 
-## SECTION 7 — ULTRASONIC SENSOR ALGORITHM
+## SECTION 7 — WATER LEVEL SENSING ALGORITHMS (DUAL MODE)
 
-- **Cycle:** 20 samples at 60ms intervals (non-blocking). Median of valid samples used.
-- **Valid range:** 0" to 84" (MAX_DISTANCE constant).
-- **Distance smoothing:** 90% new + 10% old (fast settling EMA).
-- **Error threshold:** 10 consecutive failed readings triggers SENSOR_ERROR state.
-- **LCD shows:** "SNR ERR". Button press silences alarm (errorAck flag).
-- **Percentage formula:** waterDepth = (tankHeight + bufferHeight) - sensorDistance. Percentage = waterDepth / tankHeight * 100, constrained 0–100%.
+The system supports two configurable hardware sensor options:
+
+### 7.1 Mode 0: Ultrasonic Sensor (AJ-SR04M / JSN-SR04T)
+- **Pinout:** GPIO 5 (Trig), GPIO 6 (Echo with hardware interrupt on CHANGE).
+- **Cycle:** Scan every 5000ms. Takes 5 samples at 120ms intervals using a 140µs trigger pulse.
+- **Valid range:** 8" (BUFFER_HEIGHT - 2") to 110" (MAX_DISTANCE).
+- **Anti-Condensation Filter:** Sudden jumps > 15" must persist for 5 scans before being accepted, rejecting false echoes.
+- **Distance smoothing:** 15% new + 85% old EMA filter.
+- **Percentage formula:** waterDepth = (tankHeight + 10" buffer) - sensorDistance. Percentage = (waterDepth * 100) / tankHeight, constrained 0–100%.
+
+### 7.2 Mode 1: Submersible Hydrostatic Pressure Sensor
+- **Pinout:** GPIO 3 (ADC1).
+- **Cycle:** Continuous scan every 1000ms.
+- **Sampling:** 16-sample burst ADC oversampling averaged via analogReadMilliVolts() to reject RF noise.
+- **Hardware Scale:** 0 to 3.0 meters (118.11 inches). V_MIN = 0.33V (0"), V_MAX = 3.30V (118.11").
+- **Hardware Fault Check:** Acceptable voltage gate is 0.10V to 3.35V. Disconnections (<0.10V) or shorts (>3.35V) increment invalid count.
+- **Depth formula:** measuredDepthInches = ((volt - 0.33) / (3.30 - 0.33)) * 118.11. Percentage = (measuredDepthInches / tankHeight) * 100, constrained 0–100%.
+- **Smoothing:** 15% new + 85% old EMA filter (fast-tracks the first reading on boot).
+
+### 7.3 Shared Fault Handling
+- **Error threshold:** 10 consecutive failed/invalid readings on either sensor triggers SENSOR_ERROR state.
+- **LCD Display:** Shows "SNR ERR" for both sensor types. Button press silences alarm (errorAck flag).
 
 ---
 
@@ -186,8 +204,8 @@ The system automatically adapts its flow detection sensitivity based on the Oper
 ## SECTION 9 — DRY-RUN RECOVERY SEQUENCE (Step by Step)
 
 1. Motor running, no flow detected → countdown timer decrements every second
-2. Countdown reaches 0 → DRY_RUN_ALARM (error=1): Oscillating buzzer for 60 seconds
-3. 60 seconds alarm with no reset → DRY_RUN_LOCKED (error=2): Silent lock
+2. Countdown reaches 0 → DRY_RUN_ALARM (error=1): Oscillating buzzer activates
+3. 15 seconds alarm with no reset → DRY_RUN_LOCKED (error=2): Silent lock
 4. Manual Reset: Physical button OR dashboard "Reset Alarm" → clears error, returns to IDLE
 5. Auto-Retry (if configured): Countdown (30 or 60 min) expires → automatically restarts → PUMPING
 
@@ -309,6 +327,7 @@ Dashboard auto-polls /status every 1 second.
 | Command JSON Key | Description / Action | Security Requirement
 | toggle | Remotely start or stop the pump | Device PIN
 | reset | Clear a Dry-Run Alarm/Lock state | Device PIN
+| resetRun | Reset motor total accumulated runtime to 0 | Device PIN / Admin Key
 | get | Request an immediate real-time status publish | Device PIN
 | save | Update device settings remotely (triggers reboot) | Device PIN
 | otaCheck | Command device to check GitHub for new firmware | Device PIN
@@ -372,10 +391,12 @@ Write protection: saveMotorStatus() uses static RAM variables — only writes to
 
 ## SECTION 18 — EVENT LOGGING SYSTEM
 
-- Storage: LittleFS flash filesystem, file /events.txt, rolling 8000-byte buffer (~200 entries).
+- Storage: Dual-tier logging:
+  1. In-RAM Ring Buffer: 50 lines (ramLogs[50][80]) protected by critical section for zero-latency, zero-flash wear 1-second status polling.
+  2. LittleFS Flash File: /events.txt, asynchronously written from FreeRTOS logQueue on Core 0. Auto-clears when file exceeds 150 KB.
 - Events logged: Power On, Auto Start Low, Auto Stop Full, Manual Start, Manual Stop, Voltage High/Low, Dry-Run Alarm, Cool-down, Dry-Run Retry, Slave Stop, History Reset, Resume after Volt OK, Resume after Cool.
-- Viewed: Web dashboard shows last 2000 characters from log in status JSON.
-- Cleared: MQTT clearLog command.
+- Viewed: Web dashboard displays all 50 formatted lines from the RAM buffer.
+- Cleared: Web endpoint (/clear-logs) or MQTT clearLog command.
 
 ---
 
@@ -418,9 +439,9 @@ Auto-resume (after voltage error or cool-down) bypasses this lock by queuing mot
 | Error / LCD Text | Cause | Solution |
 |---|---|---|
 | DRY_RUN_ALARM | No flow within delay period | Check pipe, water source, flow sensor wiring (GPIO 18). Press button or use dashboard Reset. |
-| PUMP_LOCKED | Dry-run alarm ran 60s without reset | Manual reset via button or dashboard. Configure auto-retry to avoid in future. |
+| PUMP_LOCKED | Dry-run alarm ran 15s without reset | Manual reset via button or dashboard. Configure auto-retry to avoid in future. |
 | WAITING_RETRY (WAIT XXM) | Auto-retry countdown in progress | Wait (30 or 60 min). Or reset manually anytime. |
-| SNR ERR / SENSOR_ERROR | 10+ consecutive ultrasonic failures | Check GPIO 5 (Trig) and GPIO 6 (Echo) wiring and power. Press button to silence. |
+| SNR ERR / SENSOR_ERROR | 10+ consecutive sensor failures (Ultrasonic echo lost / Hydrostatic cable cut <0.10V or shorted >3.35V) | Check GPIO 5 & 6 (Ultrasonic) or GPIO 3 (Hydrostatic). Press button to silence. |
 | OVER / OVER_VOLTAGE | Voltage above high threshold | Check power supply/generator. Auto-resumes after voltage normalizes + 15s delay. |
 | UNDER / UNDER_VOLTAGE | Voltage below low threshold | Check power supply. Same auto-resume logic. |
 | VOLT_DELAY (Xs) | Voltage just normalized, waiting | Normal behavior. System stabilizing. Not an error. |
@@ -443,18 +464,20 @@ Auto-resume (after voltage error or cool-down) bypasses this lock by queuing mot
 
 | Metric | Value |
 |--------|-------|
-| Control loop cadence | ~1 second |
-| Ultrasonic measurement interval | 4 seconds |
-| Ultrasonic sample count | 20 samples per cycle |
+| Control loop cadence | ~1 second (GENERAL_INTERVAL = 1000) |
+| Ultrasonic scan interval | 5 seconds (ULTRASONIC_INTERVAL = 5000) |
+| Ultrasonic sample count | 5 samples @ 120ms per cycle |
+| Hydrostatic scan interval | 1 second (16-sample ADC burst) |
 | Voltage sampling interval | 500ms |
+| Dry-Run alarm buzzer duration | 15 seconds (before locked) |
 | MQTT publish minimum throttle | 500ms between publishes |
-| MQTT reconnect backoff | 10 seconds |
+| MQTT reconnect backoff | 15 seconds between attempts |
 | MQTT keepalive | 60 seconds |
 | Master link timeout | 5 minutes |
 | AP mode auto-close | 5 minutes (no client) |
 | WiFi reconnect attempt | Every 30 seconds |
 | Watchdog timeout | 30 seconds |
-| Event log capacity | ~200 entries (8000 bytes rolling) |
+| Event log capacity | 50 lines in RAM buffer; 150 KB in LittleFS |
 | Dashboard status poll rate | 1 second |
 | Heartbeat MQTT publish | Every 30 seconds |
 
